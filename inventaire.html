@@ -198,7 +198,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     const GABARITS_PASSIF = {
         Lifesteal: (v, s) => `Vol de vie : <b>${v}%</b> des dégâts infligés sont rendus en PV.`,
-        PoisonDegats: (v, s) => `Poison : <b>${v}</b> dégâts/tour pendant <b>${s.poisonDuree}</b> tours.`,
+        PoisonDegats: (v, s) => `Poison : inflige <b>${v}</b> dégâts au tour suivant, puis <b>${Math.max(0, v - 1)}</b>, <b>${Math.max(0, v - 2)}</b>... jusqu'à 0 (s'additionne si réappliqué).`,
         EtourdissementChance: (v, s) => `<b>${v}%</b> de chance d'étourdir la cible (saute son tour suivant).`,
         ExecutionBonus: (v, s) => `Sous <b>${s.executionSeuil}%</b> de PV, inflige <b>+${v}%</b> de dégâts.`,
         Precision: (v, s) => `<b>+${v}</b> précision — réduit l'esquive adverse.`,
