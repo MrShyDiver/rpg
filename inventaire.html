@@ -9,7 +9,7 @@
 :root {
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
     --paper: #e9e3d2; --paper-dim: #b8b2a0;
-    --commun: #8d8d8d; --rare: #4a9fd8; --legendaire: #f2c230; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230; --line: #2c2c2e;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 40px 20px; }
@@ -51,6 +51,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
 
 .carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 4px; padding: 14px; position: relative; display: flex; flex-direction: column; height: 100%; }
+.carte.normal { border-left-color: var(--normal); }
 .carte.rare { border-left-color: var(--rare); }
 .carte.legendaire { border-left-color: var(--legendaire); }
 .carte.equipe { background: rgba(242,194,48,0.08); }
@@ -179,10 +180,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         28: { nom: "Frappe 500kg (Solo Silo)",icone: "🚀", image: "gear/solo_silo.png",                      slot: "strategeme" },
     };
     const RARETES = {
-        1:"commun", 2:"rare", 24:"commun", 3:"rare", 4:"rare", 8:"rare", 25:"rare", 6:"legendaire", 20:"commun",
+        1:"commun", 2:"rare", 24:"commun", 3:"rare", 4:"rare", 8:"rare", 25:"normal", 6:"legendaire", 20:"commun",
         7:"commun", 26:"rare", 9:"rare", 10:"commun", 11:"rare",
-        12:"commun", 14:"legendaire", 13:"rare", 15:"rare", 16:"rare", 17:"rare", 18:"legendaire",
-        27:"rare", 23:"rare", 22:"commun", 21:"commun", 19:"rare", 28:"rare",
+        12:"commun", 14:"legendaire", 13:"normal", 15:"rare", 16:"rare", 17:"rare", 18:"legendaire",
+        27:"normal", 23:"normal", 22:"commun", 21:"commun", 19:"rare", 28:"rare",
     };
     const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème" };
     const LABELS_CATEGORIE = {
@@ -267,6 +268,26 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
         : `<span class="${classeImg}-emoji">${ref.icone}</span>`;
 
+    // Construit TOUS les passifs actifs sur l'objet (n'importe quel effet non-nul), pas
+    // seulement celui pointé par StatPrincipale. Seul le champ qui correspond VRAIMENT à
+    // StatPrincipale reçoit la mise à l'échelle par niveau — les autres s'affichent à leur
+    // valeur fixe. C'est ce qui permet d'avoir un passif totalement indépendant du système
+    // d'amélioration par doublon.
+    function construirePassifs(s, niveau, exclureChamp) {
+        const passifs = [];
+        for (const nomStat in CHAMP_PAR_STAT_PRINCIPALE) {
+            if (nomStat === exclureChamp) continue;
+            const champ = CHAMP_PAR_STAT_PRINCIPALE[nomStat];
+            const base = s[champ];
+            const estActif = typeof base === 'boolean' ? base : base > 0;
+            if (!estActif) continue;
+            const scaleAvecNiveau = s.statPrincipale === nomStat;
+            const actuel = typeof base === 'boolean' ? base : (scaleAvecNiveau ? base + niveau * s.increment : base);
+            passifs.push(GABARITS_PASSIF[nomStat](actuel, s));
+        }
+        return passifs;
+    }
+
     function construireDetails(numero, niveau, estStrategeme) {
         const s = STATS[numero];
         if (!s) return { lignesStat: [], passifTexte: '' };
@@ -280,14 +301,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             if (s.usagesParCombat > 0) lignesStat.push({ label: 'Utilisations', valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: 'Cooldown', valeur: s.cooldownTours + ' tours', colorer: false });
 
-            const passifs = [];
+            const passifs = construirePassifs(s, niveau, 'DegatsDirects');
             if (s.penetration > 0) passifs.push(`Pénétration : <b>${s.penetration}%</b>`);
-            if (s.statPrincipale && s.statPrincipale !== 'DegatsDirects' && GABARITS_PASSIF[s.statPrincipale]) {
-                const champ = CHAMP_PAR_STAT_PRINCIPALE[s.statPrincipale];
-                const base = s[champ];
-                const actuel = typeof base === 'boolean' ? base : base + niveau * s.increment;
-                passifs.push(GABARITS_PASSIF[s.statPrincipale](actuel, s));
-            }
             return { lignesStat, passifTexte: passifs.join(' ') };
         }
 
@@ -301,14 +316,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const label2 = LABELS_STAT[s.stat2] || s.stat2;
             lignesStat.push({ label: label2, valeur: (s.bonus2 >= 0 ? '+' : '') + s.bonus2, colorer: true });
         }
-
-        let passifTexte = '';
-        if (s.statPrincipale && s.statPrincipale !== 'Bonus' && GABARITS_PASSIF[s.statPrincipale]) {
-            const champ = CHAMP_PAR_STAT_PRINCIPALE[s.statPrincipale];
-            const base = s[champ];
-            const actuel = typeof base === 'boolean' ? base : base + niveau * s.increment;
-            passifTexte = GABARITS_PASSIF[s.statPrincipale](actuel, s);
+        if (s.stat3) {
+            const label3 = LABELS_STAT[s.stat3] || s.stat3;
+            lignesStat.push({ label: label3, valeur: (s.bonus3 >= 0 ? '+' : '') + s.bonus3, colorer: true });
         }
+
+        const passifTexte = construirePassifs(s, niveau, 'Bonus').join(' ');
 
         return { lignesStat, passifTexte };
     }
