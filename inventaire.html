@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mon inventaire</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -63,15 +64,31 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-passif b { color: var(--paper); font-weight: 600; }
 .carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; }
 .carte.equipe .carte-cmd { color: var(--yellow); }
+.carte-cmd.cliquable { cursor: pointer; border: 1px solid var(--line); transition: all 0.15s ease; }
+.carte-cmd.cliquable:hover { border-color: var(--yellow); color: var(--yellow); }
+.carte-cmd.copie { color: var(--yellow); border-color: var(--yellow); }
 
 .vide-message { text-align: center; padding: 80px 20px; color: var(--paper-dim); }
+
+/* ===== Mobile ===== */
+@media (max-width: 640px) {
+    body { padding: 20px 12px; }
+    .entete h1 { font-size: 24px; }
+    .entete p { font-size: 13px; }
+    .bloc-lootbox { font-size: 13.5px; padding: 12px 14px; }
+    .emplacements { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 26px; }
+    .emplacement { padding: 10px; }
+    .grille { grid-template-columns: 1fr; gap: 10px; }
+    .categorie-titre h2 { font-size: 15px; }
+    .carte-cmd.cliquable { padding: 8px 12px; } /* cible tactile plus confortable au doigt */
+}
 </style>
 </head>
 <body>
 <div class="page">
     <div class="entete">
         <h1>MON <span>INVENTAIRE</span></h1>
-        <p>Pour équiper un objet, tape la commande indiquée sur sa carte dans le chat Twitch.</p>
+        <p>Clique sur la commande d'un objet pour la copier, puis colle-la (Ctrl+V) dans le chat Twitch.</p>
     </div>
     <div id="zoneLootbox"></div>
     <div id="emplacements" class="emplacements"></div>
@@ -262,12 +279,31 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     </div>
                     ${statTexte ? `<div class="carte-stat">${statTexte}</div>` : ''}
                     ${passifTexte ? `<div class="carte-passif">${passifTexte}</div>` : ''}
-                    <span class="carte-cmd">${estEquipe ? '✓ Équipé' : '!equip ' + item.numero}</span>
+                    ${estEquipe
+                        ? `<span class="carte-cmd">✓ Équipé</span>`
+                        : `<span class="carte-cmd cliquable" data-cmd="!equip ${item.numero}">📋 !equip ${item.numero}</span>`}
                 `;
                 grilleInterne.appendChild(carte);
             });
 
             conteneur.appendChild(bloc);
+        });
+
+        // Clic sur une commande "!equip X" = copie directe dans le presse-papier, plus qu'à
+        // coller (Ctrl+V) dans le chat Twitch et valider.
+        conteneur.querySelectorAll('.carte-cmd.cliquable').forEach(el => {
+            el.addEventListener('click', () => {
+                const commande = el.dataset.cmd;
+                navigator.clipboard.writeText(commande).then(() => {
+                    const texteOriginal = el.textContent;
+                    el.textContent = '✓ Copié !';
+                    el.classList.add('copie');
+                    setTimeout(() => {
+                        el.textContent = texteOriginal;
+                        el.classList.remove('copie');
+                    }, 1500);
+                });
+            });
         });
     }
 
