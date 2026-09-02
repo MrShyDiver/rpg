@@ -127,12 +127,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // 0_Catalogue_Init.cs — plus rien à écrire à la main pour ça.
     // ==========================================================
     const REFERENCE = {
-        1:  { nom: "Épée rouillée",           icone: "🗡️", image: "gear/machete-democratique.png", slot: "weapon" },
-        2:  { nom: "Épée à énergie",          icone: "⚡", image: "",                               slot: "weapon" },
-        3:  { nom: "Lame vampirique",         icone: "🩸", image: "gear/lame-vampirique.png",        slot: "weapon" },
-        4:  { nom: "Dague empoisonnée",       icone: "🐍", image: "gear/dague_empoisonnee.png",      slot: "weapon" },
-        5:  { nom: "Marteau de la Liberté",   icone: "🔨", image: "gear/marteau-democratique.png",   slot: "weapon" },
-        6:  { nom: "Hache du Bourreau",       icone: "🪓", image: "gear/hache-lourde.png",           slot: "weapon" },
+        1:  { nom: "Épée rouillée",           icone: "🗡️", image: "gear/machete-democratique.png", slot: "weapon", hand: "one_handed" },
+        2:  { nom: "Épée à énergie",          icone: "⚡", image: "",                               slot: "weapon", hand: "one_handed" },
+        3:  { nom: "Lame vampirique",         icone: "🩸", image: "gear/lame-vampirique.png",        slot: "weapon", hand: "one_handed" },
+        4:  { nom: "Dague empoisonnée",       icone: "🐍", image: "gear/dague_empoisonnee.png",      slot: "weapon", hand: "one_handed" },
+        5:  { nom: "Marteau de la Liberté",   icone: "🔨", image: "gear/marteau-democratique.png",   slot: "weapon", hand: "two_handed" },
+        6:  { nom: "Hache du Bourreau",       icone: "🪓", image: "gear/hache-lourde.png",           slot: "weapon", hand: "two_handed" },
         7:  { nom: "Bouclier de Super-Terre", icone: "🔷", image: "",                               slot: "offhand" },
         8:  { nom: "Bouclier Aegis",          icone: "🛡️", image: "",                               slot: "offhand" },
         9:  { nom: "Bouclier épineux",        icone: "🌵", image: "gear/bouclier_epineux.png",       slot: "offhand" },
@@ -146,7 +146,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         17: { nom: "Armure épineuse",         icone: "🦔", image: "",                               slot: "torso" },
         18: { nom: "Armure stoïque",          icone: "🗿", image: "",                               slot: "torso" },
         19: { nom: "Frappe 500kg",            icone: "🚀", image: "gear/eagle_500kg.png",            slot: "strategeme" },
-        20: { nom: "Gros Bâton",              icone: "🗡️", image: "gear/gros_baton.png",             slot: "weapon" },
+        20: { nom: "Gros Bâton",              icone: "🗡️", image: "gear/gros_baton.png",             slot: "weapon", hand: "two_handed" },
     };
     // La RARETÉ n'a pas d'impact sur les stats, mais sert au liseré de couleur — un objet sans
     // entrée ici reste affichable, juste sans couleur de rareté distincte (gris par défaut).
@@ -156,7 +156,17 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         12:"commun", 13:"commun", 14:"legendaire", 15:"rare", 16:"rare", 17:"rare", 18:"legendaire",
         19:"legendaire", 20:"commun",
     };
-    const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Torse", strategeme: "Stratagème" };
+    const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème" };
+    // Catégories d'AFFICHAGE dans la grille — distinctes du "slot" de jeu utilisé pour
+    // l'équipement (une arme 1-main et une arme 2-mains occupent le même emplacement "weapon").
+    const LABELS_CATEGORIE = {
+        weapon_1h: "Armes à une main", weapon_2h: "Armes à deux mains",
+        offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème",
+    };
+    function categorieAffichage(item) {
+        if (item.slot === "weapon") return item.hand === "two_handed" ? "weapon_2h" : "weapon_1h";
+        return item.slot;
+    }
     const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PV", esquive: "Esquive", spd: "Vitesse" };
 
     // ==========================================================
@@ -272,25 +282,26 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             emplacementsEl.appendChild(div);
         });
 
-        const parSlot = { weapon: [], offhand: [], torso: [], strategeme: [] };
+        const parCategorie = { weapon_1h: [], weapon_2h: [], offhand: [], torso: [], strategeme: [] };
         possedesParam.forEach(({ numero, niveau }) => {
             const ref = REFERENCE[numero];
             if (!ref) return;
-            parSlot[ref.slot].push({ numero, niveau, ...ref });
+            const item = { numero, niveau, ...ref };
+            parCategorie[categorieAffichage(item)].push(item);
         });
 
         const conteneur = document.getElementById('grille');
-        Object.keys(LABELS_SLOT).forEach(slot => {
-            const items = parSlot[slot];
+        Object.keys(LABELS_CATEGORIE).forEach(cat => {
+            const items = parCategorie[cat];
             if (items.length === 0) return;
 
             const bloc = document.createElement('div');
             bloc.className = 'categorie';
-            bloc.innerHTML = `<div class="categorie-titre"><h2>${LABELS_SLOT[slot]}</h2></div><div class="grille"></div>`;
+            bloc.innerHTML = `<div class="categorie-titre"><h2>${LABELS_CATEGORIE[cat]}</h2></div><div class="grille"></div>`;
             const grilleInterne = bloc.querySelector('.grille');
 
             items.forEach(item => {
-                const estEquipe = equipeParSlot[slot] === item.numero;
+                const estEquipe = equipeParSlot[item.slot] === item.numero;
                 const { statTexte, passifTexte } = construireDetails(item.numero, item.niveau);
                 const rarete = RARETES[item.numero] || 'commun';
                 const carte = document.createElement('div');
@@ -307,7 +318,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                         ? `<span class="carte-cmd">✓ Équipé</span>`
                         : `<span class="carte-cmd cliquable" data-cmd="!equip ${item.numero}">📋 !equip ${item.numero}</span>`}
                     <label class="carte-select">
-                        <input type="checkbox" data-numero="${item.numero}" data-slot="${slot}">
+                        <input type="checkbox" data-numero="${item.numero}" data-slot="${item.slot}" data-hand="${item.hand || ''}">
                         Ajouter au loadout groupé
                     </label>
                 `;
@@ -364,6 +375,29 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             });
         }
 
+        // Décoche une case déjà cochée pour un autre objet, sans redéclencher cette même logique
+        function decocherSelection(slotCible) {
+            const numeroActuel = selectionLoadout[slotCible];
+            if (numeroActuel === undefined) return;
+            delete selectionLoadout[slotCible];
+            const checkbox = conteneur.querySelector(`.carte-select input[data-slot="${slotCible}"][data-numero="${numeroActuel}"]`);
+            if (checkbox) { checkbox.checked = false; checkbox.closest('.carte').classList.remove('dans-loadout'); }
+        }
+
+        // Une arme à 2 mains et un off-hand ne peuvent jamais être sélectionnés ensemble
+        // (exactement la même règle que le jeu applique à l'équipement réel).
+        function appliquerIncompatibiliteArme2Mains(slotModifie) {
+            if (slotModifie === 'weapon') {
+                const numeroArme = selectionLoadout.weapon;
+                const armeEst2Mains = numeroArme !== undefined && REFERENCE[numeroArme]?.hand === 'two_handed';
+                if (armeEst2Mains && selectionLoadout.offhand !== undefined) decocherSelection('offhand');
+            } else if (slotModifie === 'offhand') {
+                const numeroArme = selectionLoadout.weapon;
+                const armeEst2Mains = numeroArme !== undefined && REFERENCE[numeroArme]?.hand === 'two_handed';
+                if (armeEst2Mains && selectionLoadout.offhand !== undefined) decocherSelection('weapon');
+            }
+        }
+
         conteneur.querySelectorAll('.carte-select input').forEach(input => {
             input.addEventListener('change', () => {
                 const slot = input.dataset.slot;
@@ -378,6 +412,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     });
                     selectionLoadout[slot] = numero;
                     input.closest('.carte').classList.add('dans-loadout');
+                    appliquerIncompatibiliteArme2Mains(slot);
                 } else {
                     delete selectionLoadout[slot];
                     input.closest('.carte').classList.remove('dans-loadout');
