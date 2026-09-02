@@ -85,11 +85,23 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Torse", strategeme: "Stratagème" };
 
     const params = new URLSearchParams(window.location.search);
-    const equipParam = (params.get('e') || '0,0,0,0').split(',').map(Number);
-    const possedesParam = (params.get('o') || '').split('-').filter(Boolean);
 
-    const [numEquipArme, numEquipOffhand, numEquipTorso, numEquipStrat] = equipParam;
+    // Décodage base36 sur 2 caractères par valeur (0 à 1295)
+    const depuisBase36 = (str) => parseInt(str, 36) || 0;
+
+    const equipStr = params.get('e') || '00000000';
+    const numEquipArme = depuisBase36(equipStr.slice(0, 2));
+    const numEquipOffhand = depuisBase36(equipStr.slice(2, 4));
+    const numEquipTorso = depuisBase36(equipStr.slice(4, 6));
+    const numEquipStrat = depuisBase36(equipStr.slice(6, 8));
     const equipeParSlot = { weapon: numEquipArme, offhand: numEquipOffhand, torso: numEquipTorso, strategeme: numEquipStrat };
+
+    // Les objets possédés sont concaténés par blocs fixes de 4 caractères (2 pour le numéro, 2 pour le niveau)
+    const oStr = params.get('o') || '';
+    const possedesParam = [];
+    for (let i = 0; i < oStr.length; i += 4) {
+        possedesParam.push({ numero: depuisBase36(oStr.slice(i, i + 2)), niveau: depuisBase36(oStr.slice(i + 2, i + 4)) });
+    }
 
     if (possedesParam.length === 0) {
         document.getElementById('emplacements').style.display = 'none';
@@ -110,10 +122,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
         // --- Grille complète groupée par catégorie ---
         const parSlot = { weapon: [], offhand: [], torso: [], strategeme: [] };
-        possedesParam.forEach(entree => {
-            const [numeroStr, niveauStr] = entree.split(':');
-            const numero = parseInt(numeroStr, 10);
-            const niveau = parseInt(niveauStr, 10) || 0;
+        possedesParam.forEach(({ numero, niveau }) => {
             const item = CATALOGUE[numero];
             if (!item) return;
             parSlot[item.slot].push({ numero, niveau, ...item });
