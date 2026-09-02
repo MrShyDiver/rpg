@@ -46,6 +46,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 6px;
     background: rgba(242,194,48,0.12); flex-shrink: 0;
 }
+.carte-effet { font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; margin-bottom: 10px; }
+.carte-effet b { color: var(--paper); font-weight: 600; }
 .carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; }
 .carte.equipe .carte-cmd { color: var(--yellow); }
 
@@ -76,26 +78,46 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // dans 0_Catalogue_Init.cs. Numero doit correspondre exactement.
     // ==========================================================
     const CATALOGUE = {
-        1:  { nom: "Épée rouillée",            icone: "🗡️", image: "gear/machete-democratique.png", slot: "weapon",     rarete: "commun" },
-        2:  { nom: "Épée à énergie",           icone: "⚡", image: "",                               slot: "weapon",     rarete: "rare" },
-        3:  { nom: "Lame vampirique",          icone: "🩸", image: "gear/lame-vampirique.png",        slot: "weapon",     rarete: "rare" },
-        4:  { nom: "Dague empoisonnée",        icone: "🐍", image: "gear/dague_empoisonnee.png",      slot: "weapon",     rarete: "rare" },
-        5:  { nom: "Marteau de la Liberté",    icone: "🔨", image: "gear/marteau-democratique.png",   slot: "weapon",     rarete: "rare" },
-        6:  { nom: "Hache du Bourreau",        icone: "🪓", image: "gear/hache-lourde.png",           slot: "weapon",     rarete: "legendaire" },
-        7:  { nom: "Bouclier de Super-Terre",  icone: "🔷", image: "",                               slot: "offhand",    rarete: "commun" },
-        8:  { nom: "Bouclier Aegis",           icone: "🛡️", image: "",                               slot: "offhand",    rarete: "rare" },
-        9:  { nom: "Bouclier épineux",         icone: "🌵", image: "gear/bouclier_epineux.png",       slot: "offhand",    rarete: "rare" },
-        10: { nom: "Amulette de pureté",       icone: "🔮", image: "",                               slot: "offhand",    rarete: "commun" },
-        11: { nom: "Stimulant",                icone: "💉", image: "gear/stim.png",                   slot: "offhand",    rarete: "rare" },
-        12: { nom: "Armure légère (agile)",    icone: "🦺", image: "gear/armure-legere.png",          slot: "torso",      rarete: "commun" },
-        13: { nom: "Armure lourde",            icone: "🥋", image: "gear/armure-lourde.png",          slot: "torso",      rarete: "commun" },
-        14: { nom: "Exo-squelette Titan",      icone: "🤖", image: "",                               slot: "torso",      rarete: "legendaire" },
-        15: { nom: "Plastron régénérant",      icone: "💚", image: "gear/armure-regenerante.png",     slot: "torso",      rarete: "rare" },
-        16: { nom: "Armure furtive",           icone: "💨", image: "gear/armure-esquive.png",         slot: "torso",      rarete: "rare" },
-        17: { nom: "Armure épineuse",          icone: "🦔", image: "",                               slot: "torso",      rarete: "rare" },
-        18: { nom: "Armure stoïque",           icone: "🗿", image: "",                               slot: "torso",      rarete: "legendaire" },
-        19: { nom: "Frappe 500kg",             icone: "🚀", image: "gear/eagle_500kg.png",            slot: "strategeme", rarete: "legendaire" },
-        20: { nom: "Gros Bâton",               icone: "🗡️", image: "gear/gros_baton.png",             slot: "weapon",     rarete: "commun" },
+        1:  { nom: "Épée rouillée",            icone: "🗡️", image: "gear/machete-democratique.png", slot: "weapon",     rarete: "commun",
+              effet: "Arme de départ. <b>+3 ATK</b>, aucun effet spécial." },
+        2:  { nom: "Épée à énergie",           icone: "⚡", image: "",                               slot: "weapon",     rarete: "rare",
+              effet: "<b>+7 ATK</b>, <b>+10 précision</b> — réduit l'esquive de l'adversaire." },
+        3:  { nom: "Lame vampirique",          icone: "🩸", image: "gear/lame-vampirique.png",        slot: "weapon",     rarete: "rare",
+              effet: "<b>+5 ATK</b>, <b>25% de vol de vie</b> sur chaque coup porté." },
+        4:  { nom: "Dague empoisonnée",        icone: "🐍", image: "gear/dague_empoisonnee.png",      slot: "weapon",     rarete: "rare",
+              effet: "<b>+2 ATK</b>, empoisonne : <b>8 dégâts/tour pendant 3 tours</b>." },
+        5:  { nom: "Marteau de la Liberté",    icone: "🔨", image: "gear/marteau-democratique.png",   slot: "weapon",     rarete: "rare",
+              effet: "<b>+12 ATK</b>, <b>20% de chance d'étourdir</b> — la cible saute son tour suivant." },
+        6:  { nom: "Hache du Bourreau",        icone: "🪓", image: "gear/hache-lourde.png",           slot: "weapon",     rarete: "legendaire",
+              effet: "<b>+10 ATK</b>. Sous <b>25% de PV</b>, inflige <b>+60% de dégâts</b> — l'arme d'exécution." },
+        7:  { nom: "Bouclier de Super-Terre",  icone: "🔷", image: "",                               slot: "offhand",    rarete: "commun",
+              effet: "<b>+30 PV</b>. Incompatible avec une arme à deux mains." },
+        8:  { nom: "Bouclier Aegis",           icone: "🛡️", image: "",                               slot: "offhand",    rarete: "rare",
+              effet: "<b>25% de chance de bloquer</b>, réduit alors les dégâts de <b>50%</b>." },
+        9:  { nom: "Bouclier épineux",         icone: "🌵", image: "gear/bouclier_epineux.png",       slot: "offhand",    rarete: "rare",
+              effet: "Renvoie <b>15% des dégâts subis</b> à l'attaquant." },
+        10: { nom: "Amulette de pureté",       icone: "🔮", image: "",                               slot: "offhand",    rarete: "commun",
+              effet: "<b>50% de résistance au poison</b>." },
+        11: { nom: "Stimulant",                icone: "💉", image: "gear/stim.png",                   slot: "offhand",    rarete: "rare",
+              effet: "Soigne <b>25 PV</b>, <b>2 usages</b> par combat (recharge 5 tours) — seulement si des PV manquent." },
+        12: { nom: "Armure légère (agile)",    icone: "🦺", image: "gear/armure-legere.png",          slot: "torso",      rarete: "commun",
+              effet: "<b>+15% d'esquive</b>." },
+        13: { nom: "Armure lourde",            icone: "🥋", image: "gear/armure-lourde.png",          slot: "torso",      rarete: "commun",
+              effet: "<b>+7 DEF</b>." },
+        14: { nom: "Exo-squelette Titan",      icone: "🤖", image: "",                               slot: "torso",      rarete: "legendaire",
+              effet: "<b>+12 DEF</b> — le blindage le plus lourd du jeu." },
+        15: { nom: "Plastron régénérant",      icone: "💚", image: "gear/armure-regenerante.png",     slot: "torso",      rarete: "rare",
+              effet: "Régénère <b>4% des PV max</b> à chaque tour, sans limite d'usages." },
+        16: { nom: "Armure furtive",           icone: "💨", image: "gear/armure-esquive.png",         slot: "torso",      rarete: "rare",
+              effet: "<b>+8 Vitesse</b> — agit plus souvent dans le combat." },
+        17: { nom: "Armure épineuse",          icone: "🦔", image: "",                               slot: "torso",      rarete: "rare",
+              effet: "Renvoie <b>10% des dégâts subis</b> à l'attaquant." },
+        18: { nom: "Armure stoïque",           icone: "🗿", image: "",                               slot: "torso",      rarete: "legendaire",
+              effet: "<b>-20 points de chance d'être critique</b> — la plus dure à percer." },
+        19: { nom: "Frappe 500kg",             icone: "🚀", image: "gear/eagle_500kg.png",            slot: "strategeme", rarete: "legendaire",
+              effet: "Frappe directe pénétrante (<b>50%</b>), déclenchée sur ton tour. <b>2 usages</b> par combat, recharge de <b>3 tours</b>." },
+        20: { nom: "Gros Bâton",               icone: "🗡️", image: "gear/gros_baton.png",             slot: "weapon",     rarete: "commun",
+              effet: "<b>+3 ATK</b> de base, mais chaque exemplaire supplémentaire ajoute <b>+10 ATK</b> (au lieu de +1) — devient très fort avec des doublons." },
     };
     const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Torse", strategeme: "Stratagème" };
 
@@ -177,6 +199,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                         <span class="carte-nom">${item.nom}</span>
                         ${item.niveau > 0 ? `<span class="carte-niveau">+${item.niveau}</span>` : ''}
                     </div>
+                    <div class="carte-effet">${item.effet || ''}</div>
                     <span class="carte-cmd">${estEquipe ? '✓ Équipé' : '!equip ' + item.numero}</span>
                 `;
                 grilleInterne.appendChild(carte);
