@@ -50,7 +50,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .categorie-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
 
-.carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 4px; padding: 14px; position: relative; }
+.carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 4px; padding: 14px; position: relative; display: flex; flex-direction: column; height: 100%; }
 .carte.rare { border-left-color: var(--rare); }
 .carte.legendaire { border-left-color: var(--legendaire); }
 .carte.equipe { background: rgba(242,194,48,0.08); }
@@ -60,7 +60,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.dans-loadout { outline: 2px solid var(--yellow); outline-offset: -1px; }
 
 .carte-image-zone { display: flex; justify-content: center; margin-bottom: 10px; }
-.carte-icon { max-width: 200px; width: 100%; height: auto; max-height: 140px; object-fit: contain; }
+.carte-icon { max-width: 150px; width: 100%; height: auto; max-height: 120px; object-fit: contain; }
 .carte-icon-emoji { font-size: 64px; line-height: 1; }
 
 .carte-nom-ligne { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; padding-right: 24px; }
@@ -76,7 +76,19 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-bloc-stats b { color: var(--paper); font-weight: 600; }
 .carte-bloc-stats .malus { color: #ff8080; font-weight: 600; }
 
-.carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 4px; }
+.stat-ligne { font-size: 13px; margin-bottom: 4px; }
+.stat-ligne .label { color: var(--yellow); font-weight: 700; margin-right: 5px; }
+.stat-ligne .valeur-positive { color: #5ddd7a; font-weight: 700; }
+.stat-ligne .valeur-negative { color: #ff6b6b; font-weight: 700; }
+.stat-ligne .valeur-neutre { color: var(--paper); font-weight: 700; }
+.bloc-passif { font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; margin-top: 4px; margin-bottom: 8px; }
+.bloc-passif .label { color: var(--yellow); font-weight: 700; }
+.bloc-passif b { color: var(--paper); font-weight: 600; }
+
+.carte { cursor: pointer; }
+.carte:hover { border-color: #444; }
+
+.carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: auto; align-self: flex-start; }
 .carte.equipe .carte-cmd { color: var(--yellow); }
 .carte-cmd.cliquable { cursor: pointer; border: 1px solid var(--line); transition: all 0.15s ease; }
 .carte-cmd.cliquable:hover { border-color: var(--yellow); color: var(--yellow); }
@@ -219,7 +231,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     const depuisBase36 = (str) => parseInt(str, 36) || 0;
 
     const nomViewer = params.get('n') ? decodeURIComponent(params.get('n')) : null;
-    const photoViewer = params.get('p') ? decodeURIComponent(params.get('p')) : '';
+    const fragmentPhoto = params.get('p') ? decodeURIComponent(params.get('p')) : '';
+    // Le C# retire "https://static-cdn.jtvnw.net/" avant transmission pour raccourcir le lien —
+    // on le rajoute ici, exactement comme avant pour l'affichage.
+    const photoViewer = fragmentPhoto ? 'https://static-cdn.jtvnw.net/' + fragmentPhoto : '';
     if (nomViewer) {
         document.getElementById('titreInventaire').innerHTML = `INVENTAIRE DE <span>${nomViewer}</span>`;
     }
@@ -254,16 +269,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     function construireDetails(numero, niveau, estStrategeme) {
         const s = STATS[numero];
-        if (!s) return { statistiques: [], passifTexte: '' };
+        if (!s) return { lignesStat: [], passifTexte: '' };
 
         if (estStrategeme) {
-            const statistiques = [];
+            const lignesStat = [];
             if (s.degatsDirects > 0 || s.statPrincipale === 'DegatsDirects') {
                 const actuel = s.statPrincipale === 'DegatsDirects' ? s.degatsDirects + niveau * s.increment : s.degatsDirects;
-                statistiques.push(`Dégâts : <b>${actuel}</b>`);
+                lignesStat.push({ label: 'Dégâts', valeur: actuel, colorer: false });
             }
-            if (s.usagesParCombat > 0) statistiques.push(`Utilisations : <b>${s.usagesParCombat}</b>`);
-            if (s.cooldownTours > 0) statistiques.push(`Cooldown : <b>${s.cooldownTours}</b> tours`);
+            if (s.usagesParCombat > 0) lignesStat.push({ label: 'Utilisations', valeur: s.usagesParCombat, colorer: false });
+            if (s.cooldownTours > 0) lignesStat.push({ label: 'Cooldown', valeur: s.cooldownTours + ' tours', colorer: false });
 
             const passifs = [];
             if (s.penetration > 0) passifs.push(`Pénétration : <b>${s.penetration}%</b>`);
@@ -273,24 +288,18 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 const actuel = typeof base === 'boolean' ? base : base + niveau * s.increment;
                 passifs.push(GABARITS_PASSIF[s.statPrincipale](actuel, s));
             }
-            return { statistiques, passifTexte: passifs.join(' ') };
+            return { lignesStat, passifTexte: passifs.join(' ') };
         }
 
-        const statistiques = [];
+        const lignesStat = [];
         if (s.stat) {
             const label = LABELS_STAT[s.stat] || s.stat;
-            if (s.statPrincipale === 'Bonus') {
-                const actuel = s.bonus + niveau * s.increment;
-                statistiques.push(niveau > 0 ? `+${s.bonus} → <b>+${actuel} ${label}</b>` : `<b>+${s.bonus} ${label}</b>`);
-            } else {
-                statistiques.push(`<b>+${s.bonus} ${label}</b>`);
-            }
+            const actuel = s.statPrincipale === 'Bonus' ? s.bonus + niveau * s.increment : s.bonus;
+            lignesStat.push({ label, valeur: (actuel >= 0 ? '+' : '') + actuel, colorer: true });
         }
         if (s.stat2) {
             const label2 = LABELS_STAT[s.stat2] || s.stat2;
-            const signe = s.bonus2 >= 0 ? '+' : '';
-            const classe = s.bonus2 < 0 ? ' class="malus"' : '';
-            statistiques.push(`<b${classe}>${signe}${s.bonus2} ${label2}</b>`);
+            lignesStat.push({ label: label2, valeur: (s.bonus2 >= 0 ? '+' : '') + s.bonus2, colorer: true });
         }
 
         let passifTexte = '';
@@ -301,7 +310,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             passifTexte = GABARITS_PASSIF[s.statPrincipale](actuel, s);
         }
 
-        return { statistiques, passifTexte };
+        return { lignesStat, passifTexte };
+    }
+
+    function rendreLigneStat({ label, valeur, colorer }) {
+        let classe = 'valeur-neutre';
+        if (colorer) classe = parseFloat(valeur) < 0 ? 'valeur-negative' : 'valeur-positive';
+        return `<div class="stat-ligne"><span class="label">${label}</span><span class="${classe}">${valeur}</span></div>`;
     }
 
     function afficherTout() {
@@ -344,7 +359,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             items.forEach(item => {
                 const estEquipe = equipeParSlot[item.slot] === item.numero;
                 const estStrategeme = item.slot === 'strategeme';
-                const { statistiques, passifTexte } = construireDetails(item.numero, item.niveau, estStrategeme);
+                const { lignesStat, passifTexte } = construireDetails(item.numero, item.niveau, estStrategeme);
                 const rarete = RARETES[item.numero] || 'commun';
                 const carte = document.createElement('div');
                 carte.className = 'carte ' + rarete + (estEquipe ? ' equipe' : '');
@@ -357,11 +372,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                         <span class="carte-nom">${item.nom}</span>
                         ${item.niveau > 0 ? `<span class="carte-niveau">+${item.niveau}</span>` : ''}
                     </div>
-                    ${statistiques.length ? `<div class="carte-bloc-stats"><span class="titre-bloc">Statistiques —</span> ${statistiques.join(', ')}</div>` : ''}
-                    ${passifTexte ? `<div class="carte-bloc-stats"><span class="titre-bloc">Passif —</span> ${passifTexte}</div>` : ''}
-                    ${estEquipe
-                        ? `<span class="carte-cmd">✓ Équipé</span>`
-                        : `<span class="carte-cmd cliquable" data-cmd="!equip ${item.numero}">📋 !equip ${item.numero}</span>`}
+                    ${lignesStat.map(rendreLigneStat).join('')}
+                    ${passifTexte ? `<div class="bloc-passif"><span class="label">Passif —</span> ${passifTexte}</div>` : ''}
+                    ${estEquipe ? `<span class="carte-cmd">✓ Équipé</span>` : `<span class="carte-cmd">!equip ${item.numero}</span>`}
                 `;
                 grilleInterne.appendChild(carte);
             });
@@ -369,15 +382,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             conteneur.appendChild(bloc);
         });
 
-        conteneur.querySelectorAll('.carte-cmd.cliquable').forEach(el => {
-            el.addEventListener('click', () => {
-                const commande = el.dataset.cmd;
-                navigator.clipboard.writeText(commande).then(() => {
-                    const texteOriginal = el.textContent;
-                    el.textContent = '✓ Copié !';
-                    el.classList.add('copie');
-                    setTimeout(() => { el.textContent = texteOriginal; el.classList.remove('copie'); }, 1500);
-                });
+        // Clic n'importe où sur la carte = coche/décoche la sélection pour le loadout groupé
+        // (le clic direct sur la case elle-même reste géré nativement, on évite juste le double-toggle).
+        conteneur.querySelectorAll('.carte').forEach(carte => {
+            carte.addEventListener('click', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                const input = carte.querySelector('.carte-select input');
+                input.checked = !input.checked;
+                input.dispatchEvent(new Event('change'));
             });
         });
 
