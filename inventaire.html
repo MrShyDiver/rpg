@@ -14,26 +14,33 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 40px 20px; }
 h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
-.page { max-width: 900px; margin: 0 auto; }
-.entete { padding-bottom: 20px; border-bottom: 3px solid var(--yellow); margin-bottom: 26px; }
-.entete h1 { font-size: 30px; font-weight: 700; }
-.entete h1 span { color: var(--yellow); }
-.entete p { color: var(--paper-dim); font-size: 14px; margin-top: 6px; }
+.page { max-width: 980px; margin: 0 auto; }
+
+.entete { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 3px solid var(--yellow); margin-bottom: 26px; }
+.entete img.avatar { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--yellow); flex-shrink: 0; }
+.entete-texte h1 { font-size: 26px; font-weight: 700; }
+.entete-texte h1 span { color: var(--yellow); }
+.entete-texte p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
 
 .bloc-lootbox {
     background: rgba(242,194,48,0.1); border: 1px solid var(--yellow); border-radius: 6px;
-    padding: 14px 18px; margin-bottom: 26px; font-size: 15px; color: var(--paper);
+    padding: 14px 18px; margin-bottom: 20px; font-size: 15px; color: var(--paper);
 }
 .bloc-lootbox .cmd {
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--yellow);
     background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 3px;
 }
 
-.emplacements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 36px; }
+.titre-section {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--paper-dim); margin: 24px 0 10px;
+}
+
+.emplacements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 10px; }
 .emplacement { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; text-align: center; }
 .emplacement .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1.5px; color: var(--paper-dim); text-transform: uppercase; margin-bottom: 8px; }
 .emplacement .icone { font-size: 28px; margin-bottom: 6px; }
-.icone-img { width: 34px; height: 34px; object-fit: contain; }
+.icone-img { width: 44px; height: 44px; object-fit: contain; }
 .emplacement .nom { font-size: 12.5px; font-weight: 600; }
 .emplacement.vide .nom { color: var(--paper-dim); font-style: italic; }
 
@@ -41,39 +48,39 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .categorie-titre { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .categorie-titre h2 { font-size: 17px; font-weight: 600; }
 .categorie-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
 
 .carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 4px; padding: 14px; position: relative; }
 .carte.rare { border-left-color: var(--rare); }
 .carte.legendaire { border-left-color: var(--legendaire); }
 .carte.equipe { background: rgba(242,194,48,0.08); }
-.carte-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.carte-icon { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
-.carte-icon-emoji { font-size: 24px; flex-shrink: 0; }
-.carte-nom { font-size: 14px; font-weight: 600; flex: 1; }
+
+.carte-select { position: absolute; top: 10px; right: 10px; cursor: pointer; z-index: 2; }
+.carte-select input { accent-color: var(--yellow); width: 18px; height: 18px; cursor: pointer; }
+.carte.dans-loadout { outline: 2px solid var(--yellow); outline-offset: -1px; }
+
+.carte-image-zone { display: flex; justify-content: center; margin-bottom: 10px; }
+.carte-icon { max-width: 200px; width: 100%; height: auto; max-height: 140px; object-fit: contain; }
+.carte-icon-emoji { font-size: 64px; line-height: 1; }
+
+.carte-nom-ligne { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; padding-right: 24px; }
+.carte-nom { font-size: 15px; font-weight: 600; }
 .carte-niveau {
     font-size: 12px; font-weight: 900; color: var(--yellow);
     border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 6px;
-    background: rgba(242,194,48,0.12); flex-shrink: 0;
+    background: rgba(242,194,48,0.12);
 }
-.carte-stat { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 6px; }
-.carte-stat b { color: var(--paper); font-weight: 600; }
-.carte-stat .fleche { color: var(--yellow); margin: 0 3px; }
-.carte-passif { font-size: 12.5px; color: var(--paper-dim); line-height: 1.4; margin-bottom: 10px; }
-.carte-passif::before { content: "Passif — "; color: var(--yellow); font-weight: 700; }
-.carte-passif b { color: var(--paper); font-weight: 600; }
-.carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; }
+
+.carte-bloc-stats { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 8px; line-height: 1.5; }
+.carte-bloc-stats .titre-bloc { color: var(--yellow); font-weight: 700; }
+.carte-bloc-stats b { color: var(--paper); font-weight: 600; }
+.carte-bloc-stats .malus { color: #ff8080; font-weight: 600; }
+
+.carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 4px; }
 .carte.equipe .carte-cmd { color: var(--yellow); }
 .carte-cmd.cliquable { cursor: pointer; border: 1px solid var(--line); transition: all 0.15s ease; }
 .carte-cmd.cliquable:hover { border-color: var(--yellow); color: var(--yellow); }
 .carte-cmd.copie { color: var(--yellow); border-color: var(--yellow); }
-
-.carte-select {
-    display: flex; align-items: center; gap: 6px; margin-top: 8px;
-    font-size: 11.5px; color: var(--paper-dim); cursor: pointer; user-select: none;
-}
-.carte-select input { accent-color: var(--yellow); width: 15px; height: 15px; cursor: pointer; }
-.carte.dans-loadout { outline: 2px solid var(--yellow); outline-offset: -1px; }
 
 .barre-loadout {
     position: sticky; bottom: 16px; margin-top: 30px;
@@ -88,77 +95,84 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.5px;
     text-transform: uppercase; padding: 10px 18px; border-radius: 5px; cursor: pointer; white-space: nowrap;
 }
-.bouton-loadout:disabled { opacity: 0.4; cursor: not-allowed; }
 .bouton-loadout.copie { background: #7dffc4; }
+
+.message-erreur {
+    background: rgba(168,39,31,0.15); border: 1px solid var(--red); color: #ff9d9d;
+    padding: 10px 16px; border-radius: 6px; font-size: 13px; margin-top: 10px;
+    animation: apparitionErreur 0.2s ease-out;
+}
+@keyframes apparitionErreur { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
 .vide-message { text-align: center; padding: 80px 20px; color: var(--paper-dim); }
 
-/* ===== Mobile ===== */
 @media (max-width: 640px) {
     body { padding: 20px 12px; }
-    .entete h1 { font-size: 24px; }
-    .entete p { font-size: 13px; }
+    .entete-texte h1 { font-size: 20px; }
+    .entete img.avatar { width: 44px; height: 44px; }
+    .entete-texte p { font-size: 12px; }
     .bloc-lootbox { font-size: 13.5px; padding: 12px 14px; }
-    .emplacements { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 26px; }
+    .emplacements { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .emplacement { padding: 10px; }
     .grille { grid-template-columns: 1fr; gap: 10px; }
     .categorie-titre h2 { font-size: 15px; }
-    .carte-cmd.cliquable { padding: 8px 12px; } /* cible tactile plus confortable au doigt */
+    .carte-cmd.cliquable { padding: 8px 12px; }
+    .carte-icon { max-height: 110px; }
 }
 </style>
 </head>
 <body>
 <div class="page">
     <div class="entete">
-        <h1>MON <span>INVENTAIRE</span></h1>
-        <p>Clique sur la commande d'un objet pour la copier, puis colle-la (Ctrl+V) dans le chat Twitch.</p>
+        <img class="avatar" id="avatarViewer" src="" alt="" style="display:none;">
+        <div class="entete-texte">
+            <h1 id="titreInventaire">MON <span>INVENTAIRE</span></h1>
+            <p>Sélectionnez plusieurs équipements à équiper afin d'avoir la commande à copier/coller directement dans le chat Twitch.</p>
+        </div>
     </div>
     <div id="zoneLootbox"></div>
+    <div class="titre-section">Loadout actuel</div>
     <div id="emplacements" class="emplacements"></div>
     <div id="grille"></div>
-    <div id="barreLoadout"></div>
 </div>
 
 <script>
-    // ==========================================================
-    // RÉFÉRENCE STATIQUE — nom/icône/emplacement par numéro. Ne change presque jamais
-    // (uniquement quand tu ajoutes un TOUT NOUVEL objet ou renommes/déplaces un objet existant).
-    // Toutes les VALEURS de stats et passifs viennent de catalogue_stats.json à côté, généré par
-    // 0_Catalogue_Init.cs — plus rien à écrire à la main pour ça.
-    // ==========================================================
     const REFERENCE = {
-        1:  { nom: "Épée rouillée",           icone: "🗡️", image: "gear/machete-democratique.png", slot: "weapon", hand: "one_handed" },
-        2:  { nom: "Épée à énergie",          icone: "⚡", image: "",                               slot: "weapon", hand: "one_handed" },
-        3:  { nom: "Lame vampirique",         icone: "🩸", image: "gear/lame-vampirique.png",        slot: "weapon", hand: "one_handed" },
-        4:  { nom: "Dague empoisonnée",       icone: "🐍", image: "gear/dague_empoisonnee.png",      slot: "weapon", hand: "one_handed" },
-        5:  { nom: "Marteau de la Liberté",   icone: "🔨", image: "gear/marteau-democratique.png",   slot: "weapon", hand: "two_handed" },
-        6:  { nom: "Hache du Bourreau",       icone: "🪓", image: "gear/hache-lourde.png",           slot: "weapon", hand: "two_handed" },
-        7:  { nom: "Bouclier de Super-Terre", icone: "🔷", image: "",                               slot: "offhand" },
-        8:  { nom: "Bouclier Aegis",          icone: "🛡️", image: "",                               slot: "offhand" },
-        9:  { nom: "Bouclier épineux",        icone: "🌵", image: "gear/bouclier_epineux.png",       slot: "offhand" },
-        10: { nom: "Amulette de pureté",      icone: "🔮", image: "",                               slot: "offhand" },
-        11: { nom: "Stimulant",               icone: "💉", image: "gear/stim.png",                   slot: "offhand" },
-        12: { nom: "Armure légère (agile)",   icone: "🦺", image: "gear/armure-legere.png",          slot: "torso" },
-        13: { nom: "Armure lourde",           icone: "🥋", image: "gear/armure-lourde.png",          slot: "torso" },
-        14: { nom: "Exo-squelette Titan",     icone: "🤖", image: "",                               slot: "torso" },
-        15: { nom: "Plastron régénérant",     icone: "💚", image: "gear/armure-regenerante.png",     slot: "torso" },
-        16: { nom: "Armure furtive",          icone: "💨", image: "gear/armure-esquive.png",         slot: "torso" },
-        17: { nom: "Armure épineuse",         icone: "🦔", image: "",                               slot: "torso" },
-        18: { nom: "Armure stoïque",          icone: "🗿", image: "",                               slot: "torso" },
-        19: { nom: "Frappe 500kg",            icone: "🚀", image: "gear/eagle_500kg.png",            slot: "strategeme" },
-        20: { nom: "Gros Bâton",              icone: "🗡️", image: "gear/gros_baton.png",             slot: "weapon", hand: "two_handed" },
+        1:  { nom: "Machete Démocratique",    icone: "🗡️", image: "gear/machete-democratique.png",         slot: "weapon", hand: "one_handed" },
+        2:  { nom: "Épée à énergie",          icone: "⚡", image: "",                                       slot: "weapon", hand: "one_handed" },
+        24: { nom: "Lame vampirique",         icone: "🩸", image: "gear/gallant.png",                       slot: "weapon", hand: "one_handed" },
+        3:  { nom: "Lame vampirique",         icone: "🩸", image: "gear/lame-vampirique.png",                slot: "weapon", hand: "one_handed" },
+        4:  { nom: "Dague empoisonnée",       icone: "🐍", image: "gear/dague_empoisonnee.png",              slot: "weapon", hand: "one_handed" },
+        8:  { nom: "Marteau de la Liberté",   icone: "🔨", image: "gear/marteau-democratique.png",           slot: "weapon", hand: "two_handed" },
+        25: { nom: "Deadeye",                 icone: "🩸", image: "gear/deadeye.png",                        slot: "weapon", hand: "two_handed" },
+        6:  { nom: "Hache du Bourreau",       icone: "🪓", image: "gear/hache-lourde.png",                   slot: "weapon", hand: "two_handed" },
+        20: { nom: "Gros Bâton",              icone: "🗡️", image: "gear/gros_baton.png",                    slot: "weapon", hand: "two_handed" },
+        7:  { nom: "Bouclier de Super-Terre", icone: "🔷", image: "",                                       slot: "offhand" },
+        26: { nom: "Bouclier Aegis",          icone: "🛡️", image: "",                                       slot: "offhand" },
+        9:  { nom: "Bouclier épineux",        icone: "🌵", image: "gear/bouclier_epineux.png",               slot: "offhand" },
+        10: { nom: "Amulette de pureté",      icone: "🔮", image: "",                                       slot: "offhand" },
+        11: { nom: "Stimulant",               icone: "💉", image: "gear/stim.png",                           slot: "offhand" },
+        12: { nom: "Slip de protection",      icone: "🦺", image: "gear/slip-de-protection.png",             slot: "torso" },
+        14: { nom: "Exo-squelette Titan",     icone: "🤖", image: "",                                       slot: "torso" },
+        13: { nom: "Protection Démocratique", icone: "🦺", image: "gear/armure_protection_democratique.png", slot: "torso" },
+        15: { nom: "Armure Med-Kit",          icone: "💚", image: "gear/armure-regen.png",                   slot: "torso" },
+        16: { nom: "Armure furtive",          icone: "💨", image: "gear/armure-esquive.png",                 slot: "torso" },
+        17: { nom: "Armure épineuse",         icone: "🦔", image: "",                                       slot: "torso" },
+        18: { nom: "Armure stoïque",          icone: "🗿", image: "",                                       slot: "torso" },
+        27: { nom: "Générateur de bouclier",  icone: "🚀", image: "gear/sac-generateur-bouclier.png",        slot: "strategeme" },
+        23: { nom: "Gas Orbital",             icone: "🐍", image: "gear/gas_orbital.png",                    slot: "strategeme" },
+        22: { nom: "Frappe de précision",     icone: "🚀", image: "gear/frappe-precision.png",               slot: "strategeme" },
+        21: { nom: "Frappe Aérienne",         icone: "🚀", image: "gear/eagle_airstrike.png",                slot: "strategeme" },
+        19: { nom: "Frappe 500kg",            icone: "🚀", image: "gear/eagle_500kg.png",                    slot: "strategeme" },
+        28: { nom: "Frappe 500kg (Solo Silo)",icone: "🚀", image: "gear/solo_silo.png",                      slot: "strategeme" },
     };
-    // La RARETÉ n'a pas d'impact sur les stats, mais sert au liseré de couleur — un objet sans
-    // entrée ici reste affichable, juste sans couleur de rareté distincte (gris par défaut).
     const RARETES = {
-        1:"commun", 2:"rare", 3:"rare", 4:"rare", 5:"rare", 6:"legendaire",
-        7:"commun", 8:"rare", 9:"rare", 10:"commun", 11:"rare",
-        12:"commun", 13:"commun", 14:"legendaire", 15:"rare", 16:"rare", 17:"rare", 18:"legendaire",
-        19:"legendaire", 20:"commun",
+        1:"commun", 2:"rare", 24:"commun", 3:"rare", 4:"rare", 8:"rare", 25:"rare", 6:"legendaire", 20:"commun",
+        7:"commun", 26:"rare", 9:"rare", 10:"commun", 11:"rare",
+        12:"commun", 14:"legendaire", 13:"rare", 15:"rare", 16:"rare", 17:"rare", 18:"legendaire",
+        27:"rare", 23:"rare", 22:"commun", 21:"commun", 19:"rare", 28:"rare",
     };
     const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème" };
-    // Catégories d'AFFICHAGE dans la grille — distinctes du "slot" de jeu utilisé pour
-    // l'équipement (une arme 1-main et une arme 2-mains occupent le même emplacement "weapon").
     const LABELS_CATEGORIE = {
         weapon_1h: "Armes à une main", weapon_2h: "Armes à deux mains",
         offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème",
@@ -169,11 +183,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     }
     const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PV", esquive: "Esquive", spd: "Vitesse" };
 
-    // ==========================================================
-    // GABARITS DE PASSIF — un seul par TYPE d'effet (pas par objet). Le seul endroit à
-    // compléter si tu inventes un TOUT NOUVEAU type de mécanique un jour.
-    // (v = valeur actuelle du passif, déjà avec le niveau appliqué ; s = reste des stats brutes)
-    // ==========================================================
     const GABARITS_PASSIF = {
         Lifesteal: (v, s) => `Vol de vie : <b>${v}%</b> des dégâts infligés sont rendus en PV.`,
         PoisonDegats: (v, s) => `Poison : <b>${v}</b> dégâts/tour pendant <b>${s.poisonDuree}</b> tours.`,
@@ -186,7 +195,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         Regeneration: (v, s) => `Régénère <b>${v}%</b> des PV max à chaque tour.`,
         ResistanceCrit: (v, s) => `<b>-${v}</b> points de chance d'être touché par un critique.`,
         SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
-        DegatsDirects: (v, s) => `Frappe directe de <b>${v}</b> dégâts (pénétration ${s.penetration}%), <b>${s.usagesParCombat}</b> usages, recharge ${s.cooldownTours} tours.`,
         SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
         AntiHealPourcentage: (v, s) => `Réduit les soins reçus par la cible de <b>${v}%</b> pendant <b>${s.antiHealDuree}</b> tours.`,
         ShieldMontant: (v, s) => `Accorde un bouclier de <b>${v} PV</b> en début de combat.`,
@@ -197,12 +205,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         DernierSouffleActif: () => `Une fois par combat, survit à <b>1 PV</b> au lieu de mourir.`,
         FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
     };
-    // Fait le lien entre le nom du StatPrincipale et le nom du champ correspondant dans le JSON
     const CHAMP_PAR_STAT_PRINCIPALE = {
         Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
         ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit",
-        SoinDirect: "soinDirect", DegatsDirects: "degatsDirects", SaignementDegats: "saignementDegats",
+        SoinDirect: "soinDirect", SaignementDegats: "saignementDegats",
         AntiHealPourcentage: "antiHealPourcentage", ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax",
         MarqueDegatsPourcentage: "marqueDegatsPourcentage", ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance",
         DernierSouffleActif: "dernierSouffleActif", FrenesieBonusSpd: "frenesieBonusSpd",
@@ -210,6 +217,17 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     const params = new URLSearchParams(window.location.search);
     const depuisBase36 = (str) => parseInt(str, 36) || 0;
+
+    const nomViewer = params.get('n') ? decodeURIComponent(params.get('n')) : null;
+    const photoViewer = params.get('p') ? decodeURIComponent(params.get('p')) : '';
+    if (nomViewer) {
+        document.getElementById('titreInventaire').innerHTML = `INVENTAIRE DE <span>${nomViewer}</span>`;
+    }
+    if (photoViewer) {
+        const img = document.getElementById('avatarViewer');
+        img.src = photoViewer;
+        img.style.display = 'block';
+    }
 
     const equipStr = params.get('e') || '00000000';
     const numEquipArme = depuisBase36(equipStr.slice(0, 2));
@@ -234,22 +252,45 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
         : `<span class="${classeImg}-emoji">${ref.icone}</span>`;
 
-    // Construit le texte de stat de base ("+7 ATK") et de passif à partir des données brutes
-    function construireDetails(numero, niveau) {
+    function construireDetails(numero, niveau, estStrategeme) {
         const s = STATS[numero];
-        if (!s) return { statTexte: '', passifTexte: '' };
+        if (!s) return { statistiques: [], passifTexte: '' };
 
-        let statTexte = '';
+        if (estStrategeme) {
+            const statistiques = [];
+            if (s.degatsDirects > 0 || s.statPrincipale === 'DegatsDirects') {
+                const actuel = s.statPrincipale === 'DegatsDirects' ? s.degatsDirects + niveau * s.increment : s.degatsDirects;
+                statistiques.push(`Dégâts : <b>${actuel}</b>`);
+            }
+            if (s.usagesParCombat > 0) statistiques.push(`Utilisations : <b>${s.usagesParCombat}</b>`);
+            if (s.cooldownTours > 0) statistiques.push(`Cooldown : <b>${s.cooldownTours}</b> tours`);
+
+            const passifs = [];
+            if (s.penetration > 0) passifs.push(`Pénétration : <b>${s.penetration}%</b>`);
+            if (s.statPrincipale && s.statPrincipale !== 'DegatsDirects' && GABARITS_PASSIF[s.statPrincipale]) {
+                const champ = CHAMP_PAR_STAT_PRINCIPALE[s.statPrincipale];
+                const base = s[champ];
+                const actuel = typeof base === 'boolean' ? base : base + niveau * s.increment;
+                passifs.push(GABARITS_PASSIF[s.statPrincipale](actuel, s));
+            }
+            return { statistiques, passifTexte: passifs.join(' ') };
+        }
+
+        const statistiques = [];
         if (s.stat) {
             const label = LABELS_STAT[s.stat] || s.stat;
             if (s.statPrincipale === 'Bonus') {
                 const actuel = s.bonus + niveau * s.increment;
-                statTexte = niveau > 0
-                    ? `<b>+${s.bonus}</b> ${label} de base <span class="fleche">→</span> <b>+${actuel}</b> ${label} actuel`
-                    : `<b>+${s.bonus}</b> ${label}`;
+                statistiques.push(niveau > 0 ? `+${s.bonus} → <b>+${actuel} ${label}</b>` : `<b>+${s.bonus} ${label}</b>`);
             } else {
-                statTexte = `<b>+${s.bonus}</b> ${label}`;
+                statistiques.push(`<b>+${s.bonus} ${label}</b>`);
             }
+        }
+        if (s.stat2) {
+            const label2 = LABELS_STAT[s.stat2] || s.stat2;
+            const signe = s.bonus2 >= 0 ? '+' : '';
+            const classe = s.bonus2 < 0 ? ' class="malus"' : '';
+            statistiques.push(`<b${classe}>${signe}${s.bonus2} ${label2}</b>`);
         }
 
         let passifTexte = '';
@@ -260,7 +301,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             passifTexte = GABARITS_PASSIF[s.statPrincipale](actuel, s);
         }
 
-        return { statTexte, passifTexte };
+        return { statistiques, passifTexte };
     }
 
     function afficherTout() {
@@ -302,25 +343,25 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
             items.forEach(item => {
                 const estEquipe = equipeParSlot[item.slot] === item.numero;
-                const { statTexte, passifTexte } = construireDetails(item.numero, item.niveau);
+                const estStrategeme = item.slot === 'strategeme';
+                const { statistiques, passifTexte } = construireDetails(item.numero, item.niveau, estStrategeme);
                 const rarete = RARETES[item.numero] || 'commun';
                 const carte = document.createElement('div');
                 carte.className = 'carte ' + rarete + (estEquipe ? ' equipe' : '');
                 carte.innerHTML = `
-                    <div class="carte-head">
-                        ${iconeOuImage(item, 'carte-icon')}
+                    <label class="carte-select">
+                        <input type="checkbox" data-numero="${item.numero}" data-slot="${item.slot}" data-hand="${item.hand || ''}">
+                    </label>
+                    <div class="carte-image-zone">${iconeOuImage(item, 'carte-icon')}</div>
+                    <div class="carte-nom-ligne">
                         <span class="carte-nom">${item.nom}</span>
                         ${item.niveau > 0 ? `<span class="carte-niveau">+${item.niveau}</span>` : ''}
                     </div>
-                    ${statTexte ? `<div class="carte-stat">${statTexte}</div>` : ''}
-                    ${passifTexte ? `<div class="carte-passif">${passifTexte}</div>` : ''}
+                    ${statistiques.length ? `<div class="carte-bloc-stats"><span class="titre-bloc">Statistiques —</span> ${statistiques.join(', ')}</div>` : ''}
+                    ${passifTexte ? `<div class="carte-bloc-stats"><span class="titre-bloc">Passif —</span> ${passifTexte}</div>` : ''}
                     ${estEquipe
                         ? `<span class="carte-cmd">✓ Équipé</span>`
                         : `<span class="carte-cmd cliquable" data-cmd="!equip ${item.numero}">📋 !equip ${item.numero}</span>`}
-                    <label class="carte-select">
-                        <input type="checkbox" data-numero="${item.numero}" data-slot="${item.slot}" data-hand="${item.hand || ''}">
-                        Ajouter au loadout groupé
-                    </label>
                 `;
                 grilleInterne.appendChild(carte);
             });
@@ -328,8 +369,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             conteneur.appendChild(bloc);
         });
 
-        // Clic sur une commande "!equip X" = copie directe dans le presse-papier, plus qu'à
-        // coller (Ctrl+V) dans le chat Twitch et valider.
         conteneur.querySelectorAll('.carte-cmd.cliquable').forEach(el => {
             el.addEventListener('click', () => {
                 const commande = el.dataset.cmd;
@@ -337,25 +376,30 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     const texteOriginal = el.textContent;
                     el.textContent = '✓ Copié !';
                     el.classList.add('copie');
-                    setTimeout(() => {
-                        el.textContent = texteOriginal;
-                        el.classList.remove('copie');
-                    }, 1500);
+                    setTimeout(() => { el.textContent = texteOriginal; el.classList.remove('copie'); }, 1500);
                 });
             });
         });
 
-        // --- Sélection multiple : un seul objet coché par emplacement, pour composer un
-        // loadout entier et générer une seule commande groupée (!equip 4,6,9,11). ---
-        const selectionLoadout = {}; // slot -> numero
+        const selectionLoadout = {};
+
+        function afficherErreurSelection(message) {
+            let barre = document.getElementById('barreLoadout');
+            if (!barre) { barre = document.createElement('div'); barre.id = 'barreLoadout'; document.querySelector('.page').appendChild(barre); }
+            const ancienneErreur = barre.querySelector('.message-erreur');
+            if (ancienneErreur) ancienneErreur.remove();
+            const div = document.createElement('div');
+            div.className = 'message-erreur';
+            div.textContent = message;
+            barre.appendChild(div);
+            setTimeout(() => div.remove(), 3500);
+        }
 
         function majBarreLoadout() {
-            const barre = document.getElementById('barreLoadout');
+            let barre = document.getElementById('barreLoadout');
+            if (!barre) { barre = document.createElement('div'); barre.id = 'barreLoadout'; document.querySelector('.page').appendChild(barre); }
             const numeros = Object.values(selectionLoadout);
-            if (numeros.length === 0) {
-                barre.innerHTML = '';
-                return;
-            }
+            if (numeros.length === 0) { barre.innerHTML = ''; return; }
             const noms = Object.keys(selectionLoadout).map(slot => REFERENCE[selectionLoadout[slot]].nom).join(', ');
             const commande = '!equip ' + numeros.join(',');
             barre.innerHTML = `
@@ -375,44 +419,33 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             });
         }
 
-        // Décoche une case déjà cochée pour un autre objet, sans redéclencher cette même logique
-        function decocherSelection(slotCible) {
-            const numeroActuel = selectionLoadout[slotCible];
-            if (numeroActuel === undefined) return;
-            delete selectionLoadout[slotCible];
-            const checkbox = conteneur.querySelector(`.carte-select input[data-slot="${slotCible}"][data-numero="${numeroActuel}"]`);
-            if (checkbox) { checkbox.checked = false; checkbox.closest('.carte').classList.remove('dans-loadout'); }
-        }
-
-        // Une arme à 2 mains et un off-hand ne peuvent jamais être sélectionnés ensemble
-        // (exactement la même règle que le jeu applique à l'équipement réel).
-        function appliquerIncompatibiliteArme2Mains(slotModifie) {
-            if (slotModifie === 'weapon') {
-                const numeroArme = selectionLoadout.weapon;
-                const armeEst2Mains = numeroArme !== undefined && REFERENCE[numeroArme]?.hand === 'two_handed';
-                if (armeEst2Mains && selectionLoadout.offhand !== undefined) decocherSelection('offhand');
-            } else if (slotModifie === 'offhand') {
-                const numeroArme = selectionLoadout.weapon;
-                const armeEst2Mains = numeroArme !== undefined && REFERENCE[numeroArme]?.hand === 'two_handed';
-                if (armeEst2Mains && selectionLoadout.offhand !== undefined) decocherSelection('weapon');
-            }
-        }
-
         conteneur.querySelectorAll('.carte-select input').forEach(input => {
             input.addEventListener('change', () => {
                 const slot = input.dataset.slot;
+                const hand = input.dataset.hand;
                 const numero = parseInt(input.dataset.numero, 10);
+
                 if (input.checked) {
-                    // Un seul objet sélectionné par emplacement : décoche les autres du même slot
-                    conteneur.querySelectorAll(`.carte-select input[data-slot="${slot}"]`).forEach(autre => {
-                        if (autre !== input) {
-                            autre.checked = false;
-                            autre.closest('.carte').classList.remove('dans-loadout');
+                    if (slot === 'weapon' && hand === 'two_handed' && selectionLoadout.offhand !== undefined) {
+                        input.checked = false;
+                        afficherErreurSelection("Impossible : une arme à deux mains ne peut pas être combinée avec un off-hand. Désélectionne d'abord l'un des deux.");
+                        return;
+                    }
+                    if (slot === 'offhand') {
+                        const numeroArme = selectionLoadout.weapon;
+                        const armeEst2Mains = numeroArme !== undefined && REFERENCE[numeroArme]?.hand === 'two_handed';
+                        if (armeEst2Mains) {
+                            input.checked = false;
+                            afficherErreurSelection("Impossible : un off-hand ne peut pas être combiné avec une arme à deux mains. Désélectionne d'abord l'un des deux.");
+                            return;
                         }
+                    }
+
+                    conteneur.querySelectorAll(`.carte-select input[data-slot="${slot}"]`).forEach(autre => {
+                        if (autre !== input) { autre.checked = false; autre.closest('.carte').classList.remove('dans-loadout'); }
                     });
                     selectionLoadout[slot] = numero;
                     input.closest('.carte').classList.add('dans-loadout');
-                    appliquerIncompatibiliteArme2Mains(slot);
                 } else {
                     delete selectionLoadout[slot];
                     input.closest('.carte').classList.remove('dans-loadout');
@@ -422,7 +455,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         });
     }
 
-    // Charge les valeurs de stats/passifs depuis le fichier généré par 0_Catalogue_Init.cs
     let STATS = {};
     fetch('catalogue_stats.json')
         .then(r => r.json())
