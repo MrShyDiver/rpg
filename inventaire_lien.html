@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mon inventaire</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0;
+    --commun: #8d8d8d; --rare: #4a9fd8; --legendaire: #f2c230; --line: #2c2c2e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 40px 20px; }
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.page { max-width: 900px; margin: 0 auto; }
+.entete { padding-bottom: 20px; border-bottom: 3px solid var(--yellow); margin-bottom: 26px; }
+.entete h1 { font-size: 30px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 14px; margin-top: 6px; }
+
+.emplacements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 36px; }
+.emplacement { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; text-align: center; }
+.emplacement .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1.5px; color: var(--paper-dim); text-transform: uppercase; margin-bottom: 8px; }
+.emplacement .icone { font-size: 28px; margin-bottom: 6px; }
+.emplacement .nom { font-size: 12.5px; font-weight: 600; }
+.emplacement.vide .nom { color: var(--paper-dim); font-style: italic; }
+
+.categorie { margin-bottom: 30px; }
+.categorie-titre { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.categorie-titre h2 { font-size: 17px; font-weight: 600; }
+.categorie-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+.carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 4px; padding: 14px; position: relative; }
+.carte.rare { border-left-color: var(--rare); }
+.carte.legendaire { border-left-color: var(--legendaire); }
+.carte.equipe { background: rgba(242,194,48,0.08); }
+.carte-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.carte-icon { font-size: 24px; }
+.carte-nom { font-size: 14px; font-weight: 600; flex: 1; }
+.carte-niveau { font-size: 11px; color: var(--paper-dim); margin-bottom: 8px; }
+.carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; }
+.carte.equipe .carte-cmd { color: var(--yellow); }
+
+.vide-message { text-align: center; padding: 80px 20px; color: var(--paper-dim); }
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="entete">
+        <h1>MON <span>INVENTAIRE</span></h1>
+        <p>Pour équiper un objet, tape la commande indiquée sur sa carte dans le chat Twitch.</p>
+    </div>
+    <div id="emplacements" class="emplacements"></div>
+    <div id="grille"></div>
+</div>
+
+<script>
+    // ==========================================================
+    // CATALOGUE — à tenir à jour manuellement si tu ajoutes/modifies des objets
+    // dans 0_Catalogue_Init.cs. Numero doit correspondre exactement.
+    // ==========================================================
+    const CATALOGUE = {
+        1:  { nom: "Épée rouillée",            icone: "🗡️", slot: "weapon",     rarete: "commun" },
+        2:  { nom: "Épée à énergie",           icone: "⚡", slot: "weapon",     rarete: "rare" },
+        3:  { nom: "Lame vampirique",          icone: "🩸", slot: "weapon",     rarete: "rare" },
+        4:  { nom: "Dague empoisonnée",        icone: "🐍", slot: "weapon",     rarete: "rare" },
+        5:  { nom: "Marteau de la Liberté",    icone: "🔨", slot: "weapon",     rarete: "rare" },
+        6:  { nom: "Hache du Bourreau",        icone: "🪓", slot: "weapon",     rarete: "legendaire" },
+        7:  { nom: "Bouclier de Super-Terre",  icone: "🔷", slot: "offhand",    rarete: "commun" },
+        8:  { nom: "Bouclier Aegis",           icone: "🛡️", slot: "offhand",    rarete: "rare" },
+        9:  { nom: "Bouclier épineux",         icone: "🌵", slot: "offhand",    rarete: "rare" },
+        10: { nom: "Amulette de pureté",       icone: "🔮", slot: "offhand",    rarete: "commun" },
+        11: { nom: "Stimulant",                icone: "💉", slot: "offhand",    rarete: "rare" },
+        12: { nom: "Armure légère (agile)",    icone: "🦺", slot: "torso",      rarete: "commun" },
+        13: { nom: "Armure lourde",            icone: "🥋", slot: "torso",      rarete: "commun" },
+        14: { nom: "Exo-squelette Titan",      icone: "🤖", slot: "torso",      rarete: "legendaire" },
+        15: { nom: "Plastron régénérant",      icone: "💚", slot: "torso",      rarete: "rare" },
+        16: { nom: "Armure furtive",           icone: "💨", slot: "torso",      rarete: "rare" },
+        17: { nom: "Armure épineuse",          icone: "🦔", slot: "torso",      rarete: "rare" },
+        18: { nom: "Armure stoïque",           icone: "🗿", slot: "torso",      rarete: "legendaire" },
+        19: { nom: "Frappe 500kg",             icone: "🚀", slot: "strategeme", rarete: "legendaire" },
+    };
+    const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Torse", strategeme: "Stratagème" };
+
+    const params = new URLSearchParams(window.location.search);
+    const equipParam = (params.get('e') || '0,0,0,0').split(',').map(Number);
+    const possedesParam = (params.get('o') || '').split('-').filter(Boolean);
+
+    const [numEquipArme, numEquipOffhand, numEquipTorso, numEquipStrat] = equipParam;
+    const equipeParSlot = { weapon: numEquipArme, offhand: numEquipOffhand, torso: numEquipTorso, strategeme: numEquipStrat };
+
+    if (possedesParam.length === 0) {
+        document.getElementById('emplacements').style.display = 'none';
+        document.getElementById('grille').innerHTML = '<div class="vide-message">Aucun objet pour le moment.</div>';
+    } else {
+        // --- Résumé des emplacements équipés ---
+        const emplacementsEl = document.getElementById('emplacements');
+        Object.keys(LABELS_SLOT).forEach(slot => {
+            const numero = equipeParSlot[slot];
+            const item = numero > 0 ? CATALOGUE[numero] : null;
+            const div = document.createElement('div');
+            div.className = 'emplacement' + (item ? '' : ' vide');
+            div.innerHTML = `<div class="label">${LABELS_SLOT[slot]}</div>
+                              <div class="icone">${item ? item.icone : '—'}</div>
+                              <div class="nom">${item ? item.nom : 'Aucun'}</div>`;
+            emplacementsEl.appendChild(div);
+        });
+
+        // --- Grille complète groupée par catégorie ---
+        const parSlot = { weapon: [], offhand: [], torso: [], strategeme: [] };
+        possedesParam.forEach(entree => {
+            const [numeroStr, niveauStr] = entree.split(':');
+            const numero = parseInt(numeroStr, 10);
+            const niveau = parseInt(niveauStr, 10) || 0;
+            const item = CATALOGUE[numero];
+            if (!item) return;
+            parSlot[item.slot].push({ numero, niveau, ...item });
+        });
+
+        const conteneur = document.getElementById('grille');
+        Object.keys(LABELS_SLOT).forEach(slot => {
+            const items = parSlot[slot];
+            if (items.length === 0) return;
+
+            const bloc = document.createElement('div');
+            bloc.className = 'categorie';
+            bloc.innerHTML = `<div class="categorie-titre"><h2>${LABELS_SLOT[slot]}</h2></div><div class="grille"></div>`;
+            const grilleInterne = bloc.querySelector('.grille');
+
+            items.forEach(item => {
+                const estEquipe = equipeParSlot[slot] === item.numero;
+                const carte = document.createElement('div');
+                carte.className = 'carte ' + item.rarete + (estEquipe ? ' equipe' : '');
+                carte.innerHTML = `
+                    <div class="carte-head">
+                        <span class="carte-icon">${item.icone}</span>
+                        <span class="carte-nom">${item.nom}</span>
+                    </div>
+                    <div class="carte-niveau">${item.niveau > 0 ? '+' + item.niveau : ''}</div>
+                    <span class="carte-cmd">${estEquipe ? '✓ Équipé' : '!equip ' + item.numero}</span>
+                `;
+                grilleInterne.appendChild(carte);
+            });
+
+            conteneur.appendChild(bloc);
+        });
+    }
+</script>
+</body>
+</html>
