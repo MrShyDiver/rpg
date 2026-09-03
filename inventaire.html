@@ -96,6 +96,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .scaling-item { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
 .scaling-item .scaling-label { font-size: 9px; color: var(--paper-dim); margin-bottom: 2px; }
 .scaling-item .scaling-lettre { font-size: 15px; font-weight: 800; }
+.scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; }
+.scaling-degats b { color: var(--paper); font-weight: 700; }
 
 .carte { cursor: pointer; }
 .carte:hover { border-color: #444; }
@@ -276,15 +278,23 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     // Rangée de badges de scaling (ATK/DEF/PV/SPD/CRIT) — seulement pour une arme qui en définit.
     // Un tiret long remplace la lettre pour toute stat sur laquelle l'arme ne scale pas.
-    function construireScaling(s) {
+    function construireScaling(s, niveau) {
         if (!s.scaling1Stat) return null;
-        return STATS_SCALABLES.map(stat => {
+        const badges = STATS_SCALABLES.map(stat => {
             let lettre = null;
             if (s.scaling1Stat === stat) lettre = s.scaling1Lettre;
             else if (s.scaling2Stat === stat) lettre = s.scaling2Lettre;
             const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
             return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
         }).join("");
+
+        // Fourchette de dégâts de base actuelle (montée avec le niveau via incrementBaseDegats),
+        // affichée juste sous les badges — c'est la fourchette AVANT scaling de stats.
+        const degatsMin = Math.round(s.baseDegatsMin + niveau * s.incrementBaseDegats);
+        const degatsMax = Math.round(s.baseDegatsMax + niveau * s.incrementBaseDegats);
+        const ligneDegats = `<div class="scaling-degats">Dégâts : <b>${degatsMin} - ${degatsMax}</b></div>`;
+
+        return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
     }
 
     function construireDetails(numero, niveau, estStrategeme) {
@@ -350,7 +360,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
         const passifTexte = construirePassifs(s, niveau, "Bonus").join(" ");
 
-        return { scalingHtml: construireScaling(s), lignesStat, passifTexte };
+        return { scalingHtml: construireScaling(s, niveau), lignesStat, passifTexte };
     }
 
 
@@ -421,7 +431,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                         <span class="carte-nom">${item.nom}</span>
                         ${item.niveau > 0 ? `<span class="carte-niveau">+${item.niveau}</span>` : ''}
                     </div>
-                    ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div><div class="scaling-grille">${scalingHtml}</div></div>` : ''}
+                    ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
                     ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
                     ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
                     ${estEquipe ? `<span class="carte-cmd">✓ Équipé</span>` : `<span class="carte-cmd">!equip ${item.numero}</span>`}
