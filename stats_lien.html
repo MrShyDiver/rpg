@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes statistiques</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230; --line: #2c2c2e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 40px 20px; }
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.page { max-width: 980px; margin: 0 auto; }
+
+.entete { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 3px solid var(--yellow); margin-bottom: 26px; }
+.entete img.avatar { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--yellow); flex-shrink: 0; }
+.entete-texte h1 { font-size: 26px; font-weight: 700; }
+.entete-texte h1 span { color: var(--yellow); }
+.entete-texte p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
+
+.titre-section {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--paper-dim); margin: 24px 0 10px;
+}
+.titre-section:first-of-type { margin-top: 0; }
+.titre-section-petit { margin-top: 16px; font-size: 11px; }
+
+.emplacements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 10px; }
+.emplacement { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; text-align: center; }
+.emplacement .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1.5px; color: var(--paper-dim); text-transform: uppercase; margin-bottom: 8px; }
+.emplacement .icone { font-size: 28px; margin-bottom: 6px; }
+.icone-img { width: 44px; height: 44px; object-fit: contain; }
+.emplacement .nom { font-size: 12.5px; font-weight: 600; }
+.emplacement.vide .nom { color: var(--paper-dim); font-style: italic; }
+
+.stats-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 6px; }
+.stat-carte {
+    background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--yellow);
+    border-radius: 6px; padding: 10px 12px;
+}
+.stat-valeur { font-size: 22px; font-weight: 800; color: var(--paper); line-height: 1.2; }
+.stat-valeur-texte { font-size: 15px; font-weight: 700; color: var(--paper); line-height: 1.3; }
+.stat-sous { font-size: 12px; font-weight: 500; color: var(--paper-dim); }
+.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--paper-dim); margin-top: 2px; }
+.stat-power { border-left-color: #ff8c1a; }
+.stat-power .stat-valeur { color: #ff8c1a; }
+.stat-victoire { border-left-color: #5ddd7a; }
+.stat-defaite { border-left-color: #ff6b6b; }
+.stat-type-lache { border-left-color: #ff6b6b; }
+.stat-type-fairplay { border-left-color: #5ddd7a; }
+.stat-type-valeureux { border-left-color: #f2c230; }
+.stat-type-neutre { border-left-color: #555; }
+
+.vide-message { color: var(--paper-dim); font-style: italic; padding: 20px 0; }
+
+@media (max-width: 640px) {
+    body { padding: 20px 12px; }
+    .entete img.avatar { width: 44px; height: 44px; }
+    .entete-texte p { font-size: 12px; }
+    .emplacements { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .emplacement { padding: 10px; }
+    .stats-grille { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="entete">
+        <img class="avatar" id="avatarViewer" src="" alt="" style="display:none;">
+        <div class="entete-texte">
+            <h1 id="titreInventaire">MES <span>STATISTIQUES</span></h1>
+            <p>PowerLevel, stats de combat et objets préférés — pour l'inventaire complet, utilise <span style="color:var(--yellow)">!inventaire</span>.</p>
+        </div>
+    </div>
+    <div id="zoneStatistiques"></div>
+    <div class="titre-section">Loadout actuel</div>
+    <div id="emplacements" class="emplacements"></div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const depuisBase36 = (str) => parseInt(str, 36) || 0;
+
+    const nomViewer = params.get('n') ? decodeURIComponent(params.get('n')) : null;
+    const fragmentPhoto = params.get('p') ? decodeURIComponent(params.get('p')) : '';
+    // Le C# retire 3 segments FIXES avant transmission pour raccourcir le lien : le domaine,
+    // "jtv_user_pictures/" et "profile_image-" — les 3 sont systématiquement présents dans une
+    // URL de photo de profil Twitch par défaut. On les reconstitue ici à l'identique.
+    let photoViewer = '';
+    if (fragmentPhoto) {
+        const avecProfileImage = fragmentPhoto.length > 37
+            ? fragmentPhoto.slice(0, 37) + 'profile_image-' + fragmentPhoto.slice(37)
+            : fragmentPhoto;
+        photoViewer = 'https://static-cdn.jtvnw.net/jtv_user_pictures/' + avecProfileImage;
+    }
+    if (nomViewer) {
+        document.getElementById('titreInventaire').innerHTML = `<span>${nomViewer}</span> — STATISTIQUES`;
+    }
+    if (photoViewer) {
+        const img = document.getElementById('avatarViewer');
+        img.src = photoViewer;
+        img.style.display = 'block';
+    }
+
+    const equipStr = params.get('e') || '00000000';
+    const numEquipArme = depuisBase36(equipStr.slice(0, 2));
+    const numEquipOffhand = depuisBase36(equipStr.slice(2, 4));
+    const numEquipTorso = depuisBase36(equipStr.slice(4, 6));
+    const numEquipStrat = depuisBase36(equipStr.slice(6, 8));
+    const equipeParSlot = { weapon: numEquipArme, offhand: numEquipOffhand, torso: numEquipTorso, strategeme: numEquipStrat };
+    const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème" };
+
+    // Décodage du bloc compact "st" : stats à croissance BORNÉE, empaquetées en base36 à largeur
+    // fixe côté C# — l'ORDRE et les LARGEURS ci-dessous doivent rester identiques à
+    // 29_Stats_Lien.cs (EnBase36Largeur), sinon le décodage lit n'importe quoi.
+    const stPack = params.get('st') || '';
+    let stPos = 0;
+    function lireChamp(largeur) {
+        const v = depuisBase36(stPack.slice(stPos, stPos + largeur));
+        stPos += largeur;
+        return v;
+    }
+    const statsPerso = {
+        powerLevel: lireChamp(3),
+        atk: lireChamp(3),
+        def: lireChamp(3),
+        luck: lireChamp(3),
+        spd: lireChamp(3),
+        pvBase: lireChamp(3),
+        pvPool: lireChamp(3),
+        mitigation: lireChamp(2) / 10,
+        crit: lireChamp(2) / 10,
+    };
+    const statsCombat = {
+        victoires: lireChamp(3),
+        defaites: lireChamp(3),
+        egalites: lireChamp(3),
+        serieActuelle: lireChamp(3),
+        serieRecord: lireChamp(3),
+        armePreferee: lireChamp(2),
+        offhandPrefere: lireChamp(2),
+        armurePreferee: lireChamp(2),
+        strategemePrefere: lireChamp(2),
+        attaquesAuDessus: lireChamp(3),
+        attaquesDansTranche: lireChamp(3),
+        attaquesEnDessous: lireChamp(3),
+        // Ceux-ci restent NON compressés — cumulatifs, sans plafond raisonnable dans le temps.
+        degatsInfliges: parseInt(params.get('dgi')) || 0,
+        degatsSubis: parseInt(params.get('dgs')) || 0,
+        plusGrosCoup: parseInt(params.get('pgc')) || 0,
+    };
+
+    const iconeOuImage = (ref, classeImg) => ref.image
+        ? `<img src="${ref.image}" alt="" class="${classeImg}">`
+        : `<span class="${classeImg}-emoji">${ref.icone}</span>`;
+
+    function typeCombattant(auDessus, dansTranche, enDessous) {
+        const total = auDessus + dansTranche + enDessous;
+        if (total < 3) return { texte: 'Pas assez de duels', classe: 'neutre' };
+        if (enDessous > dansTranche && enDessous > auDessus) return { texte: 'Lâche', classe: 'lache' };
+        if (auDessus > dansTranche && auDessus > enDessous) return { texte: 'Valeureux', classe: 'valeureux' };
+        return { texte: 'Fairplay', classe: 'fairplay' };
+    }
+
+    function nomObjetPrefere(numero) {
+        if (!numero) return '—';
+        const s = STATS[numero];
+        return s ? s.nom : '—';
+    }
+
+    function afficherStatistiques() {
+        const sp = statsPerso, sc = statsCombat;
+        const totalDuels = sc.victoires + sc.defaites + sc.egalites;
+        const pct = (v) => totalDuels > 0 ? ((v / totalDuels) * 100).toFixed(1) : '0.0';
+        const type = typeCombattant(sc.attaquesAuDessus, sc.attaquesDansTranche, sc.attaquesEnDessous);
+        const ratioDegats = sc.degatsSubis > 0 ? (sc.degatsInfliges / sc.degatsSubis).toFixed(2) : sc.degatsInfliges > 0 ? '∞' : '0.00';
+
+        document.getElementById('zoneStatistiques').innerHTML = `
+            <div class="titre-section">Statistiques</div>
+            <div class="stats-grille">
+                <div class="stat-carte stat-power"><div class="stat-valeur">${Math.round(sp.powerLevel)}</div><div class="stat-label">PowerLevel</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.atk)}</div><div class="stat-label">ATK</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.pvBase)} <span class="stat-sous">(pool ${Math.round(sp.pvPool)})</span></div><div class="stat-label">PV</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div><div class="stat-label">DEF</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.luck)} <span class="stat-sous">(${sp.crit}% crit)</span></div><div class="stat-label">LUCK</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.spd)}</div><div class="stat-label">Vitesse</div></div>
+            </div>
+            <div class="titre-section titre-section-petit">Historique de combat</div>
+            <div class="stats-grille">
+                <div class="stat-carte stat-victoire"><div class="stat-valeur">${sc.victoires} <span class="stat-sous">(${pct(sc.victoires)}%)</span></div><div class="stat-label">Victoires</div></div>
+                <div class="stat-carte stat-defaite"><div class="stat-valeur">${sc.defaites} <span class="stat-sous">(${pct(sc.defaites)}%)</span></div><div class="stat-label">Défaites</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.egalites} <span class="stat-sous">(${pct(sc.egalites)}%)</span></div><div class="stat-label">Égalités</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.degatsInfliges}</div><div class="stat-label">Dégâts infligés</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.degatsSubis}</div><div class="stat-label">Dégâts subis</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${ratioDegats}</div><div class="stat-label">Ratio dégâts</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.plusGrosCoup}</div><div class="stat-label">Plus gros coup</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.serieActuelle}</div><div class="stat-label">Série actuelle</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.serieRecord}</div><div class="stat-label">Record personnel</div></div>
+            </div>
+            <div class="stats-grille">
+                <div class="stat-carte stat-texte"><div class="stat-valeur-texte">${nomObjetPrefere(sc.armePreferee)}</div><div class="stat-label">Arme préférée</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-valeur-texte">${nomObjetPrefere(sc.offhandPrefere)}</div><div class="stat-label">Off-hand préféré</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-valeur-texte">${nomObjetPrefere(sc.armurePreferee)}</div><div class="stat-label">Armure préférée</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-valeur-texte">${nomObjetPrefere(sc.strategemePrefere)}</div><div class="stat-label">Stratagème préféré</div></div>
+                <div class="stat-carte stat-texte stat-type-${type.classe}"><div class="stat-valeur-texte">${type.texte}</div><div class="stat-label">Type de combattant</div></div>
+            </div>
+        `;
+    }
+
+    function afficherLoadout() {
+        const emplacementsEl = document.getElementById('emplacements');
+        Object.keys(LABELS_SLOT).forEach(slot => {
+            const numero = equipeParSlot[slot];
+            const ref = numero > 0 ? STATS[numero] : null;
+            const div = document.createElement('div');
+            div.className = 'emplacement' + (ref ? '' : ' vide');
+            div.innerHTML = `<div class="label">${LABELS_SLOT[slot]}</div>
+                              <div class="icone">${ref ? iconeOuImage(ref, 'icone-img') : '—'}</div>
+                              <div class="nom">${ref ? ref.nom : 'Aucun'}</div>`;
+            emplacementsEl.appendChild(div);
+        });
+    }
+
+    let STATS = {};
+    fetch('catalogue_stats.json?v=' + Date.now())
+        .then(r => r.json())
+        .then(data => {
+            STATS = data;
+            try {
+                afficherStatistiques();
+                afficherLoadout();
+            } catch (erreurAffichage) {
+                console.error('Erreur pendant l\'affichage des statistiques :', erreurAffichage);
+                document.getElementById('zoneStatistiques').innerHTML =
+                    '<div class="vide-message">catalogue_stats.json a bien été chargé, mais une erreur est survenue pendant l\'affichage : '
+                    + erreurAffichage.message + ' (détail complet dans la console du navigateur, F12).</div>';
+            }
+        })
+        .catch((erreurChargement) => {
+            console.error('Erreur de chargement de catalogue_stats.json :', erreurChargement);
+            document.getElementById('zoneStatistiques').innerHTML =
+                '<div class="vide-message">Impossible de charger catalogue_stats.json — vérifie qu\'il est bien présent à côté de cette page.</div>';
+        });
+</script>
+</body>
+</html>
