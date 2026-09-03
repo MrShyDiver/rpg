@@ -454,7 +454,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     }
 
     let STATS = {};
-    fetch('catalogue_stats.json')
+    // "?v=" + horodatage : force le navigateur (et le CDN de GitHub Pages) à toujours récupérer
+    // la version la plus fraîche du fichier, au lieu de servir une copie mise en cache qui peut
+    // rester en place plusieurs heures/jours sinon — la cause probable si un numéro affiché ne
+    // correspond plus à ce que contient réellement catalogue_stats.json sur le dépôt.
+    fetch('catalogue_stats.json?v=' + Date.now())
         .then(r => r.json())
         .then(data => {
             STATS = data;
