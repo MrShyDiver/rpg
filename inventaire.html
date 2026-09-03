@@ -448,8 +448,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     let STATS = {};
     fetch('catalogue_stats.json')
         .then(r => r.json())
-        .then(data => { STATS = data; afficherTout(); })
-        .catch(() => {
+        .then(data => {
+            STATS = data;
+            try {
+                afficherTout();
+            } catch (erreurAffichage) {
+                // Le JSON a bien été chargé — le bug est dans le code d'affichage lui-même,
+                // pas un problème de fichier manquant. Message différent + détail dans la console.
+                console.error('Erreur pendant l\'affichage de l\'inventaire :', erreurAffichage);
+                document.getElementById('grille').innerHTML =
+                    '<div class="vide-message">catalogue_stats.json a bien été chargé, mais une erreur est survenue pendant l\'affichage : '
+                    + erreurAffichage.message + ' (détail complet dans la console du navigateur, F12).</div>';
+            }
+        })
+        .catch((erreurChargement) => {
+            console.error('Erreur de chargement de catalogue_stats.json :', erreurChargement);
             document.getElementById('grille').innerHTML =
                 '<div class="vide-message">Impossible de charger catalogue_stats.json — vérifie qu\'il est bien présent à côté de cette page.</div>';
         });
