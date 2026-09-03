@@ -82,9 +82,20 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stat-ligne .valeur-positive { color: #5ddd7a; font-weight: 700; }
 .stat-ligne .valeur-negative { color: #ff6b6b; font-weight: 700; }
 .stat-ligne .valeur-neutre { color: var(--paper); font-weight: 700; }
-.bloc-passif { font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; margin-top: 4px; margin-bottom: 8px; }
-.bloc-passif .label { color: var(--yellow); font-weight: 700; }
+.bloc-passif { font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; }
 .bloc-passif b { color: var(--paper); font-weight: 600; }
+
+/* Sections de carte clairement séparées : Scaling / Bonus (ou Statistiques) / Passif */
+.bloc-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a2a2a; }
+.bloc-section:first-of-type { border-top: none; margin-top: 6px; padding-top: 0; }
+.section-titre {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+    color: var(--yellow); opacity: 0.85; margin-bottom: 5px;
+}
+.scaling-grille { display: flex; flex-wrap: wrap; gap: 4px; }
+.scaling-item { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
+.scaling-item .scaling-label { font-size: 9px; color: var(--paper-dim); margin-bottom: 2px; }
+.scaling-item .scaling-lettre { font-size: 15px; font-weight: 800; }
 
 .carte { cursor: pointer; }
 .carte:hover { border-color: #444; }
@@ -160,6 +171,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return item.slot;
     }
     const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PV", esquive: "Esquive", spd: "Vitesse" };
+    // Suffixe à ajouter après la valeur d'une stat — seule l'esquive est un pourcentage.
+    const SUFFIXE_STAT = { esquive: "%" };
+    const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
+
+    // Dégradé cohérent du meilleur (S, or) au plus faible (E, gris) — chaud vers froid.
+    const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
+    const STATS_SCALABLES = ["atk", "def", "pv", "spd", "crit"];
+    const LABELS_SCALING = { atk: "ATK", def: "DEF", pv: "PV", spd: "SPD", crit: "CRIT" };
+
 
     const GABARITS_PASSIF = {
         Lifesteal: (v, s) => `Vol de vie : <b>${v}%</b> des dégâts infligés sont rendus en PV.`,
@@ -238,10 +258,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // StatPrincipale reçoit la mise à l'échelle par niveau — les autres s'affichent à leur
     // valeur fixe. C'est ce qui permet d'avoir un passif totalement indépendant du système
     // d'amélioration par doublon.
-    function construirePassifs(s, niveau, exclureChamp) {
+    function construirePassifs(s, niveau, exclureChamp, exclusionsSupplementaires) {
         const passifs = [];
+        const exclusions = new Set([exclureChamp, ...(exclusionsSupplementaires || [])]);
         for (const nomStat in CHAMP_PAR_STAT_PRINCIPALE) {
-            if (nomStat === exclureChamp) continue;
+            if (exclusions.has(nomStat)) continue;
             const champ = CHAMP_PAR_STAT_PRINCIPALE[nomStat];
             const base = s[champ];
             const estActif = typeof base === 'boolean' ? base : base > 0;
@@ -253,43 +274,85 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return passifs;
     }
 
+    // Rangée de badges de scaling (ATK/DEF/PV/SPD/CRIT) — seulement pour une arme qui en définit.
+    // Un tiret long remplace la lettre pour toute stat sur laquelle l'arme ne scale pas.
+    function construireScaling(s) {
+        if (!s.scaling1Stat) return null;
+        return STATS_SCALABLES.map(stat => {
+            let lettre = null;
+            if (s.scaling1Stat === stat) lettre = s.scaling1Lettre;
+            else if (s.scaling2Stat === stat) lettre = s.scaling2Lettre;
+            const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
+            return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
+        }).join("");
+    }
+
     function construireDetails(numero, niveau, estStrategeme) {
         const s = STATS[numero];
-        if (!s) return { lignesStat: [], passifTexte: '' };
+        if (!s) return { scalingHtml: null, lignesStat: [], passifTexte: "" };
+
+        // Soin actif (Stimulant et similaires) : montant/utilisations/cooldown en clair, plutôt
+        // qu'une phrase de passif — quel que soit le slot de l'objet.
+        if (s.soinDirect > 0 || s.statPrincipale === "SoinDirect") {
+            const actuel = s.statPrincipale === "SoinDirect" ? s.soinDirect + niveau * s.increment : s.soinDirect;
+            const lignesStat = [{ label: "Montant soigné", valeur: actuel, colorer: false }];
+            if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
+            if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
+            return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, niveau, "SoinDirect").join(" ") };
+        }
 
         if (estStrategeme) {
             const lignesStat = [];
-            if (s.degatsDirects > 0 || s.statPrincipale === 'DegatsDirects') {
-                const actuel = s.statPrincipale === 'DegatsDirects' ? s.degatsDirects + niveau * s.increment : s.degatsDirects;
-                lignesStat.push({ label: 'Dégâts', valeur: actuel, colorer: false });
-            }
-            if (s.usagesParCombat > 0) lignesStat.push({ label: 'Utilisations', valeur: s.usagesParCombat, colorer: false });
-            if (s.cooldownTours > 0) lignesStat.push({ label: 'Cooldown', valeur: s.cooldownTours + ' tours', colorer: false });
 
-            const passifs = construirePassifs(s, niveau, 'DegatsDirects');
+            if (s.degatsDirects > 0 || s.statPrincipale === "DegatsDirects") {
+                const actuel = s.statPrincipale === "DegatsDirects" ? s.degatsDirects + niveau * s.increment : s.degatsDirects;
+                const coups = s.coupsParUsage > 1 ? ` x ${s.coupsParUsage}` : "";
+                lignesStat.push({ label: "Dégâts", valeur: actuel + coups, colorer: false });
+            }
+            // Poison affiché comme stat ET conservé en passif (qui détaille la dégression) —
+            // les deux se complètent, contrairement au Bouclier ci-dessous.
+            if (s.poisonDegats > 0 || s.statPrincipale === "PoisonDegats") {
+                const actuel = s.statPrincipale === "PoisonDegats" ? s.poisonDegats + niveau * s.increment : s.poisonDegats;
+                lignesStat.push({ label: "Poison", valeur: actuel + " stacks", colorer: false });
+            }
+            // Bouclier : affiché comme stat CLAIRE, exclu du passif générique juste après (son
+            // ancien libellé "en début de combat" ne serait plus exact pour un Stratagème, qui
+            // l'accorde désormais à chaque déclenchement réel).
+            if (s.shieldMontant > 0 || s.statPrincipale === "ShieldMontant") {
+                const actuel = s.statPrincipale === "ShieldMontant" ? s.shieldMontant + niveau * s.increment : s.shieldMontant;
+                lignesStat.push({ label: "Bouclier", valeur: actuel, colorer: false });
+            }
+            if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
+            if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
+
+            const passifs = construirePassifs(s, niveau, "DegatsDirects", ["ShieldMontant"]);
             if (s.penetration > 0) passifs.push(`Pénétration : <b>${s.penetration}%</b>`);
-            return { lignesStat, passifTexte: passifs.join(' ') };
+            // Déclenchement différé (Solo Silo) : explique le principe directement, la personne
+            // adapte le libellé exact de ses objets comme elle le souhaite par la suite.
+            if (s.delaiTours > 0) passifs.push(`Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.`);
+            return { scalingHtml: null, lignesStat, passifTexte: passifs.join(" ") };
         }
 
         const lignesStat = [];
         if (s.stat) {
             const label = LABELS_STAT[s.stat] || s.stat;
-            const actuel = s.statPrincipale === 'Bonus' ? s.bonus + niveau * s.increment : s.bonus;
-            lignesStat.push({ label, valeur: (actuel >= 0 ? '+' : '') + actuel, colorer: true });
+            const actuel = s.statPrincipale === "Bonus" ? s.bonus + niveau * s.increment : s.bonus;
+            lignesStat.push({ label, valeur: (actuel >= 0 ? "+" : "") + actuel + suffixeStat(s.stat), colorer: true });
         }
         if (s.stat2) {
             const label2 = LABELS_STAT[s.stat2] || s.stat2;
-            lignesStat.push({ label: label2, valeur: (s.bonus2 >= 0 ? '+' : '') + s.bonus2, colorer: true });
+            lignesStat.push({ label: label2, valeur: (s.bonus2 >= 0 ? "+" : "") + s.bonus2 + suffixeStat(s.stat2), colorer: true });
         }
         if (s.stat3) {
             const label3 = LABELS_STAT[s.stat3] || s.stat3;
-            lignesStat.push({ label: label3, valeur: (s.bonus3 >= 0 ? '+' : '') + s.bonus3, colorer: true });
+            lignesStat.push({ label: label3, valeur: (s.bonus3 >= 0 ? "+" : "") + s.bonus3 + suffixeStat(s.stat3), colorer: true });
         }
 
-        const passifTexte = construirePassifs(s, niveau, 'Bonus').join(' ');
+        const passifTexte = construirePassifs(s, niveau, "Bonus").join(" ");
 
-        return { lignesStat, passifTexte };
+        return { scalingHtml: construireScaling(s), lignesStat, passifTexte };
     }
+
 
     function rendreLigneStat({ label, valeur, colorer }) {
         let classe = 'valeur-neutre';
@@ -345,7 +408,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             items.forEach(item => {
                 const estEquipe = equipeParSlot[item.slot] === item.numero;
                 const estStrategeme = item.slot === 'strategeme';
-                const { lignesStat, passifTexte } = construireDetails(item.numero, item.niveau, estStrategeme);
+                const { scalingHtml, lignesStat, passifTexte } = construireDetails(item.numero, item.niveau, estStrategeme);
                 const rarete = item.rarete || 'commun';
                 const carte = document.createElement('div');
                 carte.className = 'carte ' + rarete + (estEquipe ? ' equipe' : '');
@@ -358,8 +421,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                         <span class="carte-nom">${item.nom}</span>
                         ${item.niveau > 0 ? `<span class="carte-niveau">+${item.niveau}</span>` : ''}
                     </div>
-                    ${lignesStat.map(rendreLigneStat).join('')}
-                    ${passifTexte ? `<div class="bloc-passif"><span class="label">Passif —</span> ${passifTexte}</div>` : ''}
+                    ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div><div class="scaling-grille">${scalingHtml}</div></div>` : ''}
+                    ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
+                    ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
                     ${estEquipe ? `<span class="carte-cmd">✓ Équipé</span>` : `<span class="carte-cmd">!equip ${item.numero}</span>`}
                 `;
                 grilleInterne.appendChild(carte);
