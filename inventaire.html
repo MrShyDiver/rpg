@@ -150,41 +150,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 </div>
 
 <script>
-    const REFERENCE = {
-        1:  { nom: "Machete Démocratique",    icone: "🗡️", image: "gear/machete-democratique.png",         slot: "weapon", hand: "one_handed" },
-        2:  { nom: "Épée à énergie",          icone: "⚡", image: "",                                       slot: "weapon", hand: "one_handed" },
-        24: { nom: "Lame vampirique",         icone: "🩸", image: "gear/gallant.png",                       slot: "weapon", hand: "one_handed" },
-        3:  { nom: "Lame vampirique",         icone: "🩸", image: "gear/lame-vampirique.png",                slot: "weapon", hand: "one_handed" },
-        4:  { nom: "Dague empoisonnée",       icone: "🐍", image: "gear/dague_empoisonnee.png",              slot: "weapon", hand: "one_handed" },
-        8:  { nom: "Marteau de la Liberté",   icone: "🔨", image: "gear/marteau-democratique.png",           slot: "weapon", hand: "two_handed" },
-        25: { nom: "Deadeye",                 icone: "🩸", image: "gear/deadeye.png",                        slot: "weapon", hand: "two_handed" },
-        6:  { nom: "Hache du Bourreau",       icone: "🪓", image: "gear/hache-lourde.png",                   slot: "weapon", hand: "two_handed" },
-        20: { nom: "Gros Bâton",              icone: "🗡️", image: "gear/gros_baton.png",                    slot: "weapon", hand: "two_handed" },
-        7:  { nom: "Bouclier de Super-Terre", icone: "🔷", image: "",                                       slot: "offhand" },
-        26: { nom: "Bouclier Aegis",          icone: "🛡️", image: "",                                       slot: "offhand" },
-        9:  { nom: "Bouclier épineux",        icone: "🌵", image: "gear/bouclier_epineux.png",               slot: "offhand" },
-        10: { nom: "Amulette de pureté",      icone: "🔮", image: "",                                       slot: "offhand" },
-        11: { nom: "Stimulant",               icone: "💉", image: "gear/stim.png",                           slot: "offhand" },
-        12: { nom: "Slip de protection",      icone: "🦺", image: "gear/slip-de-protection.png",             slot: "torso" },
-        14: { nom: "Exo-squelette Titan",     icone: "🤖", image: "",                                       slot: "torso" },
-        13: { nom: "Protection Démocratique", icone: "🦺", image: "gear/armure_protection_democratique.png", slot: "torso" },
-        15: { nom: "Armure Med-Kit",          icone: "💚", image: "gear/armure-regen.png",                   slot: "torso" },
-        16: { nom: "Armure furtive",          icone: "💨", image: "gear/armure-esquive.png",                 slot: "torso" },
-        17: { nom: "Armure épineuse",         icone: "🦔", image: "",                                       slot: "torso" },
-        18: { nom: "Armure stoïque",          icone: "🗿", image: "",                                       slot: "torso" },
-        27: { nom: "Générateur de bouclier",  icone: "🚀", image: "gear/sac-generateur-bouclier.png",        slot: "strategeme" },
-        23: { nom: "Gas Orbital",             icone: "🐍", image: "gear/gas_orbital.png",                    slot: "strategeme" },
-        22: { nom: "Frappe de précision",     icone: "🚀", image: "gear/frappe-precision.png",               slot: "strategeme" },
-        21: { nom: "Frappe Aérienne",         icone: "🚀", image: "gear/eagle_airstrike.png",                slot: "strategeme" },
-        19: { nom: "Frappe 500kg",            icone: "🚀", image: "gear/eagle_500kg.png",                    slot: "strategeme" },
-        28: { nom: "Frappe 500kg (Solo Silo)",icone: "🚀", image: "gear/solo_silo.png",                      slot: "strategeme" },
-    };
-    const RARETES = {
-        1:"commun", 2:"rare", 24:"commun", 3:"rare", 4:"rare", 8:"rare", 25:"normal", 6:"legendaire", 20:"commun",
-        7:"commun", 26:"rare", 9:"rare", 10:"commun", 11:"rare",
-        12:"commun", 14:"legendaire", 13:"normal", 15:"rare", 16:"rare", 17:"rare", 18:"legendaire",
-        27:"normal", 23:"normal", 22:"commun", 21:"commun", 19:"rare", 28:"rare",
-    };
     const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème" };
     const LABELS_CATEGORIE = {
         weapon_1h: "Armes à une main", weapon_2h: "Armes à deux mains",
@@ -342,7 +307,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const emplacementsEl = document.getElementById('emplacements');
         Object.keys(LABELS_SLOT).forEach(slot => {
             const numero = equipeParSlot[slot];
-            const ref = numero > 0 ? REFERENCE[numero] : null;
+            const ref = numero > 0 ? STATS[numero] : null;
             const div = document.createElement('div');
             div.className = 'emplacement' + (ref ? '' : ' vide');
             div.innerHTML = `<div class="label">${LABELS_SLOT[slot]}</div>
@@ -353,7 +318,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
         const parCategorie = { weapon_1h: [], weapon_2h: [], offhand: [], torso: [], strategeme: [] };
         possedesParam.forEach(({ numero, niveau }) => {
-            const ref = REFERENCE[numero];
+            const ref = STATS[numero];
             if (!ref) return;
             const item = { numero, niveau, ...ref };
             parCategorie[categorieAffichage(item)].push(item);
@@ -373,7 +338,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 const estEquipe = equipeParSlot[item.slot] === item.numero;
                 const estStrategeme = item.slot === 'strategeme';
                 const { lignesStat, passifTexte } = construireDetails(item.numero, item.niveau, estStrategeme);
-                const rarete = RARETES[item.numero] || 'commun';
+                const rarete = item.rarete || 'commun';
                 const carte = document.createElement('div');
                 carte.className = 'carte ' + rarete + (estEquipe ? ' equipe' : '');
                 carte.innerHTML = `
@@ -425,7 +390,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             if (!barre) { barre = document.createElement('div'); barre.id = 'barreLoadout'; document.querySelector('.page').appendChild(barre); }
             const numeros = Object.values(selectionLoadout);
             if (numeros.length === 0) { barre.innerHTML = ''; return; }
-            const noms = Object.keys(selectionLoadout).map(slot => REFERENCE[selectionLoadout[slot]].nom).join(', ');
+            const noms = Object.keys(selectionLoadout).map(slot => STATS[selectionLoadout[slot]].nom).join(', ');
             const commande = '!equip ' + numeros.join(',');
             barre.innerHTML = `
                 <div class="barre-loadout">
@@ -458,7 +423,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     }
                     if (slot === 'offhand') {
                         const numeroArme = selectionLoadout.weapon;
-                        const armeEst2Mains = numeroArme !== undefined && REFERENCE[numeroArme]?.hand === 'two_handed';
+                        const armeEst2Mains = numeroArme !== undefined && STATS[numeroArme]?.hand === 'two_handed';
                         if (armeEst2Mains) {
                             input.checked = false;
                             afficherErreurSelection("Impossible : un off-hand ne peut pas être combiné avec une arme à deux mains. Désélectionne d'abord l'un des deux.");
