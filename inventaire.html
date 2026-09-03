@@ -35,6 +35,25 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
     text-transform: uppercase; color: var(--paper-dim); margin: 24px 0 10px;
 }
+.titre-section-petit { margin-top: 16px; font-size: 11px; }
+
+.stats-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 6px; }
+.stat-carte {
+    background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--yellow);
+    border-radius: 6px; padding: 10px 12px;
+}
+.stat-valeur { font-size: 22px; font-weight: 800; color: var(--paper); line-height: 1.2; }
+.stat-valeur-texte { font-size: 15px; font-weight: 700; color: var(--paper); line-height: 1.3; }
+.stat-sous { font-size: 12px; font-weight: 500; color: var(--paper-dim); }
+.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--paper-dim); margin-top: 2px; }
+.stat-power { border-left-color: #ff8c1a; }
+.stat-power .stat-valeur { color: #ff8c1a; }
+.stat-victoire { border-left-color: #5ddd7a; }
+.stat-defaite { border-left-color: #ff6b6b; }
+.stat-type-lache { border-left-color: #ff6b6b; }
+.stat-type-fairplay { border-left-color: #5ddd7a; }
+.stat-type-valeureux { border-left-color: #f2c230; }
+.stat-type-neutre { border-left-color: #555; }
 
 .emplacements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 10px; }
 .emplacement { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; text-align: center; }
@@ -159,6 +178,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         </div>
     </div>
     <div id="zoneLootbox"></div>
+    <div id="zoneStatistiques"></div>
     <div class="titre-section">Loadout actuel</div>
     <div id="emplacements" class="emplacements"></div>
     <div id="grille"></div>
@@ -174,7 +194,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         if (item.slot === "weapon") return item.hand === "two_handed" ? "weapon_2h" : "weapon_1h";
         return item.slot;
     }
-    const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PV", esquive: "Esquive", spd: "Vitesse" };
+    const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PDV", esquive: "Esquive", spd: "Vitesse" };
     // Suffixe à ajouter après la valeur d'une stat — seule l'esquive est un pourcentage.
     const SUFFIXE_STAT = { esquive: "%" };
     const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
@@ -262,6 +282,36 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         document.getElementById('zoneLootbox').innerHTML =
             `<div class="bloc-lootbox">🎁 Tu as <strong>${nbLootbox}</strong> lootbox en attente — tape <span class="cmd">!lootbox</span> dans le chat pour l'ouvrir !</div>`;
     }
+
+    // Statistiques de personnage et de combat — simples nombres décimaux, pas besoin de base36.
+    const statsPerso = {
+        powerLevel: parseFloat(params.get('pl')) || 0,
+        atk: parseFloat(params.get('atk')) || 0,
+        pvBase: parseFloat(params.get('pvb')) || 0,
+        pvPool: parseFloat(params.get('pvp')) || 0,
+        def: parseFloat(params.get('def')) || 0,
+        mitigation: parseFloat(params.get('mit')) || 0,
+        luck: parseFloat(params.get('luck')) || 0,
+        crit: parseFloat(params.get('crit')) || 0,
+        spd: parseFloat(params.get('spd')) || 0,
+    };
+    const statsCombat = {
+        victoires: parseInt(params.get('vic')) || 0,
+        defaites: parseInt(params.get('dft')) || 0,
+        egalites: parseInt(params.get('egc')) || 0,
+        degatsInfliges: parseInt(params.get('dgi')) || 0,
+        degatsSubis: parseInt(params.get('dgs')) || 0,
+        plusGrosCoup: parseInt(params.get('pgc')) || 0,
+        serieActuelle: parseInt(params.get('sva')) || 0,
+        serieRecord: parseInt(params.get('svr')) || 0,
+        armePreferee: parseInt(params.get('fw')) || 0,
+        offhandPrefere: parseInt(params.get('fo')) || 0,
+        armurePreferee: parseInt(params.get('fa')) || 0,
+        strategemePrefere: parseInt(params.get('fs')) || 0,
+        attaquesAuDessus: parseInt(params.get('tad')) || 0,
+        attaquesDansTranche: parseInt(params.get('ttd')) || 0,
+        attaquesEnDessous: parseInt(params.get('ted')) || 0,
+    };
 
     const iconeOuImage = (ref, classeImg) => ref.image
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
@@ -395,7 +445,61 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return `<div class="stat-ligne"><span class="label">${label}</span><span class="${classe}">${valeur}</span></div>`;
     }
 
+    function typeCombattant(auDessus, dansTranche, enDessous) {
+        const total = auDessus + dansTranche + enDessous;
+        if (total < 3) return { texte: 'Pas assez de duels', classe: 'neutre' };
+        if (enDessous > dansTranche && enDessous > auDessus) return { texte: 'Lâche', classe: 'lache' };
+        if (auDessus > dansTranche && auDessus > enDessous) return { texte: 'Valeureux', classe: 'valeureux' };
+        return { texte: 'Fairplay', classe: 'fairplay' };
+    }
+
+    function nomObjetPrefere(numero) {
+        if (!numero) return '—';
+        const s = STATS[numero];
+        return s ? s.nom : '—';
+    }
+
+    function afficherStatistiques() {
+        const sp = statsPerso, sc = statsCombat;
+        const totalDuels = sc.victoires + sc.defaites + sc.egalites;
+        const pct = (v) => totalDuels > 0 ? ((v / totalDuels) * 100).toFixed(1) : '0.0';
+        const type = typeCombattant(sc.attaquesAuDessus, sc.attaquesDansTranche, sc.attaquesEnDessous);
+        const ratioDegats = sc.degatsSubis > 0 ? (sc.degatsInfliges / sc.degatsSubis).toFixed(2) : sc.degatsInfliges > 0 ? '∞' : '0.00';
+
+        document.getElementById('zoneStatistiques').innerHTML = `
+            <div class="titre-section">Statistiques</div>
+            <div class="stats-grille">
+                <div class="stat-carte stat-power"><div class="stat-valeur">${Math.round(sp.powerLevel)}</div><div class="stat-label">PowerLevel</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.atk)}</div><div class="stat-label">ATK</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.pvBase)} <span class="stat-sous">(pool ${Math.round(sp.pvPool)})</span></div><div class="stat-label">PV</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div><div class="stat-label">DEF</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.luck)} <span class="stat-sous">(${sp.crit}% crit)</span></div><div class="stat-label">LUCK</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${Math.round(sp.spd)}</div><div class="stat-label">Vitesse</div></div>
+            </div>
+            <div class="titre-section titre-section-petit">Historique de combat</div>
+            <div class="stats-grille">
+                <div class="stat-carte stat-victoire"><div class="stat-valeur">${sc.victoires} <span class="stat-sous">(${pct(sc.victoires)}%)</span></div><div class="stat-label">Victoires</div></div>
+                <div class="stat-carte stat-defaite"><div class="stat-valeur">${sc.defaites} <span class="stat-sous">(${pct(sc.defaites)}%)</span></div><div class="stat-label">Défaites</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.egalites} <span class="stat-sous">(${pct(sc.egalites)}%)</span></div><div class="stat-label">Égalités</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.degatsInfliges}</div><div class="stat-label">Dégâts infligés</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.degatsSubis}</div><div class="stat-label">Dégâts subis</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${ratioDegats}</div><div class="stat-label">Ratio dégâts</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.plusGrosCoup}</div><div class="stat-label">Plus gros coup</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.serieActuelle}</div><div class="stat-label">Série actuelle</div></div>
+                <div class="stat-carte"><div class="stat-valeur">${sc.serieRecord}</div><div class="stat-label">Record personnel</div></div>
+            </div>
+            <div class="stats-grille">
+                <div class="stat-carte stat-texte"><div class="stat-valeur-texte">${nomObjetPrefere(sc.armePreferee)}</div><div class="stat-label">Arme préférée</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-valeur-texte">${nomObjetPrefere(sc.offhandPrefere)}</div><div class="stat-label">Off-hand préféré</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-valeur-texte">${nomObjetPrefere(sc.armurePreferee)}</div><div class="stat-label">Armure préférée</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-valeur-texte">${nomObjetPrefere(sc.strategemePrefere)}</div><div class="stat-label">Stratagème préféré</div></div>
+                <div class="stat-carte stat-texte stat-type-${type.classe}"><div class="stat-valeur-texte">${type.texte}</div><div class="stat-label">Type de combattant</div></div>
+            </div>
+        `;
+    }
+
     function afficherTout() {
+        afficherStatistiques();
         if (possedesParam.length === 0) {
             document.getElementById('emplacements').style.display = 'none';
             document.getElementById('grille').innerHTML = '<div class="vide-message">Aucun objet pour le moment.</div>';
