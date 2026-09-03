@@ -321,7 +321,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const ref = STATS[numero];
             if (!ref) return;
             const item = { numero, niveau, ...ref };
-            parCategorie[categorieAffichage(item)].push(item);
+            const cat = categorieAffichage(item);
+            if (!parCategorie[cat]) {
+                // Le "slot" de cet objet dans catalogue_stats.json ne correspond à aucune catégorie
+                // connue (vide, mal orthographié, mauvaise casse...) — on l'ignore plutôt que de
+                // faire planter tout l'affichage, et on le signale clairement en console.
+                console.warn(`Objet #${numero} ("${item.nom || '?'}") ignoré : slot inconnu = "${item.slot}"`);
+                return;
+            }
+            parCategorie[cat].push(item);
         });
 
         const conteneur = document.getElementById('grille');
