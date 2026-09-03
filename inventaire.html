@@ -252,9 +252,18 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     const nomViewer = params.get('n') ? decodeURIComponent(params.get('n')) : null;
     const fragmentPhoto = params.get('p') ? decodeURIComponent(params.get('p')) : '';
-    // Le C# retire "https://static-cdn.jtvnw.net/" avant transmission pour raccourcir le lien —
-    // on le rajoute ici, exactement comme avant pour l'affichage.
-    const photoViewer = fragmentPhoto ? 'https://static-cdn.jtvnw.net/' + fragmentPhoto : '';
+    // Le C# retire 3 segments FIXES avant transmission pour raccourcir le lien : le domaine,
+    // "jtv_user_pictures/" et "profile_image-" — les 3 sont systématiquement présents dans une
+    // URL de photo de profil Twitch par défaut. On les reconstitue ici à l'identique.
+    // "profile_image-" se réinsère juste après l'UUID (36 caractères) + son tiret (donc à la
+    // position 37) — un UUID standard fait toujours cette longueur fixe.
+    let photoViewer = '';
+    if (fragmentPhoto) {
+        const avecProfileImage = fragmentPhoto.length > 37
+            ? fragmentPhoto.slice(0, 37) + 'profile_image-' + fragmentPhoto.slice(37)
+            : fragmentPhoto;
+        photoViewer = 'https://static-cdn.jtvnw.net/jtv_user_pictures/' + avecProfileImage;
+    }
     if (nomViewer) {
         document.getElementById('titreInventaire').innerHTML = `INVENTAIRE DE <span>${nomViewer}</span>`;
     }
@@ -283,34 +292,44 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             `<div class="bloc-lootbox">🎁 Tu as <strong>${nbLootbox}</strong> lootbox en attente — tape <span class="cmd">!lootbox</span> dans le chat pour l'ouvrir !</div>`;
     }
 
-    // Statistiques de personnage et de combat — simples nombres décimaux, pas besoin de base36.
+    // Décodage du bloc compact "st" : stats à croissance BORNÉE, empaquetées en base36 à largeur
+    // fixe côté C# — l'ORDRE et les LARGEURS ci-dessous doivent rester identiques à
+    // 28_Inventaire_Lien.cs (EnBase36Largeur), sinon le décodage lit n'importe quoi.
+    const stPack = params.get('st') || '';
+    let stPos = 0;
+    function lireChamp(largeur) {
+        const v = depuisBase36(stPack.slice(stPos, stPos + largeur));
+        stPos += largeur;
+        return v;
+    }
     const statsPerso = {
-        powerLevel: parseFloat(params.get('pl')) || 0,
-        atk: parseFloat(params.get('atk')) || 0,
-        pvBase: parseFloat(params.get('pvb')) || 0,
-        pvPool: parseFloat(params.get('pvp')) || 0,
-        def: parseFloat(params.get('def')) || 0,
-        mitigation: parseFloat(params.get('mit')) || 0,
-        luck: parseFloat(params.get('luck')) || 0,
-        crit: parseFloat(params.get('crit')) || 0,
-        spd: parseFloat(params.get('spd')) || 0,
+        powerLevel: lireChamp(3),
+        atk: lireChamp(3),
+        def: lireChamp(3),
+        luck: lireChamp(3),
+        spd: lireChamp(3),
+        pvBase: lireChamp(3),
+        pvPool: lireChamp(3),
+        mitigation: lireChamp(2) / 10,
+        crit: lireChamp(2) / 10,
     };
     const statsCombat = {
-        victoires: parseInt(params.get('vic')) || 0,
-        defaites: parseInt(params.get('dft')) || 0,
-        egalites: parseInt(params.get('egc')) || 0,
+        victoires: lireChamp(3),
+        defaites: lireChamp(3),
+        egalites: lireChamp(3),
+        serieActuelle: lireChamp(3),
+        serieRecord: lireChamp(3),
+        armePreferee: lireChamp(2),
+        offhandPrefere: lireChamp(2),
+        armurePreferee: lireChamp(2),
+        strategemePrefere: lireChamp(2),
+        attaquesAuDessus: lireChamp(3),
+        attaquesDansTranche: lireChamp(3),
+        attaquesEnDessous: lireChamp(3),
+        // Ceux-ci restent NON compressés — cumulatifs, sans plafond raisonnable dans le temps.
         degatsInfliges: parseInt(params.get('dgi')) || 0,
         degatsSubis: parseInt(params.get('dgs')) || 0,
         plusGrosCoup: parseInt(params.get('pgc')) || 0,
-        serieActuelle: parseInt(params.get('sva')) || 0,
-        serieRecord: parseInt(params.get('svr')) || 0,
-        armePreferee: parseInt(params.get('fw')) || 0,
-        offhandPrefere: parseInt(params.get('fo')) || 0,
-        armurePreferee: parseInt(params.get('fa')) || 0,
-        strategemePrefere: parseInt(params.get('fs')) || 0,
-        attaquesAuDessus: parseInt(params.get('tad')) || 0,
-        attaquesDansTranche: parseInt(params.get('ttd')) || 0,
-        attaquesEnDessous: parseInt(params.get('ted')) || 0,
     };
 
     const iconeOuImage = (ref, classeImg) => ref.image
