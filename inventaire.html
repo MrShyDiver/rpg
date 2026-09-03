@@ -99,6 +99,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .scaling-item .scaling-lettre { font-size: 15px; font-weight: 800; }
 .scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; }
 .scaling-degats b { color: var(--paper); font-weight: 700; }
+.scaling-degats b { color: var(--paper); font-weight: 700; }
 
 .carte { cursor: pointer; }
 .carte:hover { border-color: #444; }
@@ -177,6 +178,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // Suffixe à ajouter après la valeur d'une stat — seule l'esquive est un pourcentage.
     const SUFFIXE_STAT = { esquive: "%" };
     const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
+
+    // Affiche "base" si l'objet n'a pas encore de niveau (ou que cette stat ne grossit pas du
+    // tout), ou "base → actuel" sinon — pour visualiser d'un coup d'œil le gain déjà obtenu
+    // grâce aux doublons possédés. `formatteur` reçoit une valeur numérique brute et rend la
+    // chaîne finale (signe, suffixe %, etc.), pour rester cohérent avec l'affichage existant.
+    function formatEvolution(base, actuel, formatteur) {
+        if (actuel === base) return formatteur(base);
+        return `${formatteur(base)} → <b>${formatteur(actuel)}</b>`;
+    }
+
 
     // Dégradé cohérent du meilleur (S, or) au plus faible (E, gris) — chaud vers froid.
     const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
@@ -271,7 +282,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const estActif = typeof base === 'boolean' ? base : base > 0;
             if (!estActif) continue;
             const scaleAvecNiveau = s.statPrincipale === nomStat;
-            const actuel = typeof base === 'boolean' ? base : (scaleAvecNiveau ? base + niveau * s.increment : base);
+            const actuel = typeof base === 'boolean' ? base : (scaleAvecNiveau ? base + niveau * s.incrementPassif : base);
             passifs.push(GABARITS_PASSIF[nomStat](actuel, s));
         }
         return passifs;
@@ -289,11 +300,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
         }).join("");
 
-        // Fourchette de dégâts de base actuelle (montée avec le niveau via incrementBaseDegats),
-        // affichée juste sous les badges — c'est la fourchette AVANT scaling de stats.
-        const degatsMin = Math.round(s.baseDegatsMin + niveau * s.incrementBaseDegats);
-        const degatsMax = Math.round(s.baseDegatsMax + niveau * s.incrementBaseDegats);
-        const ligneDegats = `<div class="scaling-degats">Dégâts : <b>${degatsMin} - ${degatsMax}</b></div>`;
+        // Fourchette de dégâts de base — affiche la progression base → actuelle si l'objet a
+        // un niveau ET que sa fourchette grossit effectivement avec (IncrementBaseDegats).
+        const texteFourchette = (min, max) => `${Math.round(min)} - ${Math.round(max)}`;
+        const baseMin = s.baseDegatsMin, baseMax = s.baseDegatsMax;
+        const actuelMin = baseMin + niveau * s.incrementBaseDegats;
+        const actuelMax = baseMax + niveau * s.incrementBaseDegats;
+        const texteDegats = (niveau > 0 && s.incrementBaseDegats !== 0)
+            ? `${texteFourchette(baseMin, baseMax)} → <b>${texteFourchette(actuelMin, actuelMax)}</b>`
+            : `<b>${texteFourchette(baseMin, baseMax)}</b>`;
+        const ligneDegats = `<div class="scaling-degats">Dégâts : ${texteDegats}</div>`;
 
         return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
     }
@@ -305,8 +321,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         // Soin actif (Stimulant et similaires) : montant/utilisations/cooldown en clair, plutôt
         // qu'une phrase de passif — quel que soit le slot de l'objet.
         if (s.soinDirect > 0 || s.statPrincipale === "SoinDirect") {
-            const actuel = s.statPrincipale === "SoinDirect" ? s.soinDirect + niveau * s.increment : s.soinDirect;
-            const lignesStat = [{ label: "Montant soigné", valeur: actuel, colorer: false }];
+            const actuel = s.statPrincipale === "SoinDirect" ? s.soinDirect + niveau * s.incrementPassif : s.soinDirect;
+            const lignesStat = [{ label: "Montant soigné", valeur: formatEvolution(s.soinDirect, actuel, (v) => v), colorer: false }];
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
             return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, niveau, "SoinDirect").join(" ") };
@@ -316,22 +332,22 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const lignesStat = [];
 
             if (s.degatsDirects > 0 || s.statPrincipale === "DegatsDirects") {
-                const actuel = s.statPrincipale === "DegatsDirects" ? s.degatsDirects + niveau * s.increment : s.degatsDirects;
+                const actuel = s.statPrincipale === "DegatsDirects" ? s.degatsDirects + niveau * s.incrementPassif : s.degatsDirects;
                 const coups = s.coupsParUsage > 1 ? ` x ${s.coupsParUsage}` : "";
-                lignesStat.push({ label: "Dégâts", valeur: actuel + coups, colorer: false });
+                lignesStat.push({ label: "Dégâts", valeur: formatEvolution(s.degatsDirects, actuel, (v) => v) + coups, colorer: false });
             }
             // Poison affiché comme stat ET conservé en passif (qui détaille la dégression) —
             // les deux se complètent, contrairement au Bouclier ci-dessous.
             if (s.poisonDegats > 0 || s.statPrincipale === "PoisonDegats") {
-                const actuel = s.statPrincipale === "PoisonDegats" ? s.poisonDegats + niveau * s.increment : s.poisonDegats;
-                lignesStat.push({ label: "Poison", valeur: actuel + " stacks", colorer: false });
+                const actuel = s.statPrincipale === "PoisonDegats" ? s.poisonDegats + niveau * s.incrementPassif : s.poisonDegats;
+                lignesStat.push({ label: "Poison", valeur: formatEvolution(s.poisonDegats, actuel, (v) => v) + " stacks", colorer: false });
             }
             // Bouclier : affiché comme stat CLAIRE, exclu du passif générique juste après (son
             // ancien libellé "en début de combat" ne serait plus exact pour un Stratagème, qui
             // l'accorde désormais à chaque déclenchement réel).
             if (s.shieldMontant > 0 || s.statPrincipale === "ShieldMontant") {
-                const actuel = s.statPrincipale === "ShieldMontant" ? s.shieldMontant + niveau * s.increment : s.shieldMontant;
-                lignesStat.push({ label: "Bouclier", valeur: actuel, colorer: false });
+                const actuel = s.statPrincipale === "ShieldMontant" ? s.shieldMontant + niveau * s.incrementPassif : s.shieldMontant;
+                lignesStat.push({ label: "Bouclier", valeur: formatEvolution(s.shieldMontant, actuel, (v) => v), colorer: false });
             }
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
@@ -344,19 +360,27 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             return { scalingHtml: null, lignesStat, passifTexte: passifs.join(" ") };
         }
 
+        // Bonus (Stat/Stat2/Stat3) : les 3 emplacements montent TOUJOURS avec leur PROPRE
+        // incrément, indépendamment de StatPrincipale (voir 11_Duel.cs) — la valeur "actuelle"
+        // doit donc toujours appliquer niveau × increment, jamais seulement pour StatPrincipale.
         const lignesStat = [];
         if (s.stat) {
             const label = LABELS_STAT[s.stat] || s.stat;
-            const actuel = s.statPrincipale === "Bonus" ? s.bonus + niveau * s.increment : s.bonus;
-            lignesStat.push({ label, valeur: (actuel >= 0 ? "+" : "") + actuel + suffixeStat(s.stat), colorer: true });
+            const actuel = s.bonus + niveau * s.increment;
+            const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat);
+            lignesStat.push({ label, valeur: formatEvolution(s.bonus, actuel, formatteur), colorer: true });
         }
         if (s.stat2) {
             const label2 = LABELS_STAT[s.stat2] || s.stat2;
-            lignesStat.push({ label: label2, valeur: (s.bonus2 >= 0 ? "+" : "") + s.bonus2 + suffixeStat(s.stat2), colorer: true });
+            const actuel2 = s.bonus2 + niveau * s.increment2;
+            const formatteur2 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat2);
+            lignesStat.push({ label: label2, valeur: formatEvolution(s.bonus2, actuel2, formatteur2), colorer: true });
         }
         if (s.stat3) {
             const label3 = LABELS_STAT[s.stat3] || s.stat3;
-            lignesStat.push({ label: label3, valeur: (s.bonus3 >= 0 ? "+" : "") + s.bonus3 + suffixeStat(s.stat3), colorer: true });
+            const actuel3 = s.bonus3 + niveau * s.increment3;
+            const formatteur3 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat3);
+            lignesStat.push({ label: label3, valeur: formatEvolution(s.bonus3, actuel3, formatteur3), colorer: true });
         }
 
         const passifTexte = construirePassifs(s, niveau, "Bonus").join(" ");
