@@ -64,9 +64,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-icon { max-width: 150px; width: 100%; height: auto; max-height: 120px; object-fit: contain; }
 .carte-icon-emoji { font-size: 64px; line-height: 1; }
 
-.carte-nom-ligne { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; padding-right: 24px; }
+.carte-nom-ligne { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .carte-nom { font-size: 15px; font-weight: 600; }
 .carte-niveau {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
     font-size: 12px; font-weight: 900; color: var(--yellow);
     border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 6px;
     background: rgba(242,194,48,0.12);
@@ -78,7 +79,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-bloc-stats .malus { color: #ff8080; font-weight: 600; }
 
 .stat-ligne { font-size: 13px; margin-bottom: 4px; }
-.stat-ligne .label { color: var(--yellow); font-weight: 700; margin-right: 5px; }
+.stat-ligne .label { color: var(--paper-dim); font-weight: 600; margin-right: 5px; }
 .stat-ligne .valeur-positive { color: #5ddd7a; font-weight: 700; }
 .stat-ligne .valeur-negative { color: #ff6b6b; font-weight: 700; }
 .stat-ligne .valeur-neutre { color: var(--paper); font-weight: 700; }
@@ -423,13 +424,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 const carte = document.createElement('div');
                 carte.className = 'carte ' + rarete + (estEquipe ? ' equipe' : '');
                 carte.innerHTML = `
+                    ${item.niveau > 0 ? `<span class="carte-niveau">+${item.niveau}</span>` : ''}
                     <label class="carte-select">
                         <input type="checkbox" data-numero="${item.numero}" data-slot="${item.slot}" data-hand="${item.hand || ''}">
                     </label>
                     <div class="carte-image-zone">${iconeOuImage(item, 'carte-icon')}</div>
                     <div class="carte-nom-ligne">
                         <span class="carte-nom">${item.nom}</span>
-                        ${item.niveau > 0 ? `<span class="carte-niveau">+${item.niveau}</span>` : ''}
                     </div>
                     ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
                     ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
