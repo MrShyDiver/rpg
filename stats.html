@@ -163,6 +163,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         totalPower: lireChamp(3),
         rangPoints: lireChamp(3),
         totalPoints: lireChamp(3),
+        protectionsActives: lireChamp(2),
         // Ceux-ci restent NON compressés — cumulatifs, sans plafond raisonnable dans le temps
         // (et les points peuvent être négatifs).
         degatsInfliges: parseInt(params.get('dgi')) || 0,
@@ -228,6 +229,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 <div class="stat-carte"><div class="stat-label">Plus gros coup</div><div class="stat-valeur">${sc.plusGrosCoup}</div></div>
                 <div class="stat-carte"><div class="stat-label">Série actuelle</div><div class="stat-valeur">${sc.serieActuelle}</div></div>
                 <div class="stat-carte"><div class="stat-label">Record personnel</div><div class="stat-valeur">${sc.serieRecord}</div></div>
+                <div class="stat-carte"><div class="stat-label">Protections actives</div><div class="stat-valeur">${sc.protectionsActives}</div></div>
             </div>
             <div class="stats-grille">
                 <div class="stat-carte stat-texte"><div class="stat-label">Arme préférée</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.armePreferee)}</div></div>
