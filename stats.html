@@ -67,7 +67,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stat-spd { border-left-color: #FFCC00; }
 .stat-spd .stat-valeur { color: #FFCC00; }
 .stat-protection { border-left-color: #f2c230; }
-.stat-protection .stat-sous { display: block; margin-top: 4px; line-height: 1.35; }
+.info-bulle { position: relative; display: inline-block; margin-left: 4px; }
+.info-icone {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--paper-dim);
+    color: var(--paper-dim); font-size: 11px; font-style: italic; font-weight: 700;
+    cursor: help; vertical-align: middle;
+}
+.info-texte {
+    display: none; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%);
+    background: #1a1a1c; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+    font-size: 12px; font-weight: 500; color: var(--paper); line-height: 1.4;
+    width: 190px; text-align: left; z-index: 10; box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+    text-transform: none; letter-spacing: normal;
+}
+.info-bulle:hover .info-texte, .info-bulle:focus .info-texte { display: block; }
 /* PowerLevel/rang et points/rang de points utilisent désormais un dégradé DYNAMIQUE par
    percentile (voir couleurPercentile en JS) plutôt qu'une couleur fixe — plus de classe CSS ici. */
 
@@ -233,11 +247,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             <div class="stats-grille">
                 <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">${Math.round(sp.powerLevel)} <span class="stat-sous">(#${sc.rangPower}/${sc.totalPower})</span></div></div>
                 <div class="stat-carte stat-atk"><div class="stat-label">ATK</div><div class="stat-valeur">${Math.round(sp.atk)}</div></div>
-                <div class="stat-carte stat-pv"><div class="stat-label">PV</div><div class="stat-valeur">${pvAffiche} <span class="stat-sous">(pool ${Math.round(sp.pvPool)} PDV)</span></div></div>
+                <div class="stat-carte stat-pv"><div class="stat-label">PV</div><div class="stat-valeur">${pvAffiche} <span class="stat-sous">(${Math.round(sp.pvPool)} PDV)</span></div></div>
                 <div class="stat-carte stat-def"><div class="stat-label">DEF</div><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div></div>
-                <div class="stat-carte stat-protection"><div class="stat-label">Protections actives</div><div class="stat-valeur">${sc.protectionsActives}</div><div class="stat-sous">Réduit les dégâts de 20% pour un combat et consomme une protection</div></div>
+                <div class="stat-carte stat-protection"><div class="stat-label">Protections actives</div><div class="stat-valeur">${sc.protectionsActives} <span class="info-bulle" tabindex="0"><span class="info-icone">i</span><span class="info-texte">Réduit les dégâts de 20% pour un combat et consomme une protection</span></span></div></div>
                 <div class="stat-carte stat-luck"><div class="stat-label">LUCK</div><div class="stat-valeur">${Math.round(sp.luck)} <span class="stat-sous">(${sp.crit}% crit)</span></div></div>
-                <div class="stat-carte stat-spd"><div class="stat-label">Vitesse</div><div class="stat-valeur">${Math.round(sp.spd)}</div></div>
+                <div class="stat-carte stat-spd"><div class="stat-label">Speed</div><div class="stat-valeur">${Math.round(sp.spd)}</div></div>
             </div>
             <div class="titre-section titre-section-petit">Classement</div>
             <div class="stats-grille">
