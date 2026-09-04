@@ -78,10 +78,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     display: none; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%);
     background: #1a1a1c; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
     font-size: 12px; font-weight: 500; color: var(--paper); line-height: 1.4;
-    width: 190px; text-align: left; z-index: 10; box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+    width: 190px; max-width: 70vw; text-align: left; z-index: 10; box-shadow: 0 4px 14px rgba(0,0,0,0.6);
     text-transform: none; letter-spacing: normal;
 }
-.info-bulle:hover .info-texte, .info-bulle:focus .info-texte { display: block; }
+.info-texte.visible { display: block; }
 /* PowerLevel/rang et points/rang de points utilisent désormais un dégradé DYNAMIQUE par
    percentile (voir couleurPercentile en JS) plutôt qu'une couleur fixe — plus de classe CSS ici. */
 
@@ -281,6 +281,49 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             </div>
         `;
     }
+
+    // Gestion de l'infobulle "i" (protections actives, etc.) — souris (survol) ET tactile (tap),
+    // avec repositionnement automatique si elle déborderait de l'écran (surtout sur mobile, où
+    // les cases sont étroites et proches du bord).
+    function repositionnerInfobulle(icone) {
+        const bulle = icone.parentElement.querySelector('.info-texte');
+        if (!bulle) return;
+        bulle.style.transform = 'translateX(-50%)';
+        const marge = 8;
+        const rect = bulle.getBoundingClientRect();
+        if (rect.left < marge) {
+            bulle.style.transform = `translateX(calc(-50% + ${marge - rect.left}px))`;
+        } else if (rect.right > window.innerWidth - marge) {
+            bulle.style.transform = `translateX(calc(-50% - ${rect.right - (window.innerWidth - marge)}px))`;
+        }
+    }
+    function ouvrirInfobulle(icone) {
+        document.querySelectorAll('.info-texte.visible').forEach(b => {
+            if (b !== icone.parentElement.querySelector('.info-texte')) b.classList.remove('visible');
+        });
+        const bulle = icone.parentElement.querySelector('.info-texte');
+        bulle.classList.add('visible');
+        repositionnerInfobulle(icone);
+    }
+    document.addEventListener('mouseover', (e) => {
+        const icone = e.target.closest('.info-icone');
+        if (icone) ouvrirInfobulle(icone);
+    });
+    document.addEventListener('mouseout', (e) => {
+        const icone = e.target.closest('.info-icone');
+        if (icone) icone.parentElement.querySelector('.info-texte').classList.remove('visible');
+    });
+    document.addEventListener('focusin', (e) => {
+        const icone = e.target.closest('.info-icone');
+        if (icone) ouvrirInfobulle(icone);
+    });
+    document.addEventListener('click', (e) => {
+        const icone = e.target.closest('.info-icone');
+        if (icone) { ouvrirInfobulle(icone); e.stopPropagation(); return; }
+        // Un tap n'importe où ailleurs referme les infobulles ouvertes (utile au tactile,
+        // qui n'a pas d'équivalent de "mouseout" quand on touche autre chose).
+        document.querySelectorAll('.info-texte.visible').forEach(b => b.classList.remove('visible'));
+    });
 
     function afficherLoadout() {
         const emplacementsEl = document.getElementById('emplacements');
