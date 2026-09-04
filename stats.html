@@ -46,25 +46,30 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stat-valeur-texte { font-size: 15px; font-weight: 700; color: var(--paper); line-height: 1.3; margin-top: 4px; }
 .stat-sous { font-size: 12px; font-weight: 500; color: var(--paper-dim); }
 .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--paper-dim); }
-.stat-power { border-left-color: #ff8c1a; }
-.stat-power .stat-valeur { color: #ff8c1a; }
 .stat-victoire { border-left-color: #5ddd7a; }
 .stat-defaite { border-left-color: #ff6b6b; }
-.stat-type-lache { border-left-color: #ff6b6b; }
-.stat-type-fairplay { border-left-color: #5ddd7a; }
-.stat-type-valeureux { border-left-color: #f2c230; }
+.stat-type-bully { border-left-color: #ff6b6b; }
+.stat-type-fairplay { border-left-color: #3b82f6; }
+.stat-type-valeureux { border-left-color: #5ddd7a; }
 .stat-type-neutre { border-left-color: #555; }
+.stat-type-bully .stat-valeur-texte { color: #ff6b6b; }
+.stat-type-fairplay .stat-valeur-texte { color: #3b82f6; }
+.stat-type-valeureux .stat-valeur-texte { color: #5ddd7a; }
 /* Couleurs propres à chaque stat de personnage */
-.stat-atk { border-left-color: #ff6b6b; }
-.stat-atk .stat-valeur { color: #ff6b6b; }
-.stat-pv { border-left-color: #5ddd7a; }
-.stat-pv .stat-valeur { color: #5ddd7a; }
-.stat-def { border-left-color: #4a9fd8; }
-.stat-def .stat-valeur { color: #4a9fd8; }
-.stat-luck { border-left-color: #5ddd7a; }
-.stat-luck .stat-valeur { color: #5ddd7a; }
-.stat-spd { border-left-color: #f2c230; }
-.stat-spd .stat-valeur { color: #f2c230; }
+.stat-atk { border-left-color: #ff5e3a; }
+.stat-atk .stat-valeur { color: #ff5e3a; }
+.stat-pv { border-left-color: #ca2972; }
+.stat-pv .stat-valeur { color: #ca2972; }
+.stat-def { border-left-color: #3b82f6; }
+.stat-def .stat-valeur { color: #3b82f6; }
+.stat-luck { border-left-color: #00ffaa; }
+.stat-luck .stat-valeur { color: #00ffaa; }
+.stat-spd { border-left-color: #FFCC00; }
+.stat-spd .stat-valeur { color: #FFCC00; }
+.stat-protection { border-left-color: #f2c230; }
+.stat-protection .stat-sous { display: block; margin-top: 4px; line-height: 1.35; }
+/* PowerLevel/rang et points/rang de points utilisent désormais un dégradé DYNAMIQUE par
+   percentile (voir couleurPercentile en JS) plutôt qu'une couleur fixe — plus de classe CSS ici. */
 
 .vide-message { color: var(--paper-dim); font-style: italic; padding: 20px 0; }
 
@@ -176,10 +181,29 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
         : `<span class="${classeImg}-emoji">${ref.icone}</span>`;
 
+    // Dégradé de couleur par percentile — convention Warcraft Logs / Wowhead, reconnue et très
+    // lisible d'un coup d'œil : gris (bas du classement) -> vert -> bleu -> violet -> orange ->
+    // rose (top 1%) -> or (1er).
+    function couleurPercentile(percentile) {
+        if (percentile >= 100) return '#e5cc80'; // Or — 1er
+        if (percentile >= 99) return '#e268a8';  // Rose — top 1%
+        if (percentile >= 95) return '#ff8000';  // Orange — top 5%
+        if (percentile >= 75) return '#a335ee';  // Violet — top 25%
+        if (percentile >= 50) return '#0070ff';  // Bleu — top 50%
+        if (percentile >= 25) return '#1eff00';  // Vert — top 75%
+        return '#9d9d9d';                        // Gris — le reste
+    }
+
+    // rang=1 (le meilleur) -> percentile 100 ; rang=total (le dernier) -> percentile 0.
+    function percentileDepuisRang(rang, total) {
+        if (total <= 1) return 100;
+        return ((total - rang) / (total - 1)) * 100;
+    }
+
     function typeCombattant(auDessus, dansTranche, enDessous) {
         const total = auDessus + dansTranche + enDessous;
         if (total < 3) return { texte: 'Pas assez de duels', classe: 'neutre' };
-        if (enDessous > dansTranche && enDessous > auDessus) return { texte: 'Lâche', classe: 'lache' };
+        if (enDessous > dansTranche && enDessous > auDessus) return { texte: 'Bully', classe: 'bully' };
         if (auDessus > dansTranche && auDessus > enDessous) return { texte: 'Valeureux', classe: 'valeureux' };
         return { texte: 'Fairplay', classe: 'fairplay' };
     }
@@ -196,6 +220,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const pct = (v) => totalDuels > 0 ? ((v / totalDuels) * 100).toFixed(1) : '0.0';
         const type = typeCombattant(sc.attaquesAuDessus, sc.attaquesDansTranche, sc.attaquesEnDessous);
         const ratioDegats = sc.degatsSubis > 0 ? (sc.degatsInfliges / sc.degatsSubis).toFixed(2) : sc.degatsInfliges > 0 ? '∞' : '0.00';
+        const couleurPower = couleurPercentile(percentileDepuisRang(sc.rangPower, sc.totalPower));
+        const couleurPoints = couleurPercentile(percentileDepuisRang(sc.rangPoints, sc.totalPoints));
         // PV : la base brute (100 avant tout stack) est 10x plus grande que celle des autres
         // stats (ATK/DEF/SPD partent toutes de 10) — on la divise par 10 pour l'affichage
         // PRINCIPAL uniquement, afin de rester visuellement cohérent. Le vrai pool de vie
@@ -205,18 +231,19 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         document.getElementById('zoneStatistiques').innerHTML = `
             <div class="titre-section">Statistiques</div>
             <div class="stats-grille">
-                <div class="stat-carte stat-power"><div class="stat-label">PowerLevel</div><div class="stat-valeur">${Math.round(sp.powerLevel)} <span class="stat-sous">(#${sc.rangPower}/${sc.totalPower})</span></div></div>
+                <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">${Math.round(sp.powerLevel)} <span class="stat-sous">(#${sc.rangPower}/${sc.totalPower})</span></div></div>
                 <div class="stat-carte stat-atk"><div class="stat-label">ATK</div><div class="stat-valeur">${Math.round(sp.atk)}</div></div>
                 <div class="stat-carte stat-pv"><div class="stat-label">PV</div><div class="stat-valeur">${pvAffiche} <span class="stat-sous">(pool ${Math.round(sp.pvPool)} PDV)</span></div></div>
                 <div class="stat-carte stat-def"><div class="stat-label">DEF</div><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div></div>
+                <div class="stat-carte stat-protection"><div class="stat-label">Protections actives</div><div class="stat-valeur">${sc.protectionsActives}</div><div class="stat-sous">Réduit les dégâts de 20% pour un combat et consomme une protection</div></div>
                 <div class="stat-carte stat-luck"><div class="stat-label">LUCK</div><div class="stat-valeur">${Math.round(sp.luck)} <span class="stat-sous">(${sp.crit}% crit)</span></div></div>
                 <div class="stat-carte stat-spd"><div class="stat-label">Vitesse</div><div class="stat-valeur">${Math.round(sp.spd)}</div></div>
             </div>
             <div class="titre-section titre-section-petit">Classement</div>
             <div class="stats-grille">
-                <div class="stat-carte stat-power"><div class="stat-label">Rang PowerLevel</div><div class="stat-valeur">#${sc.rangPower} <span class="stat-sous">/ ${sc.totalPower}</span></div></div>
-                <div class="stat-carte"><div class="stat-label">Points de duel</div><div class="stat-valeur">${sc.points}</div></div>
-                <div class="stat-carte"><div class="stat-label">Rang points</div><div class="stat-valeur">#${sc.rangPoints} <span class="stat-sous">/ ${sc.totalPoints}</span></div></div>
+                <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">Rang PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">#${sc.rangPower} <span class="stat-sous">/ ${sc.totalPower}</span></div></div>
+                <div class="stat-carte" style="border-left-color:${couleurPoints}"><div class="stat-label">Points de duel</div><div class="stat-valeur" style="color:${couleurPoints}">${sc.points}</div></div>
+                <div class="stat-carte" style="border-left-color:${couleurPoints}"><div class="stat-label">Rang points</div><div class="stat-valeur" style="color:${couleurPoints}">#${sc.rangPoints} <span class="stat-sous">/ ${sc.totalPoints}</span></div></div>
             </div>
             <div class="titre-section titre-section-petit">Historique de combat</div>
             <div class="stats-grille">
@@ -229,14 +256,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 <div class="stat-carte"><div class="stat-label">Plus gros coup</div><div class="stat-valeur">${sc.plusGrosCoup}</div></div>
                 <div class="stat-carte"><div class="stat-label">Série actuelle</div><div class="stat-valeur">${sc.serieActuelle}</div></div>
                 <div class="stat-carte"><div class="stat-label">Record personnel</div><div class="stat-valeur">${sc.serieRecord}</div></div>
-                <div class="stat-carte"><div class="stat-label">Protections actives</div><div class="stat-valeur">${sc.protectionsActives}</div></div>
+                <div class="stat-carte stat-texte stat-type-${type.classe}"><div class="stat-label">Type de combattant</div><div class="stat-valeur-texte">${type.texte}</div></div>
             </div>
+            <div class="titre-section titre-section-petit">Équipements préférés</div>
             <div class="stats-grille">
                 <div class="stat-carte stat-texte"><div class="stat-label">Arme préférée</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.armePreferee)}</div></div>
                 <div class="stat-carte stat-texte"><div class="stat-label">Off-hand préféré</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.offhandPrefere)}</div></div>
                 <div class="stat-carte stat-texte"><div class="stat-label">Armure préférée</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.armurePreferee)}</div></div>
                 <div class="stat-carte stat-texte"><div class="stat-label">Stratagème préféré</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.strategemePrefere)}</div></div>
-                <div class="stat-carte stat-texte stat-type-${type.classe}"><div class="stat-label">Type de combattant</div><div class="stat-valeur-texte">${type.texte}</div></div>
             </div>
         `;
     }
