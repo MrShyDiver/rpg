@@ -250,7 +250,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 <div class="stat-carte stat-pv"><div class="stat-label">PV</div><div class="stat-valeur">${pvAffiche} <span class="stat-sous">(${Math.round(sp.pvPool)} PDV)</span></div></div>
                 <div class="stat-carte stat-def"><div class="stat-label">DEF</div><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div></div>
                 <div class="stat-carte stat-protection"><div class="stat-label">Protections actives</div><div class="stat-valeur">${sc.protectionsActives} <span class="info-bulle" tabindex="0"><span class="info-icone">i</span><span class="info-texte">Réduit les dégâts de 20% pour un combat et consomme une protection</span></span></div></div>
-                <div class="stat-carte stat-luck"><div class="stat-label">LUCK</div><div class="stat-valeur">${Math.round(sp.luck)} <span class="stat-sous">(${sp.crit}% crit)</span></div></div>
+                <div class="stat-carte stat-luck"><div class="stat-label">LUCK</div><div class="stat-valeur">${Math.round(sp.luck) + 10} <span class="stat-sous">(${sp.crit}% crit)</span></div></div>
                 <div class="stat-carte stat-spd"><div class="stat-label">Speed</div><div class="stat-valeur">${Math.round(sp.spd)}</div></div>
             </div>
             <div class="titre-section titre-section-petit">Classement</div>
