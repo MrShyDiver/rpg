@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codex des objets</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 30px 20px 60px; }
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.page { max-width: 1100px; margin: 0 auto; }
+
+.entete { padding-bottom: 18px; border-bottom: 3px solid var(--yellow); margin-bottom: 22px; }
+.entete h1 { font-size: 26px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 6px; }
+
+/* ============ BARRE DE RECHERCHE ET FILTRES ============ */
+.barre-controles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; align-items: center; }
+.champ-recherche {
+    flex: 1; min-width: 220px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 14px; color: var(--paper); font-size: 14px; font-family: 'Barlow', sans-serif;
+}
+.champ-recherche::placeholder { color: var(--paper-dim); }
+.champ-recherche:focus { outline: none; border-color: var(--yellow); }
+
+.filtres-rangee { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.filtre-pilule {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--paper-dim); background: var(--bg-panel); border: 1px solid var(--line);
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; transition: all 0.15s ease;
+}
+.filtre-pilule:hover { border-color: #444; color: var(--paper); }
+.filtre-pilule.actif { background: var(--yellow); color: #000; border-color: var(--yellow); }
+.filtre-pilule.actif.r-normal { background: var(--normal); border-color: var(--normal); }
+.filtre-pilule.actif.r-rare { background: var(--rare); border-color: var(--rare); }
+.filtre-pilule.actif.r-legendaire { background: var(--legendaire); border-color: var(--legendaire); }
+.filtre-pilule.actif.r-commun { background: var(--commun); border-color: var(--commun); color: #000; }
+
+.compteur-resultats { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 18px; }
+
+/* ============ CATÉGORIES + GRILLE (repris d'inventaire.html) ============ */
+.categorie { margin-bottom: 34px; }
+.categorie-titre { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.categorie-titre h2 { font-size: 18px; font-weight: 600; }
+.categorie-titre .compte { font-size: 12.5px; color: var(--paper-dim); font-weight: 400; text-transform: none; font-family: 'Barlow', sans-serif; }
+.categorie-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+
+.carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 6px; padding: 16px; position: relative; display: flex; flex-direction: column; }
+.carte.normal { border-left-color: var(--normal); }
+.carte.rare { border-left-color: var(--rare); }
+.carte.legendaire { border-left-color: var(--legendaire); }
+
+.carte-numero {
+    position: absolute; top: 10px; right: 10px; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px; font-weight: 700; color: var(--paper-dim); background: rgba(0,0,0,0.4);
+    border-radius: 4px; padding: 2px 7px;
+}
+.carte-rarete-tag {
+    position: absolute; top: 10px; left: 10px; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    border-radius: 4px; padding: 2px 7px;
+}
+.carte-rarete-tag.commun { background: rgba(141,141,141,0.18); color: var(--commun); }
+.carte-rarete-tag.normal { background: rgba(93,221,122,0.15); color: var(--normal); }
+.carte-rarete-tag.rare { background: rgba(74,159,216,0.15); color: var(--rare); }
+.carte-rarete-tag.legendaire { background: rgba(242,194,48,0.15); color: var(--legendaire); }
+
+.carte-image-zone { display: flex; justify-content: center; margin: 22px 0 12px; }
+.carte-icon { max-width: 130px; width: 100%; height: auto; max-height: 100px; object-fit: contain; }
+.carte-icon-emoji { font-size: 56px; line-height: 1; }
+
+.carte-nom { font-size: 15.5px; font-weight: 600; text-align: center; margin-bottom: 10px; }
+
+.stat-ligne { font-size: 13px; margin-bottom: 4px; }
+.stat-ligne .label { color: var(--paper-dim); font-weight: 600; margin-right: 5px; }
+.stat-ligne .valeur-positive { color: #5ddd7a; font-weight: 700; }
+.stat-ligne .valeur-negative { color: #ff6b6b; font-weight: 700; }
+.stat-ligne .valeur-neutre { color: var(--paper); font-weight: 700; }
+.bloc-passif { font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; }
+.bloc-passif b { color: var(--paper); font-weight: 600; }
+
+.bloc-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a2a2a; }
+.bloc-section:first-of-type { border-top: none; margin-top: 6px; padding-top: 0; }
+.section-titre {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+    color: var(--yellow); opacity: 0.85; margin-bottom: 5px;
+}
+.scaling-grille { display: flex; flex-wrap: wrap; gap: 4px; }
+.scaling-item { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
+.scaling-item .scaling-label { font-size: 9px; color: var(--paper-dim); margin-bottom: 2px; }
+.scaling-item .scaling-lettre { font-size: 15px; font-weight: 800; }
+.scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; }
+.scaling-degats b { color: var(--paper); font-weight: 700; }
+
+.vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
+
+@media (max-width: 640px) {
+    body { padding: 20px 12px 50px; }
+    .entete h1 { font-size: 20px; }
+    .grille { grid-template-columns: 1fr; }
+    .categorie-titre h2 { font-size: 15px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="entete">
+        <h1>LE <span>CODEX</span></h1>
+        <p>Tout l'arsenal disponible dans le jeu, armes, protections et Stratagèmes — indépendamment de ce que tu possèdes.</p>
+    </div>
+
+    <div class="barre-controles">
+        <input type="text" class="champ-recherche" id="champRecherche" placeholder="Rechercher un objet par son nom...">
+    </div>
+    <div class="filtres-rangee" id="filtresRarete"></div>
+    <div class="compteur-resultats" id="compteurResultats"></div>
+
+    <div id="grillePrincipale"></div>
+</div>
+
+<script>
+    const LABELS_CATEGORIE = {
+        weapon_1h: "Armes à une main", weapon_2h: "Armes à deux mains",
+        offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème",
+    };
+    function categorieAffichage(item) {
+        if (item.slot === "weapon") return item.hand === "two_handed" ? "weapon_2h" : "weapon_1h";
+        return item.slot;
+    }
+    const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PDV", esquive: "Esquive", spd: "Vitesse" };
+    const SUFFIXE_STAT = { esquive: "%" };
+    const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
+    const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", legendaire: "Légendaire" };
+
+    const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
+    const STATS_SCALABLES = ["atk", "def", "pv", "spd", "crit"];
+    const LABELS_SCALING = { atk: "ATK", def: "DEF", pv: "PV", spd: "SPD", crit: "CRIT" };
+
+    const GABARITS_PASSIF = {
+        Lifesteal: (v, s) => `Vol de vie : <b>${v}%</b> des dégâts infligés sont rendus en PV.`,
+        PoisonDegats: (v, s) => `Poison : inflige <b>${v}</b> dégâts au tour suivant, puis <b>${Math.max(0, v - 1)}</b>, <b>${Math.max(0, v - 2)}</b>... jusqu'à 0 (s'additionne si réappliqué).`,
+        EtourdissementChance: (v, s) => `<b>${v}%</b> de chance d'étourdir la cible (saute son tour suivant).`,
+        ExecutionBonus: (v, s) => `Sous <b>${s.executionSeuil}%</b> de PV, inflige <b>+${v}%</b> de dégâts.`,
+        Precision: (v, s) => `<b>+${v}</b> précision — réduit l'esquive adverse.`,
+        Blocage: (v, s) => `<b>${v}%</b> de chance de bloquer, réduit alors les dégâts de <b>${s.blocageReduction}%</b>.`,
+        Reflection: (v, s) => `Renvoie <b>${v}%</b> des dégâts subis à l'attaquant.`,
+        ResistancePoison: (v, s) => `<b>${v}%</b> de résistance au poison.`,
+        Regeneration: (v, s) => `Régénère <b>${v}%</b> des PV max à chaque tour.`,
+        ResistanceCrit: (v, s) => `<b>-${v}</b> points de chance d'être touché par un critique.`,
+        SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
+        SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
+        AntiHealPourcentage: (v, s) => `Réduit les soins reçus par la cible de <b>${v}%</b> pendant <b>${s.antiHealDuree}</b> tours.`,
+        ShieldMontant: (v, s) => `Accorde un bouclier de <b>${v} PV</b> en début de combat.`,
+        RageBonusMax: (v, s) => `Dégâts jusqu'à <b>+${v}%</b> quand tes PV descendent vers <b>${s.rageSeuilMin}%</b>.`,
+        MarqueDegatsPourcentage: (v, s) => `Marque la cible touchée : <b>+${v}%</b> dégâts reçus pendant <b>${s.marqueDuree}</b> tours.`,
+        ParadeChance: (v, s) => `<b>${v}%</b> de chance d'annuler un coup reçu et de riposter immédiatement.`,
+        TenaciteChance: (v, s) => `<b>${v}%</b> de chance de résister à un étourdissement.`,
+        DernierSouffleActif: () => `Une fois par combat, survit à <b>1 PV</b> au lieu de mourir.`,
+        FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
+    };
+    const CHAMP_PAR_STAT_PRINCIPALE = {
+        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
+        ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
+        ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit",
+        SoinDirect: "soinDirect", SaignementDegats: "saignementDegats",
+        AntiHealPourcentage: "antiHealPourcentage", ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax",
+        MarqueDegatsPourcentage: "marqueDegatsPourcentage", ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance",
+        DernierSouffleActif: "dernierSouffleActif", FrenesieBonusSpd: "frenesieBonusSpd",
+    };
+
+    const iconeOuImage = (ref, classeImg) => ref.image
+        ? `<img src="${ref.image}" alt="" class="${classeImg}">`
+        : `<span class="${classeImg}-emoji">${ref.icone}</span>`;
+
+    // Toutes ces fonctions de construction de carte sont IDENTIQUES à inventaire.html — le codex
+    // affiche simplement l'objet à son état de BASE (niveau 0, jamais d'évolution par doublon,
+    // puisqu'il ne s'agit pas d'un inventaire personnel).
+    function construirePassifs(s, exclureChamp, exclusionsSupplementaires) {
+        const passifs = [];
+        const exclusions = new Set([exclureChamp, ...(exclusionsSupplementaires || [])]);
+        for (const nomStat in CHAMP_PAR_STAT_PRINCIPALE) {
+            if (exclusions.has(nomStat)) continue;
+            const champ = CHAMP_PAR_STAT_PRINCIPALE[nomStat];
+            const valeur = s[champ];
+            const estActif = typeof valeur === 'boolean' ? valeur : valeur > 0;
+            if (!estActif) continue;
+            passifs.push(GABARITS_PASSIF[nomStat](valeur, s));
+        }
+        return passifs;
+    }
+
+    function construireScaling(s) {
+        if (!s.scaling1Stat) return null;
+        const badges = STATS_SCALABLES.map(stat => {
+            let lettre = null;
+            if (s.scaling1Stat === stat) lettre = s.scaling1Lettre;
+            else if (s.scaling2Stat === stat) lettre = s.scaling2Lettre;
+            const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
+            return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
+        }).join("");
+        const ligneDegats = `<div class="scaling-degats">Dégâts : <b>${Math.round(s.baseDegatsMin)} - ${Math.round(s.baseDegatsMax)}</b></div>`;
+        return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
+    }
+
+    function construireDetails(s, estStrategeme) {
+        if (s.soinDirect > 0) {
+            const lignesStat = [{ label: "Montant soigné", valeur: s.soinDirect, colorer: false }];
+            if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
+            if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
+            return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, "SoinDirect").join(" ") };
+        }
+
+        if (estStrategeme) {
+            const lignesStat = [];
+            if (s.degatsDirects > 0) {
+                const coups = s.coupsParUsage > 1 ? ` x ${s.coupsParUsage}` : "";
+                lignesStat.push({ label: "Dégâts", valeur: s.degatsDirects + coups, colorer: false });
+            }
+            if (s.poisonDegats > 0) lignesStat.push({ label: "Poison", valeur: s.poisonDegats + " stacks", colorer: false });
+            if (s.shieldMontant > 0) lignesStat.push({ label: "Bouclier", valeur: s.shieldMontant, colorer: false });
+            if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
+            if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
+
+            const passifs = construirePassifs(s, "DegatsDirects", ["ShieldMontant"]);
+            if (s.penetration > 0) passifs.push(`Pénétration : <b>${s.penetration}%</b>`);
+            if (s.delaiTours > 0) passifs.push(`Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.`);
+            return { scalingHtml: null, lignesStat, passifTexte: passifs.join(" ") };
+        }
+
+        const lignesStat = [];
+        if (s.stat) {
+            const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat);
+            lignesStat.push({ label: LABELS_STAT[s.stat] || s.stat, valeur: formatteur(s.bonus), colorer: true });
+        }
+        if (s.stat2) {
+            const formatteur2 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat2);
+            lignesStat.push({ label: LABELS_STAT[s.stat2] || s.stat2, valeur: formatteur2(s.bonus2), colorer: true });
+        }
+        if (s.stat3) {
+            const formatteur3 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat3);
+            lignesStat.push({ label: LABELS_STAT[s.stat3] || s.stat3, valeur: formatteur3(s.bonus3), colorer: true });
+        }
+
+        const passifTexte = construirePassifs(s, "Bonus").join(" ");
+        return { scalingHtml: construireScaling(s), lignesStat, passifTexte };
+    }
+
+    function rendreLigneStat({ label, valeur, colorer }) {
+        let classe = 'valeur-neutre';
+        if (colorer) classe = parseFloat(valeur) < 0 ? 'valeur-negative' : 'valeur-positive';
+        return `<div class="stat-ligne"><span class="label">${label}</span><span class="${classe}">${valeur}</span></div>`;
+    }
+
+    function construireCarte(numero, item) {
+        const rarete = item.rarete || 'commun';
+        const estStrategeme = item.slot === 'strategeme';
+        const { scalingHtml, lignesStat, passifTexte } = construireDetails(item, estStrategeme);
+        return `
+            <div class="carte ${rarete}" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
+                <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
+                <span class="carte-numero">N°${numero}</span>
+                <div class="carte-image-zone">${iconeOuImage(item, 'carte-icon')}</div>
+                <div class="carte-nom">${item.nom}</div>
+                ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
+                ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
+                ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
+            </div>
+        `;
+    }
+
+    let STATS = {};
+    let raretesDisponibles = [];
+    let raretesActives = new Set();
+    let texteRecherche = '';
+
+    function appliquerFiltres() {
+        document.querySelectorAll('.carte').forEach(carte => {
+            const correspondNom = carte.dataset.nom.includes(texteRecherche);
+            const correspondRarete = raretesActives.size === 0 || raretesActives.has(carte.dataset.rarete);
+            carte.style.display = (correspondNom && correspondRarete) ? '' : 'none';
+        });
+        document.querySelectorAll('.categorie').forEach(cat => {
+            const aUneCarteVisible = Array.from(cat.querySelectorAll('.carte')).some(c => c.style.display !== 'none');
+            cat.style.display = aUneCarteVisible ? '' : 'none';
+        });
+        const totalVisible = Array.from(document.querySelectorAll('.carte')).filter(c => c.style.display !== 'none').length;
+        const totalGeneral = document.querySelectorAll('.carte').length;
+        document.getElementById('compteurResultats').textContent = `${totalVisible} / ${totalGeneral} objet(s) affiché(s)`;
+    }
+
+    function construirePage() {
+        const parCategorie = { weapon_1h: [], weapon_2h: [], offhand: [], torso: [], strategeme: [] };
+        raretesDisponibles = [];
+        for (const numero in STATS) {
+            const item = STATS[numero];
+            const cat = categorieAffichage(item);
+            if (!parCategorie[cat]) continue;
+            parCategorie[cat].push({ numero, item });
+            const rarete = item.rarete || 'commun';
+            if (!raretesDisponibles.includes(rarete)) raretesDisponibles.push(rarete);
+        }
+
+        const ordreRarete = ['commun', 'normal', 'rare', 'legendaire'];
+        raretesDisponibles.sort((a, b) => ordreRarete.indexOf(a) - ordreRarete.indexOf(b));
+
+        const filtresEl = document.getElementById('filtresRarete');
+        filtresEl.innerHTML = `<div class="filtre-pilule actif" data-rarete="tous">Toutes les raretés</div>`
+            + raretesDisponibles.map(r => `<div class="filtre-pilule r-${r}" data-rarete="${r}">${LABELS_RARETE[r] || r}</div>`).join('');
+
+        filtresEl.querySelectorAll('.filtre-pilule').forEach(pilule => {
+            pilule.addEventListener('click', () => {
+                const rarete = pilule.dataset.rarete;
+                if (rarete === 'tous') {
+                    raretesActives.clear();
+                    filtresEl.querySelectorAll('.filtre-pilule').forEach(p => p.classList.remove('actif'));
+                    pilule.classList.add('actif');
+                } else {
+                    filtresEl.querySelector('[data-rarete="tous"]').classList.remove('actif');
+                    if (raretesActives.has(rarete)) { raretesActives.delete(rarete); pilule.classList.remove('actif'); }
+                    else { raretesActives.add(rarete); pilule.classList.add('actif'); }
+                    if (raretesActives.size === 0) filtresEl.querySelector('[data-rarete="tous"]').classList.add('actif');
+                }
+                appliquerFiltres();
+            });
+        });
+
+        const conteneur = document.getElementById('grillePrincipale');
+        let html = '';
+        Object.keys(LABELS_CATEGORIE).forEach(cat => {
+            const items = parCategorie[cat];
+            if (items.length === 0) return;
+            items.sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+            html += `
+                <div class="categorie">
+                    <div class="categorie-titre"><h2>${LABELS_CATEGORIE[cat]}</h2><span class="compte">${items.length}</span></div>
+                    <div class="grille">${items.map(({ numero, item }) => construireCarte(numero, item)).join('')}</div>
+                </div>
+            `;
+        });
+        conteneur.innerHTML = html || '<div class="vide-message">Aucun objet dans le catalogue pour le moment.</div>';
+        appliquerFiltres();
+    }
+
+    document.getElementById('champRecherche').addEventListener('input', (e) => {
+        texteRecherche = e.target.value.trim().toLowerCase();
+        appliquerFiltres();
+    });
+
+    fetch('catalogue_stats.json?v=' + Date.now())
+        .then(r => r.json())
+        .then(data => {
+            STATS = data;
+            try {
+                construirePage();
+            } catch (erreur) {
+                console.error('Erreur pendant la construction du codex :', erreur);
+                document.getElementById('grillePrincipale').innerHTML =
+                    '<div class="vide-message">catalogue_stats.json a bien été chargé, mais une erreur est survenue pendant l\'affichage : ' + erreur.message + ' (détail dans la console, F12).</div>';
+            }
+        })
+        .catch((erreur) => {
+            console.error('Erreur de chargement de catalogue_stats.json :', erreur);
+            document.getElementById('grillePrincipale').innerHTML =
+                '<div class="vide-message">Impossible de charger catalogue_stats.json — vérifie qu\'il est bien présent à côté de cette page.</div>';
+        });
+</script>
+</body>
+</html>
