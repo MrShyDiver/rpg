@@ -37,7 +37,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 }
 
 .emplacements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 10px; }
-.emplacement { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; text-align: center; }
+.emplacement { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; text-align: center; position: relative; }
+.emplacement-niveau {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    font-size: 11px; font-weight: 900; color: var(--yellow);
+    border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 5px;
+    background: rgba(242,194,48,0.12);
+}
 .emplacement .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1.5px; color: var(--paper-dim); text-transform: uppercase; margin-bottom: 8px; }
 .emplacement .icone { font-size: 28px; margin-bottom: 6px; }
 .icone-img { width: 44px; height: 44px; object-fit: contain; }
@@ -378,9 +384,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         Object.keys(LABELS_SLOT).forEach(slot => {
             const numero = equipeParSlot[slot];
             const ref = numero > 0 ? STATS[numero] : null;
+            const possede = ref ? possedesParam.find(p => p.numero === numero) : null;
+            const niveau = possede ? possede.niveau : 0;
             const div = document.createElement('div');
             div.className = 'emplacement' + (ref ? '' : ' vide');
-            div.innerHTML = `<div class="label">${LABELS_SLOT[slot]}</div>
+            div.innerHTML = `${niveau > 0 ? `<span class="emplacement-niveau">+${niveau}</span>` : ''}
+                              <div class="label">${LABELS_SLOT[slot]}</div>
                               <div class="icone">${ref ? iconeOuImage(ref, 'icone-img') : '—'}</div>
                               <div class="nom">${ref ? ref.nom : 'Aucun'}</div>`;
             emplacementsEl.appendChild(div);
