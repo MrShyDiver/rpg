@@ -128,7 +128,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 { id: 'powerlevel', titre: 'PowerLevel', sous: 'Le score de combat global', valeur: j => j.stats?.powerLevel, format: v => Math.round(v) },
                 { id: 'supercredits', titre: 'Super Crédits gagnés en combat', sous: 'Cumul des points de duel', valeur: j => j.classement?.points, format: v => v },
                 { id: 'total-objets', titre: 'Objets possédés', sous: "Taille de l'arsenal", valeur: j => j.inventaire?.length, format: v => v },
-                { id: 'puissance-arsenal', titre: "Puissance de l'arsenal", sous: 'Rare = 500 · Normal = 250 · Commun = 100 · Légendaire = 1000, par objet possédé (peu importe son niveau)', valeur: (j, p, STATS) => {
+                { id: 'puissance-arsenal', titre: "Puissance de l'arsenal", sous: 'Rare = 500 pts · Normal = 250 pts · Commun = 100 pts', valeur: (j, p, STATS) => {
                     if (!j.inventaire || j.inventaire.length === 0) return null;
                     return j.inventaire.reduce((somme, item) => {
                         const rarete = STATS[item.numero]?.rarete || 'commun';
