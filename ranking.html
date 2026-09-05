@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classements</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --or: #e5cc80; --argent: #c7cdd6; --bronze: #cd8b5c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 28px 18px 60px; }
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.page { max-width: 1040px; margin: 0 auto; }
+
+.entete { padding-bottom: 18px; border-bottom: 3px solid var(--yellow); margin-bottom: 22px; }
+.entete h1 { font-size: 26px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
+
+/* ============ ONGLETS ============ */
+.onglets { display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.onglet {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13.5px; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--paper-dim); background: var(--bg-panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 10px 16px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+.onglet:hover { color: var(--paper); border-color: #444; }
+.onglet.actif { background: var(--yellow); color: #000; border-color: var(--yellow); }
+
+/* ============ ANCRES ============ */
+.ancres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
+.ancre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; color: var(--paper-dim);
+    background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 12px; cursor: pointer; text-decoration: none; transition: all 0.15s ease;
+}
+.ancre:hover { color: var(--yellow); border-color: var(--yellow); }
+
+/* ============ VUES (onglets) ============ */
+.vue { display: none; }
+.vue.actif { display: block; }
+
+/* ============ GRILLE DE CLASSEMENTS ============ */
+.grille-classements { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.classement-carte { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; scroll-margin-top: 16px; }
+.classement-titre { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+.classement-soustitre { font-size: 12px; color: var(--paper-dim); margin-bottom: 14px; }
+
+.ligne-classement {
+    display: flex; align-items: center; gap: 10px; padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.ligne-classement:last-child { border-bottom: none; }
+.rang {
+    font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; width: 22px; text-align: center;
+    color: var(--paper-dim); flex-shrink: 0;
+}
+.rang.or { color: var(--or); font-size: 17px; }
+.rang.argent { color: var(--argent); font-size: 16px; }
+.rang.bronze { color: var(--bronze); font-size: 15px; }
+.avatar-mini { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #222; }
+.pseudo-classement { font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.valeur-classement { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14.5px; color: var(--yellow); white-space: nowrap; flex-shrink: 0; }
+.valeur-classement .unite { font-size: 11px; color: var(--paper-dim); font-weight: 500; margin-left: 3px; font-family: 'Barlow', sans-serif; }
+
+.vide-classement { color: var(--paper-dim); font-style: italic; font-size: 13px; padding: 10px 0; }
+
+@media (max-width: 640px) {
+    body { padding: 20px 12px 50px; }
+    .entete h1 { font-size: 20px; }
+    .grille-classements { grid-template-columns: 1fr; }
+    .onglet { padding: 8px 12px; font-size: 12.5px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="entete">
+        <h1>LES <span>CLASSEMENTS</span></h1>
+        <p>Le top 10 de chaque statistique suivie — mis à jour toutes les 5-10 minutes.</p>
+    </div>
+
+    <div class="onglets" id="onglets"></div>
+    <div class="ancres" id="ancres"></div>
+    <div id="vues"></div>
+</div>
+
+<script>
+    // ==========================================================
+    // DÉFINITION DE TOUS LES CLASSEMENTS — regroupés par onglet. Pour en ajouter un nouveau,
+    // il suffit d'ajouter une entrée ici, rien d'autre à toucher.
+    // "valeur" reçoit (joueur, pseudo, STATS) et renvoie soit un nombre, soit null/undefined si
+    // ce joueur ne doit PAS apparaître dans ce classement précis (ex: 0 duel joué pour un ratio).
+    // "format" reçoit la valeur numérique et renvoie le texte affiché.
+    // ==========================================================
+    const ONGLETS = [
+        {
+            id: 'puissance', nom: 'Puissance',
+            classements: [
+                { id: 'powerlevel', titre: 'PowerLevel', sous: 'Le score de combat global', valeur: j => j.stats?.powerLevel, format: v => Math.round(v) },
+                { id: 'supercredits', titre: 'Super Crédits gagnés en combat', sous: 'Cumul des points de duel', valeur: j => j.classement?.points, format: v => v },
+                { id: 'total-objets', titre: 'Objets possédés', sous: "Taille de l'arsenal", valeur: j => j.inventaire?.length, format: v => v },
+                { id: 'plus-haut-niveau', titre: 'Objet le plus amélioré', sous: 'Le doublon le plus poussé', valeur: j => (j.inventaire && j.inventaire.length) ? Math.max(...j.inventaire.map(i => i.niveau)) : null, format: v => '+' + v },
+                { id: 'lootbox-stock', titre: 'Lootbox en stock', sous: 'Celles et ceux qui accumulent sans ouvrir', valeur: j => j.lootbox, format: v => v },
+            ],
+        },
+        {
+            id: 'combat', nom: 'Combat',
+            classements: [
+                { id: 'victoires', titre: 'Victoires', sous: 'Total, toutes tranches confondues', valeur: j => j.combat?.victoires, format: v => v },
+                { id: 'degats-infliges', titre: 'Dégâts infligés', sous: 'Cumul de tous les duels', valeur: j => j.combat?.degatsInfliges, format: v => v.toLocaleString('fr-FR') },
+                { id: 'degats-subis', titre: 'Dégâts subis', sous: 'Le classement des tanks (ou des sacs de sable)', valeur: j => j.combat?.degatsSubis, format: v => v.toLocaleString('fr-FR') },
+                { id: 'ratio-degats', titre: 'Ratio dégâts', sous: 'Infligés ÷ subis', valeur: j => (j.combat?.degatsSubis > 0) ? j.combat.degatsInfliges / j.combat.degatsSubis : null, format: v => v.toFixed(2) },
+                { id: 'plus-gros-coup', titre: 'Plus gros coup porté', sous: 'En un seul coup', valeur: j => j.combat?.plusGrosCoup, format: v => v },
+                { id: 'ratio-vd', titre: 'Meilleur ratio victoires', sous: 'Minimum 3 duels joués', valeur: j => { const t = (j.combat?.victoires||0)+(j.combat?.defaites||0); return t >= 3 ? (j.combat.victoires / t) * 100 : null; }, format: v => v.toFixed(0) + '%' },
+                { id: 'total-duels', titre: 'Duels joués', sous: 'Victoires + défaites + égalités', valeur: j => (j.combat?.victoires||0)+(j.combat?.defaites||0)+(j.combat?.egalites||0), format: v => v },
+                { id: 'serie-actuelle', titre: 'Série de victoires actuelle', sous: 'En ce moment même', valeur: j => j.combat?.serieActuelle, format: v => v },
+                { id: 'serie-record', titre: 'Meilleure série jamais atteinte', sous: 'Record personnel', valeur: j => j.combat?.serieRecord, format: v => v },
+            ],
+        },
+        {
+            id: 'caractere', nom: 'Caractère',
+            classements: [
+                { id: 'valeureux', titre: 'Les plus Valeureux', sous: 'Victoires valeureuses + défenses exceptionnelles', valeur: j => (j.combat?.categories?.victoireValeureuse||0) + (j.combat?.categories?.defenseExceptionnelle||0), format: v => v },
+                { id: 'bully', titre: 'Les plus grands Bully', sous: 'Victoires déshonorables (viser plus faible et gagner)', valeur: j => j.combat?.categories?.victoireDeshonorable, format: v => v },
+                { id: 'defenseur-improbable', titre: 'Meilleurs défenseurs improbables', sous: 'Battre un attaquant plus fort venu vous chercher', valeur: j => j.combat?.categories?.defenseExceptionnelle, format: v => v },
+                { id: 'indecis', titre: "Les plus grands indécis", sous: "Le plus grand nombre d'égalités", valeur: j => j.combat?.egalites, format: v => v },
+            ],
+        },
+        {
+            id: 'statistiques', nom: 'Statistiques',
+            classements: [
+                { id: 'atk', titre: 'ATK le plus élevé', sous: 'Attaque brute', valeur: j => j.stats?.atk, format: v => Math.round(v) },
+                { id: 'def', titre: 'DEF la plus élevée', sous: 'Défense brute', valeur: j => j.stats?.def, format: v => Math.round(v) },
+                { id: 'pv', titre: 'PV le plus élevé', sous: 'Pool de vie total', valeur: j => j.stats?.pvPool, format: v => Math.round(v) },
+                { id: 'spd', titre: 'SPD la plus élevée', sous: 'Vitesse', valeur: j => j.stats?.spd, format: v => Math.round(v) },
+                { id: 'crit', titre: 'Taux de critique le plus élevé', sous: 'Basé sur le LUCK', valeur: j => j.stats?.crit, format: v => v.toFixed(1) + '%' },
+                { id: 'mitigation', titre: 'Mitigation la plus élevée', sous: 'Réduction de dégâts subis', valeur: j => j.stats?.mitigation, format: v => v.toFixed(1) + '%' },
+            ],
+        },
+    ];
+
+    let JOUEURS = {};
+    let STATS = {};
+
+    function classeRang(rang) {
+        if (rang === 1) return 'or';
+        if (rang === 2) return 'argent';
+        if (rang === 3) return 'bronze';
+        return '';
+    }
+
+    function construireLigne(rang, pseudo, joueur, valeurFormatee) {
+        const avatar = joueur.avatar || '';
+        return `
+            <div class="ligne-classement">
+                <div class="rang ${classeRang(rang)}">${rang}</div>
+                ${avatar ? `<img class="avatar-mini" src="${avatar}" alt="">` : `<div class="avatar-mini"></div>`}
+                <div class="pseudo-classement">${joueur.nomAffichage || pseudo}</div>
+                <div class="valeur-classement">${valeurFormatee}</div>
+            </div>
+        `;
+    }
+
+    function construireCarteClassement(def) {
+        const entrees = [];
+        for (const pseudo in JOUEURS) {
+            const joueur = JOUEURS[pseudo];
+            let v;
+            try { v = def.valeur(joueur, pseudo, STATS); } catch (e) { v = null; }
+            if (v === null || v === undefined || isNaN(v)) continue;
+            entrees.push({ pseudo, joueur, v });
+        }
+        entrees.sort((a, b) => b.v - a.v);
+        const top10 = entrees.slice(0, 10);
+
+        const lignesHtml = top10.length > 0
+            ? top10.map((e, i) => construireLigne(i + 1, e.pseudo, e.joueur, def.format(e.v))).join('')
+            : '<div class="vide-classement">Pas encore assez de données pour ce classement.</div>';
+
+        return `
+            <div class="classement-carte" id="classement-${def.id}">
+                <div class="classement-titre">${def.titre}</div>
+                <div class="classement-soustitre">${def.sous}</div>
+                ${lignesHtml}
+            </div>
+        `;
+    }
+
+    function construirePage() {
+        const ongletsEl = document.getElementById('onglets');
+        const vuesEl = document.getElementById('vues');
+        const ancresEl = document.getElementById('ancres');
+
+        ONGLETS.forEach((onglet, idx) => {
+            const boutonOnglet = document.createElement('div');
+            boutonOnglet.className = 'onglet' + (idx === 0 ? ' actif' : '');
+            boutonOnglet.textContent = onglet.nom;
+            boutonOnglet.dataset.onglet = onglet.id;
+            boutonOnglet.addEventListener('click', () => activerOnglet(onglet.id));
+            ongletsEl.appendChild(boutonOnglet);
+
+            const vue = document.createElement('div');
+            vue.className = 'vue' + (idx === 0 ? ' actif' : '');
+            vue.id = 'vue-' + onglet.id;
+            vue.innerHTML = `<div class="grille-classements">${onglet.classements.map(construireCarteClassement).join('')}</div>`;
+            vuesEl.appendChild(vue);
+        });
+
+        activerOnglet(ONGLETS[0].id);
+    }
+
+    function activerOnglet(idOnglet) {
+        document.querySelectorAll('.onglet').forEach(el => el.classList.toggle('actif', el.dataset.onglet === idOnglet));
+        document.querySelectorAll('.vue').forEach(el => el.classList.toggle('actif', el.id === 'vue-' + idOnglet));
+
+        const onglet = ONGLETS.find(o => o.id === idOnglet);
+        const ancresEl = document.getElementById('ancres');
+        ancresEl.innerHTML = onglet.classements.map(c => `<a class="ancre" href="#classement-${c.id}">${c.titre}</a>`).join('');
+    }
+
+    Promise.all([
+        fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()),
+        fetch('players.json?v=' + Date.now()).then(r => r.json()),
+    ]).then(([catalogue, joueurs]) => {
+        STATS = catalogue;
+        JOUEURS = joueurs;
+        construirePage();
+    }).catch((erreur) => {
+        console.error('Erreur de chargement :', erreur);
+        document.getElementById('vues').innerHTML = '<div class="vide-classement">Impossible de charger les données — vérifie que catalogue_stats.json et players.json sont bien présents à côté de cette page.</div>';
+    });
+</script>
+</body>
+</html>
