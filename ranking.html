@@ -21,6 +21,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .entete h1 span { color: var(--yellow); }
 .entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
 
+/* ============ RECHERCHE D'UNE PERSONNE ============ */
+.barre-recherche-personne { margin-bottom: 18px; }
+.barre-recherche-personne input {
+    width: 100%; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 14px; color: var(--paper); font-size: 14px; font-family: 'Barlow', sans-serif;
+}
+.barre-recherche-personne input::placeholder { color: var(--paper-dim); }
+.barre-recherche-personne input:focus { outline: none; border-color: var(--yellow); }
+
 /* ============ ONGLETS ============ */
 .onglets { display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
 .onglet {
@@ -52,12 +61,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .classement-soustitre { font-size: 12px; color: var(--paper-dim); margin-bottom: 14px; }
 
 .ligne-classement {
-    display: flex; align-items: center; gap: 10px; padding: 7px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; gap: 10px; padding: 7px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 5px;
 }
 .ligne-classement:last-child { border-bottom: none; }
+.ligne-classement.ligne-surlignee { background: rgba(242,194,48,0.12); outline: 1px solid var(--yellow); }
 .rang {
-    font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; width: 22px; text-align: center;
+    font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; width: 26px; text-align: center;
     color: var(--paper-dim); flex-shrink: 0;
 }
 .rang.or { color: var(--or); font-size: 17px; }
@@ -67,6 +77,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .pseudo-classement { font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .valeur-classement { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14.5px; color: var(--yellow); white-space: nowrap; flex-shrink: 0; }
 .valeur-classement .unite { font-size: 11px; color: var(--paper-dim); font-weight: 500; margin-left: 3px; font-family: 'Barlow', sans-serif; }
+.separateur-recherche { text-align: center; color: var(--paper-dim); font-size: 12px; padding: 2px 0; letter-spacing: 3px; }
 
 .vide-classement { color: var(--paper-dim); font-style: italic; font-size: 13px; padding: 10px 0; }
 
@@ -85,6 +96,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         <p>Le top 10 de chaque statistique suivie — mis à jour toutes les 5-10 minutes.</p>
     </div>
 
+    <div class="barre-recherche-personne">
+        <input type="text" id="champRecherchePersonne" placeholder="Rechercher un pseudo — le fait apparaître dans chaque classement même hors du top 10...">
+    </div>
+
     <div class="onglets" id="onglets"></div>
     <div class="ancres" id="ancres"></div>
     <div id="vues"></div>
@@ -98,6 +113,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // ce joueur ne doit PAS apparaître dans ce classement précis (ex: 0 duel joué pour un ratio).
     // "format" reçoit la valeur numérique et renvoie le texte affiché.
     // ==========================================================
+
+    // Poids de "Puissance de l'arsenal" — un objet compte pour ce poids UNE fois (peu importe son
+    // niveau d'amélioration), donc ce classement reflète la RARETÉ de l'arsenal, pas son niveau.
+    // ⚠️ Poids "legendaire" non précisé à la demande — extrapolé en poursuivant la progression
+    // (commun 100 -> normal 250 -> rare 500, environ x2 à chaque palier) à 1000. À corriger ici
+    // si ce n'est pas la valeur voulue.
+    const POIDS_RARETE_ARSENAL = { commun: 100, normal: 250, rare: 500, legendaire: 1000 };
+
     const ONGLETS = [
         {
             id: 'puissance', nom: 'Puissance',
@@ -105,6 +128,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 { id: 'powerlevel', titre: 'PowerLevel', sous: 'Le score de combat global', valeur: j => j.stats?.powerLevel, format: v => Math.round(v) },
                 { id: 'supercredits', titre: 'Super Crédits gagnés en combat', sous: 'Cumul des points de duel', valeur: j => j.classement?.points, format: v => v },
                 { id: 'total-objets', titre: 'Objets possédés', sous: "Taille de l'arsenal", valeur: j => j.inventaire?.length, format: v => v },
+                { id: 'puissance-arsenal', titre: "Puissance de l'arsenal", sous: 'Rare = 500 · Normal = 250 · Commun = 100 · Légendaire = 1000, par objet possédé (peu importe son niveau)', valeur: (j, p, STATS) => {
+                    if (!j.inventaire || j.inventaire.length === 0) return null;
+                    return j.inventaire.reduce((somme, item) => {
+                        const rarete = STATS[item.numero]?.rarete || 'commun';
+                        return somme + (POIDS_RARETE_ARSENAL[rarete] || 0);
+                    }, 0);
+                }, format: v => v.toLocaleString('fr-FR') },
                 { id: 'plus-haut-niveau', titre: 'Objet le plus amélioré', sous: 'Le doublon le plus poussé', valeur: j => (j.inventaire && j.inventaire.length) ? Math.max(...j.inventaire.map(i => i.niveau)) : null, format: v => '+' + v },
                 { id: 'lootbox-stock', titre: 'Lootbox en stock', sous: 'Celles et ceux qui accumulent sans ouvrir', valeur: j => j.lootbox, format: v => v },
             ],
@@ -113,6 +143,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             id: 'combat', nom: 'Combat',
             classements: [
                 { id: 'victoires', titre: 'Victoires', sous: 'Total, toutes tranches confondues', valeur: j => j.combat?.victoires, format: v => v },
+                { id: 'defaites', titre: 'Défaites', sous: 'Total, toutes tranches confondues', valeur: j => j.combat?.defaites, format: v => v },
+                { id: 'egalites', titre: 'Égalités', sous: 'Total, toutes tranches confondues', valeur: j => j.combat?.egalites, format: v => v },
                 { id: 'degats-infliges', titre: 'Dégâts infligés', sous: 'Cumul de tous les duels', valeur: j => j.combat?.degatsInfliges, format: v => v.toLocaleString('fr-FR') },
                 { id: 'degats-subis', titre: 'Dégâts subis', sous: 'Le classement des tanks (ou des sacs de sable)', valeur: j => j.combat?.degatsSubis, format: v => v.toLocaleString('fr-FR') },
                 { id: 'ratio-degats', titre: 'Ratio dégâts', sous: 'Infligés ÷ subis', valeur: j => (j.combat?.degatsSubis > 0) ? j.combat.degatsInfliges / j.combat.degatsSubis : null, format: v => v.toFixed(2) },
@@ -124,12 +156,23 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             ],
         },
         {
-            id: 'caractere', nom: 'Caractère',
+            // Anciennement "Caractère" — renommé pour refléter ce que ces classements mesurent
+            // vraiment : pas un trait de personnalité fixe, mais la MANIÈRE dont chaque victoire,
+            // défaite, défense ou égalité a été obtenue (voir 11_Duel.cs/16_Auto_Battle.cs).
+            id: 'honneur', nom: 'Honneur',
             classements: [
-                { id: 'valeureux', titre: 'Les plus Valeureux', sous: 'Victoires valeureuses + défenses exceptionnelles', valeur: j => (j.combat?.categories?.victoireValeureuse||0) + (j.combat?.categories?.defenseExceptionnelle||0), format: v => v },
-                { id: 'bully', titre: 'Les plus grands Bully', sous: 'Victoires déshonorables (viser plus faible et gagner)', valeur: j => j.combat?.categories?.victoireDeshonorable, format: v => v },
-                { id: 'defenseur-improbable', titre: 'Meilleurs défenseurs improbables', sous: 'Battre un attaquant plus fort venu vous chercher', valeur: j => j.combat?.categories?.defenseExceptionnelle, format: v => v },
-                { id: 'indecis', titre: "Les plus grands indécis", sous: "Le plus grand nombre d'égalités", valeur: j => j.combat?.egalites, format: v => v },
+                { id: 'victoires-valeureuses', titre: 'Victoires valeureuses', sous: 'Victoire remportée contre un adversaire plus fort', valeur: j => j.combat?.categories?.victoireValeureuse, format: v => v },
+                { id: 'victoires-equitables', titre: 'Victoires équitables', sous: 'Victoire dans un combat équilibré', valeur: j => j.combat?.categories?.victoireEquitable, format: v => v },
+                { id: 'victoires-deshonorables', titre: 'Victoires déshonorables', sous: 'Victoire remportée contre un adversaire plus faible (Bully)', valeur: j => j.combat?.categories?.victoireDeshonorable, format: v => v },
+                { id: 'defaites-valeureuses', titre: 'Défaites valeureuses', sous: 'Défaite face à un adversaire plus fort', valeur: j => j.combat?.categories?.defaiteValeureuse, format: v => v },
+                { id: 'defaites-equitables', titre: 'Défaites équitables', sous: 'Défaite dans un combat équilibré', valeur: j => j.combat?.categories?.defaiteEquitable, format: v => v },
+                { id: 'defaites-deshonorables', titre: 'Défaites déshonorables', sous: 'Défaite face à un adversaire plus faible', valeur: j => j.combat?.categories?.defaiteDeshonorable, format: v => v },
+                { id: 'defenses-valeureuses', titre: 'Défenses valeureuses', sous: 'A repoussé un attaquant plus fort venu le chercher', valeur: j => j.combat?.categories?.defenseExceptionnelle, format: v => v },
+                { id: 'defenses-equitables', titre: 'Défenses équitables', sous: 'A repoussé un attaquant à son niveau', valeur: j => j.combat?.categories?.defenseEquitable, format: v => v },
+                { id: 'defenses-deshonorables', titre: 'Défenses déshonorables', sous: 'A battu un attaquant plus faible venu le chercher', valeur: j => j.combat?.categories?.defenseDeshonorable, format: v => v },
+                { id: 'egalites-valeureuses', titre: 'Égalités valeureuses', sous: 'Match nul face à un adversaire plus fort', valeur: j => j.combat?.categories?.egaliteValeureuse, format: v => v },
+                { id: 'egalites-equitables', titre: 'Égalités équitables', sous: 'Match nul dans un combat équilibré', valeur: j => j.combat?.categories?.egaliteEquitable, format: v => v },
+                { id: 'egalites-deshonorables', titre: 'Égalités déshonorables', sous: 'Match nul face à un adversaire plus faible', valeur: j => j.combat?.categories?.egaliteDeshonorable, format: v => v },
             ],
         },
         {
@@ -147,6 +190,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     let JOUEURS = {};
     let STATS = {};
+    let personneRecherchee = '';
 
     function classeRang(rang) {
         if (rang === 1) return 'or';
@@ -155,10 +199,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return '';
     }
 
-    function construireLigne(rang, pseudo, joueur, valeurFormatee) {
+    function construireLigne(rang, pseudo, joueur, valeurFormatee, surligne) {
         const avatar = joueur.avatar || '';
         return `
-            <div class="ligne-classement">
+            <div class="ligne-classement${surligne ? ' ligne-surlignee' : ''}">
                 <div class="rang ${classeRang(rang)}">${rang}</div>
                 ${avatar ? `<img class="avatar-mini" src="${avatar}" alt="">` : `<div class="avatar-mini"></div>`}
                 <div class="pseudo-classement">${joueur.nomAffichage || pseudo}</div>
@@ -179,9 +223,20 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         entrees.sort((a, b) => b.v - a.v);
         const top10 = entrees.slice(0, 10);
 
-        const lignesHtml = top10.length > 0
-            ? top10.map((e, i) => construireLigne(i + 1, e.pseudo, e.joueur, def.format(e.v))).join('')
+        let lignesHtml = top10.length > 0
+            ? top10.map((e, i) => construireLigne(i + 1, e.pseudo, e.joueur, def.format(e.v), e.pseudo.toLowerCase() === personneRecherchee)).join('')
             : '<div class="vide-classement">Pas encore assez de données pour ce classement.</div>';
+
+        // Recherche active ET la personne existe dans CE classement, mais hors du top 10 déjà
+        // affiché : on calcule son vrai rang et on l'ajoute à la suite, séparé visuellement —
+        // pour "la trouver plus rapidement" même quand elle n'est pas dans le haut du classement.
+        if (personneRecherchee) {
+            const indexComplet = entrees.findIndex(e => e.pseudo.toLowerCase() === personneRecherchee);
+            if (indexComplet >= 10) {
+                const e = entrees[indexComplet];
+                lignesHtml += `<div class="separateur-recherche">···</div>` + construireLigne(indexComplet + 1, e.pseudo, e.joueur, def.format(e.v), true);
+            }
+        }
 
         return `
             <div class="classement-carte" id="classement-${def.id}">
@@ -194,9 +249,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     function construirePage() {
         const ongletsEl = document.getElementById('onglets');
-        const vuesEl = document.getElementById('vues');
-        const ancresEl = document.getElementById('ancres');
-
+        ongletsEl.innerHTML = '';
         ONGLETS.forEach((onglet, idx) => {
             const boutonOnglet = document.createElement('div');
             boutonOnglet.className = 'onglet' + (idx === 0 ? ' actif' : '');
@@ -204,25 +257,33 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             boutonOnglet.dataset.onglet = onglet.id;
             boutonOnglet.addEventListener('click', () => activerOnglet(onglet.id));
             ongletsEl.appendChild(boutonOnglet);
-
-            const vue = document.createElement('div');
-            vue.className = 'vue' + (idx === 0 ? ' actif' : '');
-            vue.id = 'vue-' + onglet.id;
-            vue.innerHTML = `<div class="grille-classements">${onglet.classements.map(construireCarteClassement).join('')}</div>`;
-            vuesEl.appendChild(vue);
         });
-
         activerOnglet(ONGLETS[0].id);
     }
 
+    // Reconstruit entièrement l'onglet actif à chaque activation (et à chaque changement de
+    // recherche) — plus simple et plus sûr que de patcher le DOM existant pour n'appliquer que le
+    // surlignage, au prix d'un recalcul qui reste négligeable vu le nombre de joueurs en jeu.
     function activerOnglet(idOnglet) {
         document.querySelectorAll('.onglet').forEach(el => el.classList.toggle('actif', el.dataset.onglet === idOnglet));
-        document.querySelectorAll('.vue').forEach(el => el.classList.toggle('actif', el.id === 'vue-' + idOnglet));
 
         const onglet = ONGLETS.find(o => o.id === idOnglet);
+        document.querySelectorAll('.vue').forEach(el => el.remove());
+        const vue = document.createElement('div');
+        vue.className = 'vue actif';
+        vue.id = 'vue-' + idOnglet;
+        vue.innerHTML = `<div class="grille-classements">${onglet.classements.map(construireCarteClassement).join('')}</div>`;
+        document.getElementById('vues').appendChild(vue);
+
         const ancresEl = document.getElementById('ancres');
         ancresEl.innerHTML = onglet.classements.map(c => `<a class="ancre" href="#classement-${c.id}">${c.titre}</a>`).join('');
     }
+
+    document.getElementById('champRecherchePersonne').addEventListener('input', (e) => {
+        personneRecherchee = e.target.value.trim().toLowerCase();
+        const idActif = document.querySelector('.onglet.actif').dataset.onglet;
+        activerOnglet(idActif);
+    });
 
     Promise.all([
         fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()),
