@@ -82,8 +82,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     text-transform: none; letter-spacing: normal;
 }
 .info-texte.visible { display: block; }
-/* PowerLevel/rang et points/rang de points utilisent désormais un dégradé DYNAMIQUE par
-   percentile (voir couleurPercentile en JS) plutôt qu'une couleur fixe — plus de classe CSS ici. */
 
 .vide-message { color: var(--paper-dim); font-style: italic; padding: 20px 0; }
 
@@ -102,8 +100,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     <div class="entete">
         <img class="avatar" id="avatarViewer" src="" alt="" style="display:none;">
         <div class="entete-texte">
-            <h1 id="titreInventaire">MES <span>STATISTIQUES</span></h1>
-            <p>PowerLevel, stats de combat et objets préférés — pour l'inventaire complet, utilise <span style="color:var(--yellow)">!inventaire</span>.</p>
+            <h1 id="titreInventaire">STATISTIQUES</h1>
+            <p>PowerLevel, stats de combat et objets préférés — pour l'inventaire complet, utilise <span style="color:var(--yellow)">!inventaire</span>. Mis à jour toutes les 5-10 minutes.</p>
         </div>
     </div>
     <div id="zoneStatistiques"></div>
@@ -113,83 +111,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
 <script>
     const params = new URLSearchParams(window.location.search);
-    const depuisBase36 = (str) => parseInt(str, 36) || 0;
-
-    const nomViewer = params.get('n') ? decodeURIComponent(params.get('n')) : null;
-    const fragmentPhoto = params.get('p') ? decodeURIComponent(params.get('p')) : '';
-    // Le C# retire 3 segments FIXES avant transmission pour raccourcir le lien : le domaine,
-    // "jtv_user_pictures/" et "profile_image-" — les 3 sont systématiquement présents dans une
-    // URL de photo de profil Twitch par défaut. On les reconstitue ici à l'identique.
-    let photoViewer = '';
-    if (fragmentPhoto) {
-        const avecProfileImage = fragmentPhoto.length > 37
-            ? fragmentPhoto.slice(0, 37) + 'profile_image-' + fragmentPhoto.slice(37)
-            : fragmentPhoto;
-        photoViewer = 'https://static-cdn.jtvnw.net/jtv_user_pictures/' + avecProfileImage;
-    }
-    if (nomViewer) {
-        document.getElementById('titreInventaire').innerHTML = `<span>${nomViewer}</span> — STATISTIQUES`;
-    }
-    if (photoViewer) {
-        const img = document.getElementById('avatarViewer');
-        img.src = photoViewer;
-        img.style.display = 'block';
-    }
-
-    const equipStr = params.get('e') || '00000000';
-    const numEquipArme = depuisBase36(equipStr.slice(0, 2));
-    const numEquipOffhand = depuisBase36(equipStr.slice(2, 4));
-    const numEquipTorso = depuisBase36(equipStr.slice(4, 6));
-    const numEquipStrat = depuisBase36(equipStr.slice(6, 8));
-    const equipeParSlot = { weapon: numEquipArme, offhand: numEquipOffhand, torso: numEquipTorso, strategeme: numEquipStrat };
-    const LABELS_SLOT = { weapon: "Arme", offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème" };
-
-    // Décodage du bloc compact "st" : stats à croissance BORNÉE, empaquetées en base36 à largeur
-    // fixe côté C# — l'ORDRE et les LARGEURS ci-dessous doivent rester identiques à
-    // 29_Stats_Lien.cs (EnBase36Largeur), sinon le décodage lit n'importe quoi.
-    const stPack = params.get('st') || '';
-    let stPos = 0;
-    function lireChamp(largeur) {
-        const v = depuisBase36(stPack.slice(stPos, stPos + largeur));
-        stPos += largeur;
-        return v;
-    }
-    const statsPerso = {
-        powerLevel: lireChamp(3),
-        atk: lireChamp(3),
-        def: lireChamp(3),
-        luck: lireChamp(3),
-        spd: lireChamp(3),
-        pvBase: lireChamp(3),
-        pvPool: lireChamp(3),
-        mitigation: lireChamp(2) / 10,
-        crit: lireChamp(2) / 10,
-    };
-    const statsCombat = {
-        victoires: lireChamp(3),
-        defaites: lireChamp(3),
-        egalites: lireChamp(3),
-        serieActuelle: lireChamp(3),
-        serieRecord: lireChamp(3),
-        armePreferee: lireChamp(2),
-        offhandPrefere: lireChamp(2),
-        armurePreferee: lireChamp(2),
-        strategemePrefere: lireChamp(2),
-        attaquesAuDessus: lireChamp(3),
-        attaquesDansTranche: lireChamp(3),
-        attaquesEnDessous: lireChamp(3),
-        rangPower: lireChamp(3),
-        totalPower: lireChamp(3),
-        rangPoints: lireChamp(3),
-        totalPoints: lireChamp(3),
-        protectionsActives: lireChamp(2),
-        // Ceux-ci restent NON compressés — cumulatifs, sans plafond raisonnable dans le temps
-        // (et les points peuvent être négatifs).
-        degatsInfliges: parseInt(params.get('dgi')) || 0,
-        degatsSubis: parseInt(params.get('dgs')) || 0,
-        plusGrosCoup: parseInt(params.get('pgc')) || 0,
-        points: parseInt(params.get('pts')) || 0,
-    };
+    const pseudo = params.get('user');
+    const LABELS_SLOT = { arme: "Arme", offhand: "Off-hand", armure: "Armure", strategeme: "Stratagème" };
 
     const iconeOuImage = (ref, classeImg) => ref.image
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
@@ -228,63 +151,70 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return s ? s.nom : '—';
     }
 
-    function afficherStatistiques() {
-        const sp = statsPerso, sc = statsCombat;
-        const totalDuels = sc.victoires + sc.defaites + sc.egalites;
+    function afficherStatistiques(joueur) {
+        const sp = joueur.stats, cl = joueur.classement, co = joueur.combat, cat = co.categories;
+        const totalDuels = co.victoires + co.defaites + co.egalites;
         const pct = (v) => totalDuels > 0 ? ((v / totalDuels) * 100).toFixed(1) : '0.0';
-        const type = typeCombattant(sc.attaquesAuDessus, sc.attaquesDansTranche, sc.attaquesEnDessous);
-        const ratioDegats = sc.degatsSubis > 0 ? (sc.degatsInfliges / sc.degatsSubis).toFixed(2) : sc.degatsInfliges > 0 ? '∞' : '0.00';
-        const couleurPower = couleurPercentile(percentileDepuisRang(sc.rangPower, sc.totalPower));
-        const couleurPoints = couleurPercentile(percentileDepuisRang(sc.rangPoints, sc.totalPoints));
-        // PV : la base brute (100 avant tout stack) est 10x plus grande que celle des autres
-        // stats (ATK/DEF/SPD partent toutes de 10) — on la divise par 10 pour l'affichage
-        // PRINCIPAL uniquement, afin de rester visuellement cohérent. Le vrai pool de vie
-        // (avec bonus d'objets), lui, reste affiché tel quel entre parenthèses.
+        const type = typeCombattant(co.attaquesAuDessus, co.attaquesDansTranche, co.attaquesEnDessous);
+        const ratioDegats = co.degatsSubis > 0 ? (co.degatsInfliges / co.degatsSubis).toFixed(2) : co.degatsInfliges > 0 ? '∞' : '0.00';
+        const couleurPower = couleurPercentile(percentileDepuisRang(cl.rangPower, cl.totalPower));
+        const couleurPoints = couleurPercentile(percentileDepuisRang(cl.rangPoints, cl.totalPoints));
         const pvAffiche = Math.round(sp.pvBase / 10);
 
         document.getElementById('zoneStatistiques').innerHTML = `
             <div class="titre-section">Statistiques</div>
             <div class="stats-grille">
-                <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">${Math.round(sp.powerLevel)} <span class="stat-sous">(#${sc.rangPower}/${sc.totalPower})</span></div></div>
+                <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">${Math.round(sp.powerLevel)} <span class="stat-sous">(#${cl.rangPower}/${cl.totalPower})</span></div></div>
                 <div class="stat-carte stat-atk"><div class="stat-label">ATK</div><div class="stat-valeur">${Math.round(sp.atk)}</div></div>
                 <div class="stat-carte stat-pv"><div class="stat-label">PV</div><div class="stat-valeur">${pvAffiche} <span class="stat-sous">(${Math.round(sp.pvPool)} PDV)</span></div></div>
                 <div class="stat-carte stat-def"><div class="stat-label">DEF</div><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div></div>
-                <div class="stat-carte stat-protection"><div class="stat-label">Protections actives</div><div class="stat-valeur">${sc.protectionsActives} <span class="info-bulle" tabindex="0"><span class="info-icone">i</span><span class="info-texte">Réduit les dégâts de 20% pour un combat et consomme une protection</span></span></div></div>
+                <div class="stat-carte stat-protection"><div class="stat-label">Protections actives</div><div class="stat-valeur">${co.protectionsActives} <span class="info-bulle" tabindex="0"><span class="info-icone">i</span><span class="info-texte">Réduit les dégâts de 20% pour un combat et consomme une protection</span></span></div></div>
                 <div class="stat-carte stat-luck"><div class="stat-label">LUCK</div><div class="stat-valeur">${Math.round(sp.luck) + 10} <span class="stat-sous">(${sp.crit}% crit)</span></div></div>
                 <div class="stat-carte stat-spd"><div class="stat-label">Speed</div><div class="stat-valeur">${Math.round(sp.spd)}</div></div>
             </div>
             <div class="titre-section titre-section-petit">Classement</div>
             <div class="stats-grille">
-                <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">Rang PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">#${sc.rangPower} <span class="stat-sous">/ ${sc.totalPower}</span></div></div>
-                <div class="stat-carte" style="border-left-color:${couleurPoints}"><div class="stat-label">Points de duel</div><div class="stat-valeur" style="color:${couleurPoints}">${sc.points}</div></div>
-                <div class="stat-carte" style="border-left-color:${couleurPoints}"><div class="stat-label">Rang points</div><div class="stat-valeur" style="color:${couleurPoints}">#${sc.rangPoints} <span class="stat-sous">/ ${sc.totalPoints}</span></div></div>
+                <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">Rang PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">#${cl.rangPower} <span class="stat-sous">/ ${cl.totalPower}</span></div></div>
+                <div class="stat-carte" style="border-left-color:${couleurPoints}"><div class="stat-label">Points de duel</div><div class="stat-valeur" style="color:${couleurPoints}">${cl.points}</div></div>
+                <div class="stat-carte" style="border-left-color:${couleurPoints}"><div class="stat-label">Rang points</div><div class="stat-valeur" style="color:${couleurPoints}">#${cl.rangPoints} <span class="stat-sous">/ ${cl.totalPoints}</span></div></div>
             </div>
             <div class="titre-section titre-section-petit">Historique de combat</div>
             <div class="stats-grille">
-                <div class="stat-carte stat-victoire"><div class="stat-label">Victoires</div><div class="stat-valeur">${sc.victoires} <span class="stat-sous">(${pct(sc.victoires)}%)</span></div></div>
-                <div class="stat-carte stat-defaite"><div class="stat-label">Défaites</div><div class="stat-valeur">${sc.defaites} <span class="stat-sous">(${pct(sc.defaites)}%)</span></div></div>
-                <div class="stat-carte"><div class="stat-label">Égalités</div><div class="stat-valeur">${sc.egalites} <span class="stat-sous">(${pct(sc.egalites)}%)</span></div></div>
-                <div class="stat-carte"><div class="stat-label">Dégâts infligés</div><div class="stat-valeur">${sc.degatsInfliges}</div></div>
-                <div class="stat-carte"><div class="stat-label">Dégâts subis</div><div class="stat-valeur">${sc.degatsSubis}</div></div>
+                <div class="stat-carte stat-victoire"><div class="stat-label">Victoires</div><div class="stat-valeur">${co.victoires} <span class="stat-sous">(${pct(co.victoires)}%)</span></div></div>
+                <div class="stat-carte stat-defaite"><div class="stat-label">Défaites</div><div class="stat-valeur">${co.defaites} <span class="stat-sous">(${pct(co.defaites)}%)</span></div></div>
+                <div class="stat-carte"><div class="stat-label">Égalités</div><div class="stat-valeur">${co.egalites} <span class="stat-sous">(${pct(co.egalites)}%)</span></div></div>
+                <div class="stat-carte"><div class="stat-label">Dégâts infligés</div><div class="stat-valeur">${co.degatsInfliges}</div></div>
+                <div class="stat-carte"><div class="stat-label">Dégâts subis</div><div class="stat-valeur">${co.degatsSubis}</div></div>
                 <div class="stat-carte"><div class="stat-label">Ratio dégâts</div><div class="stat-valeur">${ratioDegats}</div></div>
-                <div class="stat-carte"><div class="stat-label">Plus gros coup</div><div class="stat-valeur">${sc.plusGrosCoup}</div></div>
-                <div class="stat-carte"><div class="stat-label">Série actuelle</div><div class="stat-valeur">${sc.serieActuelle}</div></div>
-                <div class="stat-carte"><div class="stat-label">Record personnel</div><div class="stat-valeur">${sc.serieRecord}</div></div>
-                <div class="stat-carte stat-texte stat-type-${type.classe}"><div class="stat-label">Type de combattant</div><div class="stat-valeur-texte">${type.texte}</div></div>
+                <div class="stat-carte"><div class="stat-label">Plus gros coup</div><div class="stat-valeur">${co.plusGrosCoup}</div></div>
+                <div class="stat-carte"><div class="stat-label">Série actuelle</div><div class="stat-valeur">${co.serieActuelle}</div></div>
+                <div class="stat-carte"><div class="stat-label">Record personnel</div><div class="stat-valeur">${co.serieRecord}</div></div>
+                <div class="stat-carte stat-texte stat-type-${type.classe}"><div class="stat-label">Type de combattant</div><div class="stat-valeur-texte">${type.texte} <span class="info-bulle" tabindex="0"><span class="info-icone">i</span><span class="info-texte">Calculé sur tes duels CIBLÉS uniquement (hors Auto Battle) : Bully si tu attaques surtout plus faible que toi, Valeureux si tu vises surtout plus fort, Fairplay sinon.</span></span></div></div>
+            </div>
+            <div class="titre-section titre-section-petit">Détail des victoires, défenses et égalités</div>
+            <div class="stats-grille">
+                <div class="stat-carte stat-victoire"><div class="stat-label">Victoire valeureuse</div><div class="stat-valeur">${cat.victoireValeureuse}</div></div>
+                <div class="stat-carte stat-victoire"><div class="stat-label">Victoire équitable</div><div class="stat-valeur">${cat.victoireEquitable}</div></div>
+                <div class="stat-carte stat-victoire"><div class="stat-label">Victoire déshonorable</div><div class="stat-valeur">${cat.victoireDeshonorable}</div></div>
+                <div class="stat-carte stat-defaite"><div class="stat-label">Défense exceptionnelle</div><div class="stat-valeur">${cat.defenseExceptionnelle}</div></div>
+                <div class="stat-carte stat-defaite"><div class="stat-label">Défense équitable</div><div class="stat-valeur">${cat.defenseEquitable}</div></div>
+                <div class="stat-carte stat-defaite"><div class="stat-label">Défense déshonorable</div><div class="stat-valeur">${cat.defenseDeshonorable}</div></div>
+                <div class="stat-carte"><div class="stat-label">Égalité valeureuse</div><div class="stat-valeur">${cat.egaliteValeureuse}</div></div>
+                <div class="stat-carte"><div class="stat-label">Égalité équitable</div><div class="stat-valeur">${cat.egaliteEquitable}</div></div>
+                <div class="stat-carte"><div class="stat-label">Égalité déshonorable</div><div class="stat-valeur">${cat.egaliteDeshonorable}</div></div>
             </div>
             <div class="titre-section titre-section-petit">Équipements préférés</div>
             <div class="stats-grille">
-                <div class="stat-carte stat-texte"><div class="stat-label">Arme préférée</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.armePreferee)}</div></div>
-                <div class="stat-carte stat-texte"><div class="stat-label">Off-hand préféré</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.offhandPrefere)}</div></div>
-                <div class="stat-carte stat-texte"><div class="stat-label">Armure préférée</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.armurePreferee)}</div></div>
-                <div class="stat-carte stat-texte"><div class="stat-label">Stratagème préféré</div><div class="stat-valeur-texte">${nomObjetPrefere(sc.strategemePrefere)}</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-label">Arme préférée</div><div class="stat-valeur-texte">${nomObjetPrefere(joueur.equipementPrefere.arme)}</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-label">Off-hand préféré</div><div class="stat-valeur-texte">${nomObjetPrefere(joueur.equipementPrefere.offhand)}</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-label">Armure préférée</div><div class="stat-valeur-texte">${nomObjetPrefere(joueur.equipementPrefere.armure)}</div></div>
+                <div class="stat-carte stat-texte"><div class="stat-label">Stratagème préféré</div><div class="stat-valeur-texte">${nomObjetPrefere(joueur.equipementPrefere.strategeme)}</div></div>
             </div>
         `;
     }
 
-    // Gestion de l'infobulle "i" (protections actives, etc.) — souris (survol) ET tactile (tap),
-    // avec repositionnement automatique si elle déborderait de l'écran (surtout sur mobile, où
-    // les cases sont étroites et proches du bord).
+    // Gestion de l'infobulle "i" (protections actives, type de combattant...) — souris (survol)
+    // ET tactile (tap), avec repositionnement automatique si elle déborderait de l'écran.
     function repositionnerInfobulle(icone) {
         const bulle = icone.parentElement.querySelector('.info-texte');
         if (!bulle) return;
@@ -320,15 +250,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     document.addEventListener('click', (e) => {
         const icone = e.target.closest('.info-icone');
         if (icone) { ouvrirInfobulle(icone); e.stopPropagation(); return; }
-        // Un tap n'importe où ailleurs referme les infobulles ouvertes (utile au tactile,
-        // qui n'a pas d'équivalent de "mouseout" quand on touche autre chose).
         document.querySelectorAll('.info-texte.visible').forEach(b => b.classList.remove('visible'));
     });
 
-    function afficherLoadout() {
+    function afficherLoadout(joueur) {
         const emplacementsEl = document.getElementById('emplacements');
+        emplacementsEl.innerHTML = '';
         Object.keys(LABELS_SLOT).forEach(slot => {
-            const numero = equipeParSlot[slot];
+            const numero = joueur.loadout[slot];
             const ref = numero > 0 ? STATS[numero] : null;
             const div = document.createElement('div');
             div.className = 'emplacement' + (ref ? '' : ' vide');
@@ -339,26 +268,46 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         });
     }
 
+    function afficherJoueurIntrouvable() {
+        document.getElementById('titreInventaire').innerHTML = pseudo ? `<span>${pseudo}</span> — STATISTIQUES` : 'STATISTIQUES';
+        document.getElementById('zoneStatistiques').innerHTML =
+            '<div class="vide-message">Pas encore de données pour ce joueur — la prochaine synchronisation (toutes les 5 à 10 minutes) les fera apparaître après un premier achat de stat ou un premier combat.</div>';
+    }
+
     let STATS = {};
-    fetch('catalogue_stats.json?v=' + Date.now())
-        .then(r => r.json())
-        .then(data => {
-            STATS = data;
+    if (!pseudo) {
+        afficherJoueurIntrouvable();
+    } else {
+        Promise.all([
+            fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()),
+            fetch('players.json?v=' + Date.now()).then(r => r.json()),
+        ]).then(([catalogue, joueurs]) => {
+            STATS = catalogue;
+            const joueur = joueurs[pseudo];
+            if (!joueur) { afficherJoueurIntrouvable(); return; }
+
+            document.getElementById('titreInventaire').innerHTML = `<span>${joueur.nomAffichage}</span> — STATISTIQUES`;
+            if (joueur.avatar) {
+                const img = document.getElementById('avatarViewer');
+                img.src = joueur.avatar;
+                img.style.display = 'block';
+            }
+
             try {
-                afficherStatistiques();
-                afficherLoadout();
+                afficherStatistiques(joueur);
+                afficherLoadout(joueur);
             } catch (erreurAffichage) {
                 console.error('Erreur pendant l\'affichage des statistiques :', erreurAffichage);
                 document.getElementById('zoneStatistiques').innerHTML =
-                    '<div class="vide-message">catalogue_stats.json a bien été chargé, mais une erreur est survenue pendant l\'affichage : '
+                    '<div class="vide-message">Données chargées, mais une erreur est survenue pendant l\'affichage : '
                     + erreurAffichage.message + ' (détail complet dans la console du navigateur, F12).</div>';
             }
-        })
-        .catch((erreurChargement) => {
-            console.error('Erreur de chargement de catalogue_stats.json :', erreurChargement);
+        }).catch((erreurChargement) => {
+            console.error('Erreur de chargement :', erreurChargement);
             document.getElementById('zoneStatistiques').innerHTML =
-                '<div class="vide-message">Impossible de charger catalogue_stats.json — vérifie qu\'il est bien présent à côté de cette page.</div>';
+                '<div class="vide-message">Impossible de charger catalogue_stats.json ou players.json — vérifie qu\'ils sont bien présents à côté de cette page.</div>';
         });
+    }
 </script>
 </body>
 </html>
