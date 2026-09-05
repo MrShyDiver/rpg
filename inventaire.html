@@ -155,7 +155,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         <img class="avatar" id="avatarViewer" src="" alt="" style="display:none;">
         <div class="entete-texte">
             <h1 id="titreInventaire">MON <span>INVENTAIRE</span></h1>
-            <p>Sélectionnez plusieurs équipements à équiper afin d'avoir la commande à copier/coller directement dans le chat Twitch.</p>
+            <p>Sélectionnez plusieurs équipements à équiper afin d'avoir la commande à copier/coller directement dans le chat Twitch. Mis à jour toutes les 5-10 minutes.</p>
         </div>
     </div>
     <div id="zoneLootbox"></div>
@@ -228,49 +228,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     };
 
     const params = new URLSearchParams(window.location.search);
-    const depuisBase36 = (str) => parseInt(str, 36) || 0;
+    const pseudo = params.get('user');
 
-    const nomViewer = params.get('n') ? decodeURIComponent(params.get('n')) : null;
-    const fragmentPhoto = params.get('p') ? decodeURIComponent(params.get('p')) : '';
-    // Le C# retire 3 segments FIXES avant transmission pour raccourcir le lien : le domaine,
-    // "jtv_user_pictures/" et "profile_image-" — les 3 sont systématiquement présents dans une
-    // URL de photo de profil Twitch par défaut. On les reconstitue ici à l'identique.
-    // "profile_image-" se réinsère juste après l'UUID (36 caractères) + son tiret (donc à la
-    // position 37) — un UUID standard fait toujours cette longueur fixe.
-    let photoViewer = '';
-    if (fragmentPhoto) {
-        const avecProfileImage = fragmentPhoto.length > 37
-            ? fragmentPhoto.slice(0, 37) + 'profile_image-' + fragmentPhoto.slice(37)
-            : fragmentPhoto;
-        photoViewer = 'https://static-cdn.jtvnw.net/jtv_user_pictures/' + avecProfileImage;
-    }
-    if (nomViewer) {
-        document.getElementById('titreInventaire').innerHTML = `INVENTAIRE DE <span>${nomViewer}</span>`;
-    }
-    if (photoViewer) {
-        const img = document.getElementById('avatarViewer');
-        img.src = photoViewer;
-        img.style.display = 'block';
-    }
-
-    const equipStr = params.get('e') || '00000000';
-    const numEquipArme = depuisBase36(equipStr.slice(0, 2));
-    const numEquipOffhand = depuisBase36(equipStr.slice(2, 4));
-    const numEquipTorso = depuisBase36(equipStr.slice(4, 6));
-    const numEquipStrat = depuisBase36(equipStr.slice(6, 8));
-    const equipeParSlot = { weapon: numEquipArme, offhand: numEquipOffhand, torso: numEquipTorso, strategeme: numEquipStrat };
-
-    const oStr = params.get('o') || '';
-    const possedesParam = [];
-    for (let i = 0; i < oStr.length; i += 4) {
-        possedesParam.push({ numero: depuisBase36(oStr.slice(i, i + 2)), niveau: depuisBase36(oStr.slice(i + 2, i + 4)) });
-    }
-
-    const nbLootbox = depuisBase36(params.get('l') || '00');
-    if (nbLootbox > 0) {
-        document.getElementById('zoneLootbox').innerHTML =
-            `<div class="bloc-lootbox">🎁 Tu as <strong>${nbLootbox}</strong> lootbox en attente — tape <span class="cmd">!lootbox</span> dans le chat pour l'ouvrir !</div>`;
-    }
+    // Rempli une fois players.json chargé (voir tout en bas) — reste vide tant que ce n'est pas le cas.
+    let equipeParSlot = { weapon: 0, offhand: 0, torso: 0, strategeme: 0 };
+    let possedesParam = [];
+    let nbLootbox = 0;
 
     const iconeOuImage = (ref, classeImg) => ref.image
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
@@ -561,31 +524,64 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         });
     }
 
+    function afficherJoueurIntrouvable() {
+        document.getElementById('titreInventaire').innerHTML = pseudo ? `INVENTAIRE DE <span>${pseudo}</span>` : 'MON <span>INVENTAIRE</span>';
+        document.getElementById('emplacements').style.display = 'none';
+        document.getElementById('grille').innerHTML =
+            '<div class="vide-message">Pas encore de données pour ce joueur — la prochaine synchronisation (toutes les 5 à 10 minutes) les fera apparaître après un premier achat de stat, d\'objet ou un premier combat.</div>';
+    }
+
     let STATS = {};
-    // "?v=" + horodatage : force le navigateur (et le CDN de GitHub Pages) à toujours récupérer
-    // la version la plus fraîche du fichier, au lieu de servir une copie mise en cache qui peut
-    // rester en place plusieurs heures/jours sinon — la cause probable si un numéro affiché ne
-    // correspond plus à ce que contient réellement catalogue_stats.json sur le dépôt.
-    fetch('catalogue_stats.json?v=' + Date.now())
-        .then(r => r.json())
-        .then(data => {
-            STATS = data;
+    if (!pseudo) {
+        afficherJoueurIntrouvable();
+    } else {
+        // "?v=" + horodatage : force le navigateur (et le CDN de GitHub Pages) à toujours récupérer
+        // la version la plus fraîche, au lieu de servir une copie mise en cache.
+        Promise.all([
+            fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()),
+            fetch('players.json?v=' + Date.now()).then(r => r.json()),
+        ]).then(([catalogue, joueurs]) => {
+            STATS = catalogue;
+            const joueur = joueurs[pseudo];
+            if (!joueur) { afficherJoueurIntrouvable(); return; }
+
+            document.getElementById('titreInventaire').innerHTML = `INVENTAIRE DE <span>${joueur.nomAffichage}</span>`;
+            if (joueur.avatar) {
+                const img = document.getElementById('avatarViewer');
+                img.src = joueur.avatar;
+                img.style.display = 'block';
+            }
+
+            // ⚠️ players.json (17_Publier_Snapshot_Joueurs.cs) utilise "arme"/"armure" pour le
+            // loadout, alors que catalogue_stats.json (et donc tout le reste de cette page) parle
+            // en "weapon"/"torso" — recalé ici plutôt que dans les 2 autres fichiers, qui
+            // fonctionnent déjà tels quels avec ces noms.
+            equipeParSlot = {
+                weapon: joueur.loadout.arme, offhand: joueur.loadout.offhand,
+                torso: joueur.loadout.armure, strategeme: joueur.loadout.strategeme,
+            };
+            possedesParam = joueur.inventaire || [];
+            nbLootbox = joueur.lootbox || 0;
+
+            if (nbLootbox > 0) {
+                document.getElementById('zoneLootbox').innerHTML =
+                    `<div class="bloc-lootbox">🎁 Tu as <strong>${nbLootbox}</strong> lootbox en attente — tape <span class="cmd">!lootbox</span> dans le chat pour l'ouvrir !</div>`;
+            }
+
             try {
                 afficherTout();
             } catch (erreurAffichage) {
-                // Le JSON a bien été chargé — le bug est dans le code d'affichage lui-même,
-                // pas un problème de fichier manquant. Message différent + détail dans la console.
                 console.error('Erreur pendant l\'affichage de l\'inventaire :', erreurAffichage);
                 document.getElementById('grille').innerHTML =
-                    '<div class="vide-message">catalogue_stats.json a bien été chargé, mais une erreur est survenue pendant l\'affichage : '
+                    '<div class="vide-message">Données chargées, mais une erreur est survenue pendant l\'affichage : '
                     + erreurAffichage.message + ' (détail complet dans la console du navigateur, F12).</div>';
             }
-        })
-        .catch((erreurChargement) => {
-            console.error('Erreur de chargement de catalogue_stats.json :', erreurChargement);
+        }).catch((erreurChargement) => {
+            console.error('Erreur de chargement :', erreurChargement);
             document.getElementById('grille').innerHTML =
-                '<div class="vide-message">Impossible de charger catalogue_stats.json — vérifie qu\'il est bien présent à côté de cette page.</div>';
+                '<div class="vide-message">Impossible de charger catalogue_stats.json ou players.json — vérifie qu\'ils sont bien présents à côté de cette page.</div>';
         });
+    }
 </script>
 </body>
 </html>
