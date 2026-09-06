@@ -214,6 +214,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ResistanceCrit: (v, s) => `<b>-${v}</b> points de chance d'être touché par un critique.`,
         SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
         SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
+        BrulureDegats: (v, s) => `Brûlure : inflige <b>${v}</b> dégâts par tour pendant <b>${s.brulureDuree}</b> tours, ignore l'armure et le bouclier.`,
         AntiHealPourcentage: (v, s) => `Réduit les soins reçus par la cible de <b>${v}%</b> pendant <b>${s.antiHealDuree}</b> tours.`,
         ShieldMontant: (v, s) => `Accorde un bouclier de <b>${v} PV</b> en début de combat.`,
         RageBonusMax: (v, s) => `Dégâts jusqu'à <b>+${v}%</b> quand tes PV descendent vers <b>${s.rageSeuilMin}%</b>.`,
@@ -227,7 +228,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
         ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit",
-        SoinDirect: "soinDirect", SaignementDegats: "saignementDegats",
+        SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
         AntiHealPourcentage: "antiHealPourcentage", ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax",
         MarqueDegatsPourcentage: "marqueDegatsPourcentage", ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance",
         DernierSouffleActif: "dernierSouffleActif", FrenesieBonusSpd: "frenesieBonusSpd",
@@ -319,6 +320,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             if (s.poisonDegats > 0 || s.statPrincipale === "PoisonDegats") {
                 const actuel = s.statPrincipale === "PoisonDegats" ? s.poisonDegats + niveau * s.incrementPassif : s.poisonDegats;
                 lignesStat.push({ label: "Poison", valeur: formatEvolution(s.poisonDegats, actuel, (v) => v) + " stacks", colorer: false });
+            }
+            // Brûlure : même traitement que le Poison ci-dessus (stat ET passif) — le montant PAR
+            // TOUR scale par doublon, la durée (3 tours) reste fixe.
+            if (s.brulureDegats > 0 || s.statPrincipale === "BrulureDegats") {
+                const actuel = s.statPrincipale === "BrulureDegats" ? s.brulureDegats + niveau * s.incrementPassif : s.brulureDegats;
+                lignesStat.push({ label: "Brûlure", valeur: formatEvolution(s.brulureDegats, actuel, (v) => v) + "/tour", colorer: false });
             }
             // Bouclier : affiché comme stat CLAIRE, exclu du passif générique juste après (son
             // ancien libellé "en début de combat" ne serait plus exact pour un Stratagème, qui
