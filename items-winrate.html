@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Winrate des objets</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f; --vert: #5ddd7a;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 28px 18px 60px; }
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.page { max-width: 1100px; margin: 0 auto; }
+
+.entete { padding-bottom: 18px; border-bottom: 3px solid var(--yellow); margin-bottom: 22px; }
+.entete h1 { font-size: 26px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
+
+.onglets { display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.onglet {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13.5px; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--paper-dim); background: var(--bg-panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 10px 16px; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s ease;
+    position: relative;
+}
+.onglet:hover { color: var(--paper); border-color: #444; }
+.onglet.actif { background: var(--yellow); color: #000; border-color: var(--yellow); }
+.onglet.actif-version::after {
+    content: '●'; color: var(--vert); font-size: 9px; position: absolute; top: 2px; right: 4px;
+}
+
+.barre-controles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.champ-recherche {
+    flex: 1; min-width: 220px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 14px; color: var(--paper); font-size: 14px; font-family: 'Barlow', sans-serif;
+}
+.champ-recherche:focus { outline: none; border-color: var(--yellow); }
+.select-tri {
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px;
+    color: var(--paper); font-size: 13px; font-family: 'Barlow Condensed', sans-serif; cursor: pointer;
+}
+
+.compteur-resultats { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 14px; }
+
+.tableau-wrap { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+table.tableau-winrate { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.tableau-winrate th {
+    font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--paper-dim); font-size: 11px; text-align: left; padding: 12px 14px; border-bottom: 2px solid var(--line);
+    background: rgba(255,255,255,0.02);
+}
+table.tableau-winrate td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+table.tableau-winrate tr:last-child td { border-bottom: none; }
+table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
+
+.tag-rarete { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
+.tag-rarete.commun { background: rgba(141,141,141,0.18); color: var(--commun); }
+.tag-rarete.normal { background: rgba(93,221,122,0.15); color: var(--normal); }
+.tag-rarete.rare { background: rgba(74,159,216,0.15); color: var(--rare); }
+.tag-rarete.legendaire { background: rgba(242,194,48,0.15); color: var(--legendaire); }
+
+.nom-objet { font-weight: 600; }
+.slot-objet { color: var(--paper-dim); font-size: 11.5px; }
+
+.barre-winrate-zone { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+.barre-winrate-fond { flex: 1; height: 7px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+.barre-winrate-remplie { height: 100%; border-radius: 4px; }
+.winrate-valeur { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; min-width: 42px; text-align: right; }
+
+.aucune-donnee { color: var(--paper-dim); font-style: italic; font-size: 12.5px; }
+.vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
+
+@media (max-width: 700px) {
+    body { padding: 20px 12px 50px; }
+    .entete h1 { font-size: 20px; }
+    table.tableau-winrate { font-size: 12px; }
+    table.tableau-winrate th, table.tableau-winrate td { padding: 8px 8px; }
+    .slot-objet { display: none; }
+    .barre-winrate-zone { min-width: 80px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="entete">
+        <h1>WINRATE DES <span>OBJETS</span></h1>
+        <p>Taux de victoire de chaque objet, par version d'équilibrage — un ● vert marque la version actuellement active. Mis à jour toutes les 5-10 minutes.</p>
+    </div>
+
+    <div class="onglets" id="onglets"></div>
+
+    <div class="barre-controles">
+        <input type="text" class="champ-recherche" id="champRecherche" placeholder="Rechercher un objet par son nom...">
+        <select class="select-tri" id="selectTri">
+            <option value="winrate_desc">Winrate décroissant</option>
+            <option value="winrate_asc">Winrate croissant</option>
+            <option value="duels_desc">Le plus de duels</option>
+            <option value="nom">Nom (A-Z)</option>
+        </select>
+    </div>
+    <div class="compteur-resultats" id="compteurResultats"></div>
+
+    <div class="tableau-wrap">
+        <table class="tableau-winrate">
+            <thead>
+                <tr><th>Objet</th><th>Rareté</th><th>V</th><th>D</th><th>É</th><th>Duels</th><th>Winrate</th></tr>
+            </thead>
+            <tbody id="corpsTableau"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", legendaire: "Légendaire" };
+
+    let STATS = {};
+    let ITEM_STATS = { versionActuelle: "", versions: [], items: {} };
+    let versionActive = null;
+    let texteRecherche = '';
+    let triActuel = 'winrate_desc';
+
+    function couleurWinrate(pct) {
+        if (pct >= 60) return '#5ddd7a';
+        if (pct >= 45) return '#f2c230';
+        if (pct >= 30) return '#ff8a3d';
+        return '#ff6b6b';
+    }
+
+    function construireLigne(numero, donnees) {
+        const infoCatalogue = STATS[numero] || {};
+        const rarete = donnees.rarete || infoCatalogue.rarete || 'commun';
+        const nom = donnees.nom || infoCatalogue.nom || `Objet #${numero}`;
+        const totalDuels = donnees.totalDuels || 0;
+
+        if (totalDuels === 0) {
+            return `
+                <tr data-nom="${nom.toLowerCase()}">
+                    <td><div class="nom-objet">${nom}</div><div class="slot-objet">N°${numero}</div></td>
+                    <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
+                    <td colspan="4"><span class="aucune-donnee">Aucun duel enregistré sur cette version</span></td>
+                    <td>—</td>
+                </tr>`;
+        }
+
+        const pct = donnees.winratePourcent || 0;
+        const couleur = couleurWinrate(pct);
+        return `
+            <tr data-nom="${nom.toLowerCase()}">
+                <td><div class="nom-objet">${nom}</div><div class="slot-objet">N°${numero}</div></td>
+                <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
+                <td>${donnees.victoires || 0}</td>
+                <td>${donnees.defaites || 0}</td>
+                <td>${donnees.egalites || 0}</td>
+                <td>${totalDuels}</td>
+                <td>
+                    <div class="barre-winrate-zone">
+                        <div class="barre-winrate-fond"><div class="barre-winrate-remplie" style="width:${pct}%; background:${couleur};"></div></div>
+                        <span class="winrate-valeur" style="color:${couleur}">${pct}%</span>
+                    </div>
+                </td>
+            </tr>`;
+    }
+
+    function afficherVersion() {
+        const itemsVersion = ITEM_STATS.items[versionActive] || {};
+
+        // Fusionne TOUS les objets du catalogue avec leurs données de cette version (0 duel si absent)
+        const lignes = [];
+        for (const numero in STATS) {
+            const donnees = itemsVersion[numero] || { totalDuels: 0, victoires: 0, defaites: 0, egalites: 0, winratePourcent: 0, nom: STATS[numero].nom, rarete: STATS[numero].rarete };
+            lignes.push({ numero, donnees });
+        }
+
+        lignes.sort((a, b) => {
+            if (triActuel === 'winrate_desc') return (b.donnees.winratePourcent || 0) - (a.donnees.winratePourcent || 0);
+            if (triActuel === 'winrate_asc') return (a.donnees.winratePourcent || 0) - (b.donnees.winratePourcent || 0);
+            if (triActuel === 'duels_desc') return (b.donnees.totalDuels || 0) - (a.donnees.totalDuels || 0);
+            return (a.donnees.nom || '').localeCompare(b.donnees.nom || '');
+        });
+
+        const corps = document.getElementById('corpsTableau');
+        corps.innerHTML = lignes.map(l => construireLigne(l.numero, l.donnees)).join('');
+        appliquerFiltreRecherche();
+    }
+
+    function appliquerFiltreRecherche() {
+        const lignes = document.querySelectorAll('#corpsTableau tr');
+        let visibles = 0;
+        lignes.forEach(tr => {
+            const correspond = tr.dataset.nom.includes(texteRecherche);
+            tr.style.display = correspond ? '' : 'none';
+            if (correspond) visibles++;
+        });
+        document.getElementById('compteurResultats').textContent = `${visibles} / ${lignes.length} objet(s) affiché(s) — version ${versionActive}`;
+    }
+
+    function construireOnglets() {
+        const ongletsEl = document.getElementById('onglets');
+        ongletsEl.innerHTML = '';
+        ITEM_STATS.versions.forEach((v, idx) => {
+            const bouton = document.createElement('div');
+            bouton.className = 'onglet' + (idx === 0 ? ' actif' : '') + (v === ITEM_STATS.versionActuelle ? ' actif-version' : '');
+            bouton.textContent = v;
+            bouton.title = v === ITEM_STATS.versionActuelle ? 'Version actuellement active' : '';
+            bouton.addEventListener('click', () => {
+                document.querySelectorAll('.onglet').forEach(o => o.classList.remove('actif'));
+                bouton.classList.add('actif');
+                versionActive = v;
+                afficherVersion();
+            });
+            ongletsEl.appendChild(bouton);
+        });
+        versionActive = ITEM_STATS.versions[0] || null;
+    }
+
+    document.getElementById('champRecherche').addEventListener('input', (e) => {
+        texteRecherche = e.target.value.trim().toLowerCase();
+        appliquerFiltreRecherche();
+    });
+    document.getElementById('selectTri').addEventListener('change', (e) => {
+        triActuel = e.target.value;
+        afficherVersion();
+    });
+
+    Promise.all([
+        fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()),
+        fetch('item_stats.json?v=' + Date.now()).then(r => r.json()),
+    ]).then(([catalogue, itemStats]) => {
+        STATS = catalogue;
+        ITEM_STATS = itemStats;
+        if (!ITEM_STATS.versions || ITEM_STATS.versions.length === 0) {
+            document.getElementById('onglets').innerHTML = '';
+            document.querySelector('.tableau-wrap').outerHTML = '<div class="vide-message">Aucune donnée de winrate pour le moment — elle apparaîtra après les premiers duels suivant la mise en place de ce suivi.</div>';
+            return;
+        }
+        construireOnglets();
+        afficherVersion();
+    }).catch((erreur) => {
+        console.error('Erreur de chargement :', erreur);
+        document.querySelector('.tableau-wrap').outerHTML = '<div class="vide-message">Impossible de charger catalogue_stats.json ou item_stats.json — vérifie qu\'ils sont bien présents à côté de cette page.</div>';
+    });
+</script>
+</body>
+</html>
