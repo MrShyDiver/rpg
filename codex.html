@@ -157,6 +157,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ResistanceCrit: (v, s) => `<b>-${v}</b> points de chance d'être touché par un critique.`,
         SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
         SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
+        BrulureDegats: (v, s) => `Brûlure : inflige <b>${v}</b> dégâts par tour pendant <b>${s.brulureDuree}</b> tours, ignore l'armure et le bouclier.`,
         AntiHealPourcentage: (v, s) => `Réduit les soins reçus par la cible de <b>${v}%</b> pendant <b>${s.antiHealDuree}</b> tours.`,
         ShieldMontant: (v, s) => `Accorde un bouclier de <b>${v} PV</b> en début de combat.`,
         RageBonusMax: (v, s) => `Dégâts jusqu'à <b>+${v}%</b> quand tes PV descendent vers <b>${s.rageSeuilMin}%</b>.`,
@@ -170,7 +171,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
         ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit",
-        SoinDirect: "soinDirect", SaignementDegats: "saignementDegats",
+        SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
         AntiHealPourcentage: "antiHealPourcentage", ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax",
         MarqueDegatsPourcentage: "marqueDegatsPourcentage", ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance",
         DernierSouffleActif: "dernierSouffleActif", FrenesieBonusSpd: "frenesieBonusSpd",
@@ -225,6 +226,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 lignesStat.push({ label: "Dégâts", valeur: s.degatsDirects + coups, colorer: false });
             }
             if (s.poisonDegats > 0) lignesStat.push({ label: "Poison", valeur: s.poisonDegats + " stacks", colorer: false });
+            if (s.brulureDegats > 0) lignesStat.push({ label: "Brûlure", valeur: s.brulureDegats + "/tour", colorer: false });
             if (s.shieldMontant > 0) lignesStat.push({ label: "Bouclier", valeur: s.shieldMontant, colorer: false });
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
