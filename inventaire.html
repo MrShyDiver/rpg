@@ -212,6 +212,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ResistancePoison: (v, s) => `<b>${v}%</b> de résistance au poison.`,
         Regeneration: (v, s) => `Régénère <b>${v}%</b> des PV max à chaque tour.`,
         ResistanceCrit: (v, s) => `<b>-${v}</b> points de chance d'être touché par un critique.`,
+        ReductionDegatsTir: (v, s) => `Réduit de <b>${v}%</b> les dégâts subis d'une arme de tir à une ou deux mains.`,
         SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
         SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
         BrulureDegats: (v, s) => `Brûlure : inflige <b>${v}</b> dégâts par tour pendant <b>${s.brulureDuree}</b> tours, ignore l'armure et le bouclier.`,
@@ -227,7 +228,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     const CHAMP_PAR_STAT_PRINCIPALE = {
         Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
-        ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit",
+        ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit", ReductionDegatsTir: "reductionDegatsTir",
         SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
         AntiHealPourcentage: "antiHealPourcentage", ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax",
         MarqueDegatsPourcentage: "marqueDegatsPourcentage", ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance",
