@@ -208,6 +208,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         EtourdissementChance: (v, s) => `<b>${v}%</b> de chance d'étourdir la cible (saute son tour suivant).`,
         ExecutionBonus: (v, s) => `Sous <b>${s.executionSeuil}%</b> de PV, inflige <b>+${v}%</b> de dégâts.`,
         Precision: (v, s) => `<b>+${v}</b> précision — réduit l'esquive adverse.`,
+        ResistanceFeu:  (v, s) => `Réduit de <b>${v}</b>% les dégats de brûlure.`,
         Blocage: (v, s) => `<b>${v}%</b> de chance de bloquer, réduit alors les dégâts de <b>${s.blocageReduction}%</b>.`,
         Reflection: (v, s) => `Renvoie <b>${v}%</b> des dégâts subis à l'attaquant.`,
         ResistancePoison: (v, s) => `<b>${v}%</b> de résistance au poison.`,
@@ -227,7 +228,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
     };
     const CHAMP_PAR_STAT_PRINCIPALE = {
-        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
+        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance", EtourdissementChance: "resistanceFeu"
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
         ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit", ReductionDegatsTir: "reductionDegatsTir",
         SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
