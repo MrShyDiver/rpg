@@ -78,6 +78,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-icon-emoji { font-size: 56px; line-height: 1; }
 
 .carte-nom { font-size: 15.5px; font-weight: 600; text-align: center; margin-bottom: 10px; }
+.carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; text-align: center; margin-top: -6px; margin-bottom: 10px; }
 
 .stat-ligne { font-size: 13px; margin-bottom: 4px; }
 .stat-ligne .label { color: var(--paper-dim); font-weight: 600; margin-right: 5px; }
@@ -272,6 +273,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 <span class="carte-numero">N°${numero}</span>
                 <div class="carte-image-zone">${iconeOuImage(item, 'carte-icon')}</div>
                 <div class="carte-nom">${item.nom}</div>
+                ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
                 ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
                 ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
                 ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
