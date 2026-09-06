@@ -164,11 +164,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         MarqueDegatsPourcentage: (v, s) => `Marque la cible touchée : <b>+${v}%</b> dégâts reçus pendant <b>${s.marqueDuree}</b> tours.`,
         ParadeChance: (v, s) => `<b>${v}%</b> de chance d'annuler un coup reçu et de riposter immédiatement.`,
         TenaciteChance: (v, s) => `<b>${v}%</b> de chance de résister à un étourdissement.`,
+        ReductionDegatsTir: () => `Réduit les dégats subits des armes à distance de -<b>${v}%</b>.`,
         DernierSouffleActif: () => `Une fois par combat, survit à <b>1 PV</b> au lieu de mourir.`,
         FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
     };
     const CHAMP_PAR_STAT_PRINCIPALE = {
         Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
+        ReductionDegatsTir: "reductiontir",
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
         ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit",
         SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
