@@ -72,6 +72,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
 .carte-nom-ligne { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .carte-nom { font-size: 15px; font-weight: 600; }
+.carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; margin: -4px 0 8px; }
 .carte-niveau {
     position: absolute; top: 10px; left: 10px; z-index: 2;
     font-size: 12px; font-weight: 900; color: var(--yellow);
@@ -212,7 +213,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ResistancePoison: (v, s) => `<b>${v}%</b> de résistance au poison.`,
         Regeneration: (v, s) => `Régénère <b>${v}%</b> des PV max à chaque tour.`,
         ResistanceCrit: (v, s) => `<b>-${v}</b> points de chance d'être touché par un critique.`,
-        ReductionDegatsTir: (v, s) => `Réduit de <b>${v}%</b> les dégâts subis d'une arme de tir à une ou deux mains.`,
+        ReductionDegatsTir: (v, s) => `Réduit de -<b>${v}%</b> les dégâts subis d'une arme de tir à une ou deux mains.`,
         SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
         SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
         BrulureDegats: (v, s) => `Brûlure : inflige <b>${v}</b> dégâts par tour pendant <b>${s.brulureDuree}</b> tours, ignore l'armure et le bouclier.`,
@@ -312,7 +313,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const lignesStat = [];
 
             if (s.degatsDirects > 0 || s.statPrincipale === "DegatsDirects") {
-                const actuel = s.statPrincipale === "DegatsDirects" ? s.degatsDirects + niveau * s.incrementPassif : s.degatsDirects;
+                // Deux scalings possibles et indépendants désormais : via StatPrincipale (ancien
+                // système, 4 objets existants) ET/OU via incrementDegatsDirects (nouveau système
+                // indépendant, ex: Souffle Draconique qui fait plutôt monter sa Brûlure en
+                // StatPrincipale). Les deux s'additionnent si jamais un objet cumulait les deux.
+                const viaStatPrincipale = s.statPrincipale === "DegatsDirects" ? niveau * s.incrementPassif : 0;
+                const viaIncrementDedie = niveau * (s.incrementDegatsDirects || 0);
+                const actuel = s.degatsDirects + viaStatPrincipale + viaIncrementDedie;
                 const coups = s.coupsParUsage > 1 ? ` x ${s.coupsParUsage}` : "";
                 lignesStat.push({ label: "Dégâts", valeur: formatEvolution(s.degatsDirects, actuel, (v) => v) + coups, colorer: false });
             }
@@ -445,6 +452,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     <div class="carte-nom-ligne">
                         <span class="carte-nom">${item.nom}</span>
                     </div>
+                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
                     ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
                     ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
                     ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
