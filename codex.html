@@ -101,6 +101,27 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; }
 .scaling-degats b { color: var(--paper); font-weight: 700; }
 
+/* ============ CARTE À CHANGEMENT DE STANCE ============ */
+.carte-stance { position: relative; cursor: pointer; }
+.stance-indicateur {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
+    color: #000; background: var(--yellow); border-radius: 999px; padding: 3px 10px; z-index: 3;
+    animation: stancePulse 1.8s ease-in-out infinite;
+}
+@keyframes stancePulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; transform: translateX(-50%) scale(1.05); } }
+.stance-vue-2 { display: none; }
+.carte-stance:hover .stance-vue-1 { display: none; }
+.carte-stance:hover .stance-vue-2 { display: block; }
+.carte-stance:hover { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow); }
+.carte-stance:hover .stance-indicateur { background: var(--paper); }
+.stance-etiquette {
+    display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; color: #000; background: var(--rare);
+    border-radius: 4px; padding: 1px 6px; vertical-align: middle; margin-left: 4px;
+}
+.stance-etiquette-2 { background: var(--legendaire); }
+
 .vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
 
 @media (max-width: 640px) {
@@ -151,16 +172,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         EtourdissementChance: (v, s) => `<b>${v}%</b> de chance d'étourdir la cible (saute son tour suivant).`,
         ExecutionBonus: (v, s) => `Sous <b>${s.executionSeuil}%</b> de PV, inflige <b>+${v}%</b> de dégâts.`,
         Precision: (v, s) => `<b>+${v}</b> précision — réduit l'esquive adverse.`,
-        ResistanceFeu:  (v, s) => `Réduit de <b>${v}</b>% les dégats de brûlure.`,
         Blocage: (v, s) => `<b>${v}%</b> de chance de bloquer, réduit alors les dégâts de <b>${s.blocageReduction}%</b>.`,
         Reflection: (v, s) => `Renvoie <b>${v}%</b> des dégâts subis à l'attaquant.`,
         ResistancePoison: (v, s) => `<b>${v}%</b> de résistance au poison.`,
+        ResistanceFeu: (v, s) => `Réduit de <b>${v}%</b> les dégâts subis de type feu (Brûlure).`,
         Regeneration: (v, s) => `Régénère <b>${v}%</b> des PV max à chaque tour.`,
         ResistanceCrit: (v, s) => `<b>-${v}</b> points de chance d'être touché par un critique.`,
         ReductionDegatsTir: (v, s) => `Réduit de -<b>${v}%</b> les dégâts subis d'une arme de tir à une ou deux mains.`,
         SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
         SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
-        BrulureDegats: (v, s) => `Brûlure : inflige <b>${v}</b> dégâts par tour pendant <b>${s.brulureDuree}</b> tours qui ignorent la défense.`,
+        BrulureDegats: (v, s) => `Brûlure : inflige <b>${v}</b> dégâts par tour pendant <b>${s.brulureDuree}</b> tours, ignore l'armure et le bouclier.`,
         AntiHealPourcentage: (v, s) => `Réduit les soins reçus par la cible de <b>${v}%</b> pendant <b>${s.antiHealDuree}</b> tours.`,
         ShieldMontant: (v, s) => `Accorde un bouclier de <b>${v} PV</b> en début de combat.`,
         RageBonusMax: (v, s) => `Dégâts jusqu'à <b>+${v}%</b> quand tes PV descendent vers <b>${s.rageSeuilMin}%</b>.`,
@@ -171,15 +192,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
     };
     const CHAMP_PAR_STAT_PRINCIPALE = {
-        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance", ResistanceFeu: "resistanceFeu",
+        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
-        ResistancePoison: "resistancePoison", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit", ReductionDegatsTir: "reductionDegatsTir",
+        ResistancePoison: "resistancePoison", ResistanceFeu: "resistanceFeu", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit", ReductionDegatsTir: "reductionDegatsTir",
         SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
         AntiHealPourcentage: "antiHealPourcentage", ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax",
         MarqueDegatsPourcentage: "marqueDegatsPourcentage", ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance",
         DernierSouffleActif: "dernierSouffleActif", FrenesieBonusSpd: "frenesieBonusSpd",
     };
-
 
     const iconeOuImage = (ref, classeImg) => ref.image
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
@@ -202,17 +222,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return passifs;
     }
 
-    function construireScaling(s) {
-        if (!s.scaling1Stat) return null;
+    function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, degatsMin, degatsMax) {
         const badges = STATS_SCALABLES.map(stat => {
             let lettre = null;
-            if (s.scaling1Stat === stat) lettre = s.scaling1Lettre;
-            else if (s.scaling2Stat === stat) lettre = s.scaling2Lettre;
+            if (scaling1Stat === stat) lettre = scaling1Lettre;
+            else if (scaling2Stat === stat) lettre = scaling2Lettre;
             const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
             return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
         }).join("");
-        const ligneDegats = `<div class="scaling-degats">Dégâts : <b>${Math.round(s.baseDegatsMin)} - ${Math.round(s.baseDegatsMax)}</b></div>`;
+        const ligneDegats = `<div class="scaling-degats">Dégâts : <b>${Math.round(degatsMin)} - ${Math.round(degatsMax)}</b></div>`;
         return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
+    }
+
+    function construireScaling(s) {
+        if (!s.scaling1Stat) return null;
+        return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax);
     }
 
     function construireDetails(s, estStrategeme) {
@@ -265,7 +289,57 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return `<div class="stat-ligne"><span class="label">${label}</span><span class="${classe}">${valeur}</span></div>`;
     }
 
+    function construireLignesStatGenerique(stat, bonus, stat2, bonus2, stat3, bonus3) {
+        const lignes = [];
+        if (stat) lignes.push({ label: LABELS_STAT[stat] || stat, valeur: (bonus >= 0 ? "+" : "") + bonus + suffixeStat(stat), colorer: true });
+        if (stat2) lignes.push({ label: LABELS_STAT[stat2] || stat2, valeur: (bonus2 >= 0 ? "+" : "") + bonus2 + suffixeStat(stat2), colorer: true });
+        if (stat3) lignes.push({ label: LABELS_STAT[stat3] || stat3, valeur: (bonus3 >= 0 ? "+" : "") + bonus3 + suffixeStat(stat3), colorer: true });
+        return lignes;
+    }
+
+    // Carte dédiée aux armes à changement de stance : affiche la stance 1 par défaut, bascule
+    // vers la stance 2 (image, scaling ET bonus différents) au survol — pur CSS, voir .carte-stance
+    // dans le <style>. Le passif générique décrit le mécanisme lui-même, indépendant de la stance.
+    function construireCarteStance(numero, item) {
+        const rarete = item.rarete || 'commun';
+        const imageStance1 = iconeOuImage(item, 'carte-icon');
+        const imageStance2 = iconeOuImage({ image: item.stance2ImageUrl || item.image, icone: item.icone }, 'carte-icon');
+        const scaling1 = blocScalingUnique(item.scaling1Stat, item.scaling1Lettre, item.scaling2Stat, item.scaling2Lettre, item.baseDegatsMin, item.baseDegatsMax);
+        const scaling2 = blocScalingUnique(item.stance2Scaling1Stat, item.stance2Scaling1Lettre, item.stance2Scaling2Stat, item.stance2Scaling2Lettre, item.stance2BaseDegatsMin, item.stance2BaseDegatsMax);
+        const stats1 = construireLignesStatGenerique(item.stat, item.bonus, item.stat2, item.bonus2, item.stat3, item.bonus3).map(rendreLigneStat).join('');
+        const stats2 = construireLignesStatGenerique(item.stance2Stat, item.stance2Bonus, item.stance2Stat2, item.stance2Bonus2, item.stance2Stat3, item.stance2Bonus3).map(rendreLigneStat).join('');
+
+        return `
+            <div class="carte ${rarete} carte-stance" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
+                <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
+                <span class="carte-numero">N°${numero}</span>
+                <div class="stance-indicateur">⇄ Survolez pour voir l'autre stance</div>
+
+                <div class="stance-vue stance-vue-1">
+                    <div class="carte-image-zone">${imageStance1}</div>
+                    <div class="carte-nom">${item.nom} <span class="stance-etiquette">Stance 1</span></div>
+                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
+                    <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling1}</div>
+                    ${stats1 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
+                </div>
+                <div class="stance-vue stance-vue-2">
+                    <div class="carte-image-zone">${imageStance2}</div>
+                    <div class="carte-nom">${item.nom} <span class="stance-etiquette stance-etiquette-2">Stance 2</span></div>
+                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
+                    <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling2}</div>
+                    ${stats2 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats2}</div>` : ''}
+                </div>
+
+                <div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">
+                    Alterne de stance toutes les <b>${item.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge le poison et la brûlure sur le porteur lui-même.
+                </div></div>
+            </div>
+        `;
+    }
+
     function construireCarte(numero, item) {
+        if (item.dureeStance > 0) return construireCarteStance(numero, item);
+
         const rarete = item.rarete || 'commun';
         const estStrategeme = item.slot === 'strategeme';
         const { scalingHtml, lignesStat, passifTexte } = construireDetails(item, estStrategeme);
