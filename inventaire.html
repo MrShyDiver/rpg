@@ -30,6 +30,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--yellow);
     background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 3px;
 }
+.bloc-tickets {
+    background: rgba(255,128,64,0.1); border: 1px solid #FF8040; border-radius: 6px;
+    padding: 14px 18px; margin-bottom: 20px; font-size: 15px; color: #FF8040;
+}
 
 .titre-section {
     font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
@@ -112,7 +116,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stance-indicateur {
     position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
     font-family: 'Barlow Condensed', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
-    color: #000; background: var(--yellow); border-radius: 999px; padding: 4px 40px; z-index: 3;
+    color: #000; background: var(--yellow); border-radius: 999px; padding: 3px 10px; z-index: 3;
+    animation: stancePulse 1.8s ease-in-out infinite;
 }
 @keyframes stancePulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; transform: translateX(-50%) scale(1.05); } }
 .stance-vue-2 { display: none; }
@@ -184,6 +189,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             <p>Sélectionnez plusieurs équipements à équiper afin d'avoir la commande à copier/coller directement dans le chat Twitch. Mis à jour toutes les 5-10 minutes.</p>
         </div>
     </div>
+    <div id="zoneTickets"></div>
     <div id="zoneLootbox"></div>
     <div class="titre-section">Loadout actuel</div>
     <div id="emplacements" class="emplacements"></div>
@@ -351,7 +357,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const stats2 = construireLignesStatGenerique(s.stance2Stat, s.stance2Bonus, s.stance2IncrementBonus, s.stance2Stat2, s.stance2Bonus2, s.stance2IncrementBonus2, s.stance2Stat3, s.stance2Bonus3, s.stance2IncrementBonus3, niveau).map(rendreLigneStat).join('');
 
         return `
-            <div class="stance-indicateur">⇄</div>
+            <div class="stance-indicateur">⇄ Survolez pour voir l'autre stance</div>
             <div class="stance-vue stance-vue-1">
                 <div class="carte-image-zone">${imageStance1}</div>
                 <div class="carte-nom-ligne"><span class="carte-nom">${s.nom}</span><span class="stance-etiquette">Stance 1</span></div>
@@ -673,6 +679,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             };
             possedesParam = joueur.inventaire || [];
             nbLootbox = joueur.lootbox || 0;
+            const nbTickets = joueur.tickets || 0;
+
+            if (nbTickets > 0) {
+                document.getElementById('zoneTickets').innerHTML =
+                    `<div class="bloc-tickets">🎟️ Tu as <strong>${nbTickets}</strong> ticket(s) de duel disponible(s).</div>`;
+            }
 
             if (nbLootbox > 0) {
                 document.getElementById('zoneLootbox').innerHTML =
