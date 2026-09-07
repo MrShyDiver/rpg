@@ -106,8 +106,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stance-indicateur {
     position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
     font-family: 'Barlow Condensed', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
-    color: #000; background: var(--yellow); border-radius: 999px; padding: 3px 10px; z-index: 3;
-    animation: stancePulse 1.8s ease-in-out infinite;
+    color: #000; background: var(--yellow); border-radius: 999px; padding: 4px 40px; z-index: 3;
 }
 @keyframes stancePulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; transform: translateX(-50%) scale(1.05); } }
 .stance-vue-2 { display: none; }
@@ -313,7 +312,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             <div class="carte ${rarete} carte-stance" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
                 <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
                 <span class="carte-numero">N°${numero}</span>
-                <div class="stance-indicateur">⇄ Survolez pour voir l'autre stance</div>
+                <div class="stance-indicateur">⇄</div>
 
                 <div class="stance-vue stance-vue-1">
                     <div class="carte-image-zone">${imageStance1}</div>
