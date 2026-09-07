@@ -116,8 +116,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stance-indicateur {
     position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
     font-family: 'Barlow Condensed', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
-    color: #000; background: var(--yellow); border-radius: 999px; padding: 3px 10px; z-index: 3;
-    animation: stancePulse 1.8s ease-in-out infinite;
+    color: #000; background: var(--yellow); border-radius: 999px; padding: 4px 40px; z-index: 3;
 }
 @keyframes stancePulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; transform: translateX(-50%) scale(1.05); } }
 .stance-vue-2 { display: none; }
@@ -357,7 +356,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const stats2 = construireLignesStatGenerique(s.stance2Stat, s.stance2Bonus, s.stance2IncrementBonus, s.stance2Stat2, s.stance2Bonus2, s.stance2IncrementBonus2, s.stance2Stat3, s.stance2Bonus3, s.stance2IncrementBonus3, niveau).map(rendreLigneStat).join('');
 
         return `
-            <div class="stance-indicateur">⇄ Survolez pour voir l'autre stance</div>
+            <div class="stance-indicateur">⇄</div>
             <div class="stance-vue stance-vue-1">
                 <div class="carte-image-zone">${imageStance1}</div>
                 <div class="carte-nom-ligne"><span class="carte-nom">${s.nom}</span><span class="stance-etiquette">Stance 1</span></div>
