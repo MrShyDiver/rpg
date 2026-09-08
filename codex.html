@@ -417,7 +417,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         Object.keys(LABELS_CATEGORIE).forEach(cat => {
             const items = parCategorie[cat];
             if (items.length === 0) return;
-            items.sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+            const ordreRarete = ['commun', 'normal', 'rare', 'legendaire'];
+            items.sort((a, b) => {
+                const indexA = ordreRarete.indexOf(a.item.rarete || 'commun');
+                const indexB = ordreRarete.indexOf(b.item.rarete || 'commun');
+                
+                if (indexA !== indexB) {
+                    return indexA - indexB;
+                }
+                return parseInt(a.numero) - parseInt(b.numero);
+            });
             html += `
                 <div class="categorie">
                     <div class="categorie-titre"><h2>${LABELS_CATEGORIE[cat]}</h2><span class="compte">${items.length}</span></div>
