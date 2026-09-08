@@ -187,11 +187,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         MarqueDegatsPourcentage: (v, s) => `Marque la cible touchée : <b>+${v}%</b> dégâts reçus pendant <b>${s.marqueDuree}</b> tours.`,
         ParadeChance: (v, s) => `<b>${v}%</b> de chance d'annuler un coup reçu et de riposter immédiatement.`,
         TenaciteChance: (v, s) => `<b>${v}%</b> de chance de résister à un étourdissement.`,
+        Penetration: (v, s) => `Pénétration : Ignore <b>${v}%</b> de l'armure adverse.`,
         DernierSouffleActif: () => `Une fois par combat, survit à <b>1 PV</b> au lieu de mourir.`,
         FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
     };
     const CHAMP_PAR_STAT_PRINCIPALE = {
-        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
+        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance", Penetration: "penetration",
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
         ResistancePoison: "resistancePoison", ResistanceFeu: "resistanceFeu", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit", ReductionDegatsTir: "reductionDegatsTir",
         SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
@@ -259,7 +260,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
 
             const passifs = construirePassifs(s, "DegatsDirects", ["ShieldMontant"]);
-            if (s.penetration > 0) passifs.push(`Pénétration : <b>${s.penetration}%</b>`);
             if (s.delaiTours > 0) passifs.push(`Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.`);
             return { scalingHtml: null, lignesStat, passifTexte: passifs.join(" ") };
         }
