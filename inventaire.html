@@ -240,6 +240,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ResistanceCrit: (v, s) => `<b>-${v}</b> points de chance d'être touché par un critique.`,
         ReductionDegatsTir: (v, s) => `Réduit de -<b>${v}%</b> les dégâts subis d'une arme de tir à une ou deux mains.`,
         SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
+        Penetration: (v, s) => `Pénétration : Ignore <b>${v}%</b> de l'armure adverse.`,
         SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
         BrulureDegats: (v, s) => `Brûlure : inflige <b>${v}</b> dégâts par tour pendant <b>${s.brulureDuree}</b> tours, ignore l'armure et le bouclier.`,
         AntiHealPourcentage: (v, s) => `Réduit les soins reçus par la cible de <b>${v}%</b> pendant <b>${s.antiHealDuree}</b> tours.`,
@@ -252,7 +253,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
     };
     const CHAMP_PAR_STAT_PRINCIPALE = {
-        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",
+        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance",  Penetration: "penetration",
         ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
         ResistancePoison: "resistancePoison", ResistanceFeu: "resistanceFeu", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit", ReductionDegatsTir: "reductionDegatsTir",
         SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
@@ -428,7 +429,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
 
             const passifs = construirePassifs(s, niveau, "DegatsDirects", ["ShieldMontant"]);
-            if (s.penetration > 0) passifs.push(`Pénétration : <b>${s.penetration}%</b>`);
             // Déclenchement différé (Solo Silo) : explique le principe directement, la personne
             // adapte le libellé exact de ses objets comme elle le souhaite par la suite.
             if (s.delaiTours > 0) passifs.push(`Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.`);
