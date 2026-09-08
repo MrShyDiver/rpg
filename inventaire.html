@@ -513,27 +513,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const items = parCategorie[cat];
             if (items.length === 0) return;
 
-            const conteneur = document.getElementById('grille');
-        Object.keys(LABELS_CATEGORIE).forEach(cat => {
-            const items = parCategorie[cat];
-            if (items.length === 0) return;
-
-            // --- NOUVEAU CODE : TRI PAR RARETÉ PUIS PAR NUMÉRO ---
-            const ordreRarete = ['commun', 'normal', 'rare', 'legendaire'];
-            items.sort((a, b) => {
-                const indexA = ordreRarete.indexOf(a.rarete || 'commun');
-                const indexB = ordreRarete.indexOf(b.rarete || 'commun');
-                
-                if (indexA !== indexB) {
-                    return indexA - indexB; // Tri par rareté (commun -> normal -> rare -> legendaire)
-                }
-                return parseInt(a.numero) - parseInt(b.numero); // Si même rareté, tri par numéro
-            });
-            // -----------------------------------------------------
-
             const bloc = document.createElement('div');
             bloc.className = 'categorie';
-            
             bloc.innerHTML = `<div class="categorie-titre"><h2>${LABELS_CATEGORIE[cat]}</h2></div><div class="grille"></div>`;
             const grilleInterne = bloc.querySelector('.grille');
 
