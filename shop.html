@@ -445,6 +445,11 @@ function afficherSolde() {
         ' ' + iconeMedaille('icone-medaille grande') + '</div></div>';
 }
 
+    function iconeMedaille(classeExtra = '') {
+    // Remplace le chemin par celui de ton image dans le dossier assets
+    return '<img src="assets/medaille.png" alt="Médailles" class="icone-medaille ' + classeExtra + '" style="height:1em; vertical-align:middle;">';
+}
+
 /* ===================== CARD GÉNÉRIQUE ===================== */
 // Un seul gabarit pour Acheter ET Vendre, afin que les deux se ressemblent
 // comme demandé — seule la couleur/le libellé du prix changent, pour que la
