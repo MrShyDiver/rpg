@@ -20,7 +20,6 @@ body {
 }
 h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
 .page { max-width: 1080px; margin: 0 auto; }
-/* De la place en bas pour que la barre fixe ne recouvre jamais la dernière rangée. */
 .page { padding-bottom: 28px; }
 
 .entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
@@ -76,10 +75,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     margin-left: auto; font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700;
     color: var(--yellow); line-height: 1;
 }
-.solde-barre .unite {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
-    letter-spacing: 1.4px; text-transform: uppercase; color: var(--paper-dim);
-}
 
 /* ===== Onglets ===== */
 .onglets { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
@@ -112,7 +107,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .sous-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .section-produits { margin-bottom: 30px; }
 
-/* ===== Grille de cards façon gacha ===== */
+/* ===== Grille de cards ===== */
 .grille-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 13px; }
 .grille-fixes { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 13px; }
 
@@ -124,6 +119,13 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     transition: box-shadow .15s, transform .1s;
 }
 .card.choisi { box-shadow: 0 0 0 3px var(--accent); transform: translateY(-2px); }
+
+/* Cadenas (Fixes) */
+.card-verrou {
+    position: absolute; top: 8px; left: 8px; font-size: 12px; line-height: 1;
+    background: rgba(0,0,0,.7); border: 1px solid var(--line); border-radius: 4px; 
+    padding: 3px 5px; z-index: 2;
+}
 
 /* Badge de quantité pour la revente */
 .card-niveau {
@@ -151,18 +153,14 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 .card-prix {
     display: flex; align-items: center; justify-content: center; gap: 5px;
-    font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 9px;
+    font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 12px;
 }
 .card-prix.mode-achat { color: var(--yellow); }
 .card-prix.mode-vente { color: var(--vente); }
-.card-prix .label {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 9.5px; font-weight: 700;
-    letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); display: block;
-    margin-bottom: 2px;
-}
 .card-prix-bloc { display: flex; flex-direction: column; align-items: center; }
 
-.card-qte { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+/* Zone quantité (Inputs et boutons) */
+.card-qte { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
 .card-qte button {
     width: 26px; height: 26px; background: none; border: 1px solid var(--line);
     border-radius: 5px; color: var(--paper); font-size: 15px; line-height: 1; cursor: pointer;
@@ -170,14 +168,29 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .card-qte button:hover:not([disabled]) { border-color: var(--accent); color: var(--accent); background: rgba(255,255,255,0.05); }
 .card-qte button[disabled] { opacity: .3; cursor: default; }
-.card-qte .valeur { min-width: 20px; text-align: center; font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; }
+
+.valeur-input {
+    width: 36px; height: 26px; text-align: center; font-family: 'Oswald', sans-serif;
+    font-size: 14px; font-weight: 600; background: rgba(0,0,0,0.3); border: 1px solid var(--line);
+    border-radius: 4px; color: var(--paper); -moz-appearance: textfield; padding: 0;
+}
+.valeur-input::-webkit-outer-spin-button, .valeur-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.valeur-input:focus { outline: none; border-color: var(--accent); }
+
+/* Bouton MAX exclusif à la vente */
+.card-qte .btn-max {
+    font-size: 10px; font-weight: 700; width: auto; padding: 0 6px; margin-left: 2px;
+    background: rgba(93,221,122,0.1); color: var(--vente); border-color: var(--vente);
+}
+.card-qte .btn-max:hover:not([disabled]) {
+    background: var(--vente); color: #000;
+}
 
 .message { color: var(--paper-dim); font-size: 14px; padding: 18px 2px; }
 .message b { color: var(--paper); }
 .cache { display: none !important; }
 
-
-/* ===== BARRE FIXE (Popin de confirmation modernisée) ===== */
+/* ===== BARRE FIXE ===== */
 .barre-fixe {
     position: fixed; left: 18px; right: 18px; bottom: 20px; z-index: 50;
     max-width: 1044px; margin: 0 auto;
@@ -230,23 +243,31 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .barre-fixe.mode-vente .zone-commande-ligne code { color: var(--vente); border-color: rgba(93,221,122,0.3); }
 
-.zone-commande-ligne button {
+/* Boutons de la barre */
+.btn-action {
     font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: .05em;
     text-transform: uppercase; color: #17170f; background: var(--yellow); border: none;
     border-radius: 6px; padding: 0 24px; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
     transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
 }
-.barre-fixe.mode-vente .zone-commande-ligne button { background: var(--vente); color: #0b1c10; }
-.zone-commande-ligne button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(242,194,48,0.3); }
-.barre-fixe.mode-vente .zone-commande-ligne button:hover { box-shadow: 0 5px 15px rgba(93,221,122,0.3); }
-.zone-commande-ligne button:active { transform: translateY(0); }
+.barre-fixe.mode-vente .btn-action { background: var(--vente); color: #0b1c10; }
+.btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(242,194,48,0.3); }
+.barre-fixe.mode-vente .btn-action:hover { box-shadow: 0 5px 15px rgba(93,221,122,0.3); }
 
+.btn-vider {
+    font-family: 'Oswald', sans-serif; font-size: 16px; background: rgba(168, 39, 31, 0.15); 
+    border: 1px solid var(--red); color: var(--paper); border-radius: 6px; padding: 0 16px; 
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease; flex: 0 0 auto;
+}
+.btn-vider:hover { background: var(--red); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(168, 39, 31, 0.3); }
 
 @media (max-width: 768px) {
     .barre-fixe { flex-direction: column; align-items: stretch; padding: 18px; gap: 18px; }
     .barre-fixe-chiffres { gap: 18px; }
     .zone-commande-ligne { flex-direction: column; }
-    .zone-commande-ligne button { padding: 12px; }
+    .btn-action { padding: 12px; }
+    .btn-vider { padding: 12px; }
 }
 @media (max-width: 620px) {
     .grille-cards { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
@@ -308,8 +329,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 <script>
 /* =====================================================================
-   ÉCONOMIE — doit rester identique côté Streamer.bot (commandes !vendre
-   et !acheter)
+   ÉCONOMIE
    ===================================================================== */
 var PRIX_ACHAT  = { commun: 20, normal: 48, rare: 120, legendaire: 300 };
 var PRIX_VENTE  = { commun: 5,  normal: 12, rare: 30,  legendaire: 75  };
@@ -321,9 +341,6 @@ var LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendair
 var ORDRE_RARETE = { legendaire: 0, rare: 1, normal: 2, commun: 3 };
 var LABEL_SLOT = { weapon: 'Arme', offhand: 'Main gauche', torso: 'Armure', strategeme: 'Stratagème' };
 
-/* ---------------------------------------------------------------------
-   TIRAGE DU STOCK
-   --------------------------------------------------------------------- */
 function heureCourante() { return Math.floor(Date.now() / 3600000); }
 
 function generateur(graine) {
@@ -355,7 +372,6 @@ function tirerStock(catalogue, heure) {
     return stock;
 }
 
-/* ===================== ÉTAT ===================== */
 var CATALOGUE = {}, JOUEURS = {}, listeJoueurs = [];
 var pseudoActif = null, joueurActif = null;
 var panierAchat = {};
@@ -377,7 +393,6 @@ function visuelHtml(it) {
 }
 function soldeActuel() { return (joueurActif && joueurActif.medailles) || 0; }
 
-/* ===================== SÉLECTION DU PROFIL ===================== */
 var champ = document.getElementById('chercheProfil');
 var propos = document.getElementById('propositions');
 var iActif = -1;
@@ -471,7 +486,8 @@ function carteProduit(cfg) {
         : '';
     var badgeQuantite = cfg.badgeQuantite !== undefined ? '<div class="card-niveau">×' + cfg.badgeQuantite + '</div>' : '';
     
-    // On ne génère plus la div "card-verrou", le cadenas est désormais directement dans le nom de l'objet
+    // Ajout du verrou (Cadenas)
+    var verrou = cfg.verrou ? '<div class="card-verrou">🔒</div>' : '';
     
     var modeClasse = cfg.mode === 'vente' ? 'mode-vente' : 'mode-achat';
     var signe = cfg.mode === 'vente' ? '+' : '';
@@ -479,19 +495,23 @@ function carteProduit(cfg) {
         ? (cfg.image ? '<img src="' + echapper(cfg.image) + '" alt="">' : '<div class="emoji">' + echapper(cfg.icone || '?') + '</div>')
         : '<div class="emoji">' + echapper(cfg.icone || '?') + '</div>';
 
+    // Bouton MAX pour la revente (optionnel)
+    var btnMax = (cfg.quantiteMax !== undefined && cfg.mode === 'vente') 
+        ? '<button type="button" data-act="max" class="btn-max" title="Tout sélectionner" ' + (cfg.quantite >= cfg.quantiteMax ? 'disabled' : '') + '>MAX</button>' 
+        : '';
+
     return '<div class="card' + (cfg.quantite > 0 ? ' choisi' : '') + '" data-id="' + cfg.id + '" style="--accent:' + accent + '">' +
-        puceRarete + badgeQuantite +
+        verrou + puceRarete + badgeQuantite +
         '<div class="card-image">' + visuel + '</div>' +
         '<div class="card-nom">' + echapper(cfg.nom) + '</div>' +
         (cfg.sous ? '<div class="card-sous">' + cfg.sous + '</div>' : '') +
-        '<div class="card-prix-bloc"><span class="label">' + (cfg.mode === 'vente' ? "Prix de revente" : "Prix d'achat") + '</span>' +
+        '<div class="card-prix-bloc">' +
             '<div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>' +
         '<div class="card-qte">' +
-            '<button type="button" data-act="moins" aria-label="Retirer un ' + echapper(cfg.nom) + '"' +
-                (cfg.quantite <= 0 ? ' disabled' : '') + '>&minus;</button>' +
-            '<div class="valeur">' + cfg.quantite + '</div>' +
-            '<button type="button" data-act="plus" aria-label="Ajouter un ' + echapper(cfg.nom) + '"' +
-                (cfg.quantiteMax !== undefined && cfg.quantite >= cfg.quantiteMax ? ' disabled' : '') + '>+</button>' +
+            '<button type="button" data-act="moins" aria-label="Retirer" ' + (cfg.quantite <= 0 ? ' disabled' : '') + '>&minus;</button>' +
+            '<input type="number" class="valeur-input" value="' + cfg.quantite + '" min="0" ' + (cfg.quantiteMax !== undefined ? 'max="' + cfg.quantiteMax + '"' : '') + '>' +
+            '<button type="button" data-act="plus" aria-label="Ajouter" ' + (cfg.quantiteMax !== undefined && cfg.quantite >= cfg.quantiteMax ? ' disabled' : '') + '>+</button>' +
+            btnMax +
         '</div>' +
     '</div>';
 }
@@ -504,22 +524,20 @@ function prixProduitAchat(id) {
 }
 
 function rendreAchat() {
-    // --- Toujours en stock : Cadenas ajouté directement dans le nom de l'objet ---
     var carteReset = carteProduit({
-        id: 'reset', mode: 'achat', nom: '🔒 Ticket de reset de stats', icone: '♻️',
-        accent: 'var(--special)', prix: PRIX_RESET,
+        id: 'reset', mode: 'achat', nom: 'Ticket de reset de stats', icone: '♻️',
+        accent: 'var(--special)', verrou: true, prix: PRIX_RESET,
         sous: 'Réattribue tous tes points de stats',
         quantite: panierAchat.reset || 0,
     });
     var carteLootbox = carteProduit({
-        id: 'lootbox', mode: 'achat', nom: '🔒 Lootbox', icone: '🎁',
-        accent: 'var(--special)', prix: PRIX_LOOTBOX,
+        id: 'lootbox', mode: 'achat', nom: 'Lootbox', icone: '🎁',
+        accent: 'var(--special)', verrou: true, prix: PRIX_LOOTBOX,
         sous: 'Un objet aléatoire de la boutique',
         quantite: panierAchat.lootbox || 0,
     });
     document.getElementById('listeFixes').innerHTML = carteReset + carteLootbox;
 
-    // --- Étal de l'heure ---
     var stock = tirerStock(CATALOGUE, heureCourante());
     stock.sort(function (a, b) { return (ORDRE_RARETE[a.rarete] ?? 9) - (ORDRE_RARETE[b.rarete] ?? 9); });
     document.getElementById('listeRotation').innerHTML = stock.map(function (it) {
@@ -534,15 +552,30 @@ function rendreAchat() {
     majBarreFixe();
 }
 
+// Gestion Clics Boutons (+, -, MAX)
 document.getElementById('panneauAcheter').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-act]');
     if (!btn) return;
     var id = btn.closest('.card').getAttribute('data-id');
     var actuel = panierAchat[id] || 0;
-    actuel += (btn.getAttribute('data-act') === 'plus') ? 1 : -1;
+    
+    if (btn.getAttribute('data-act') === 'plus') actuel += 1;
+    else if (btn.getAttribute('data-act') === 'moins') actuel -= 1;
+    
     if (actuel <= 0) delete panierAchat[id]; else panierAchat[id] = actuel;
     rendreAchat();
 });
+
+// Saisie libre de la quantité (Mise à jour quand l'utilisateur tape un nombre)
+document.getElementById('panneauAcheter').addEventListener('change', function (e) {
+    if (e.target.classList.contains('valeur-input')) {
+        var id = e.target.closest('.card').getAttribute('data-id');
+        var val = parseInt(e.target.value, 10) || 0;
+        if (val <= 0) delete panierAchat[id]; else panierAchat[id] = val;
+        rendreAchat();
+    }
+});
+
 
 /* ===================== VENDRE ===================== */
 function rendreVente() {
@@ -579,6 +612,7 @@ function rendreVente() {
     majBarreFixe();
 }
 
+// Gestion Clics Boutons (+, -, MAX)
 document.getElementById('listeVendre').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -586,10 +620,30 @@ document.getElementById('listeVendre').addEventListener('click', function (e) {
     var entree = (joueurActif.inventaire || []).filter(function (x) { return String(x.numero) === String(num); })[0];
     var max = (entree.niveau || 0) + 1;
     var actuel = aVendre[num] || 0;
-    actuel += (btn.getAttribute('data-act') === 'plus') ? 1 : -1;
+    
+    var act = btn.getAttribute('data-act');
+    if (act === 'plus') actuel += 1;
+    else if (act === 'moins') actuel -= 1;
+    else if (act === 'max') actuel = max;
+    
     if (actuel <= 0) delete aVendre[num]; else aVendre[num] = Math.min(actuel, max);
     rendreVente();
 });
+
+// Saisie libre de la quantité
+document.getElementById('listeVendre').addEventListener('change', function (e) {
+    if (e.target.classList.contains('valeur-input')) {
+        var num = e.target.closest('.card').getAttribute('data-id');
+        var entree = (joueurActif.inventaire || []).filter(function (x) { return String(x.numero) === String(num); })[0];
+        var max = entree ? (entree.niveau || 0) + 1 : 0;
+        var val = parseInt(e.target.value, 10) || 0;
+        
+        val = Math.min(val, max);
+        if (val <= 0) delete aVendre[num]; else aVendre[num] = val;
+        rendreVente();
+    }
+});
+
 
 /* ===================== BARRE FIXE ===================== */
 function majBarreFixe() {
@@ -627,7 +681,8 @@ function majBarreFixe() {
                 '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
                 '<div class="zone-commande-ligne">' +
                     '<code id="cmdBarre">' + echapper(commande) + '</code>' +
-                    '<button type="button" id="btnCopierBarre">Copier</button>' +
+                    '<button type="button" id="btnCopierBarre" class="btn-action">Copier</button>' +
+                    '<button type="button" id="btnViderBarre" class="btn-vider" title="Vider le panier">🗑️</button>' +
                 '</div>' +
             '</div>';
 
@@ -655,12 +710,21 @@ function majBarreFixe() {
                 '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
                 '<div class="zone-commande-ligne">' +
                     '<code id="cmdBarre">' + echapper(commandeV) + '</code>' +
-                    '<button type="button" id="btnCopierBarre">Copier</button>' +
+                    '<button type="button" id="btnCopierBarre" class="btn-action">Copier</button>' +
+                    '<button type="button" id="btnViderBarre" class="btn-vider" title="Vider la sélection">🗑️</button>' +
                 '</div>' +
             '</div>';
     }
 
     document.getElementById('btnCopierBarre').addEventListener('click', function () { copier('cmdBarre', this); });
+    
+    // Fonctionnalité pour vider le panier/sélection
+    document.getElementById('btnViderBarre').addEventListener('click', function () { 
+        if (ongletCourant === 'acheter') panierAchat = {}; else aVendre = {};
+        rendreAchat();
+        rendreVente();
+    });
+    
     ajusterPaddingPage();
 }
 
