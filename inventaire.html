@@ -22,23 +22,58 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .entete-texte h1 span { color: var(--yellow); }
 .entete-texte p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
 
-.bloc-lootbox {
-    background: rgba(242,194,48,0.1); border: 1px solid var(--yellow); border-radius: 6px;
-    padding: 14px 18px; margin-bottom: 20px; font-size: 15px; color: var(--paper);
+
+/* ===== ENCARTS DE RESSOURCES =====
+   Toujours affiches, meme a zero : voir "0 ticket de reset" apprend qu'ils
+   existent et ou les obtenir, alors qu'un bloc qui n'apparait que si on en a
+   deja n'apprend rien a celles et ceux qui n'en ont jamais eu. */
+.encarts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.encart {
+    position: relative; background: var(--bg-panel); border: 1px solid var(--line);
+    border-top: 3px solid var(--accent); border-radius: 6px; padding: 13px 15px 15px;
 }
-.bloc-lootbox .cmd {
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--yellow);
-    background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 3px;
+.encart-tete { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+.encart-label {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 1.4px; text-transform: uppercase; color: var(--paper-dim);
 }
-.bloc-tickets {
-    background: rgba(255,128,64,0.1); border: 1px solid #FF8040; border-radius: 6px;
-    padding: 14px 18px; margin-bottom: 20px; font-size: 15px; color: #FF8040;
+.encart-valeur {
+    font-family: 'Oswald', sans-serif; font-size: 30px; font-weight: 700;
+    color: var(--accent); line-height: 1;
 }
-.bloc-tickets .cmd {
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: #FF8040;
-    background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 3px;
-    white-space: nowrap;
+/* A zero, le chiffre s'efface : on distingue d'un coup d'oeil ce qu'on possede
+   de ce qu'on ne possede pas, sans avoir a lire. */
+.encart.vide .encart-valeur { color: #4a4a4a; }
+.encart-sous { font-size: 12px; color: var(--paper-dim); margin-top: 5px; min-height: 16px; }
+.encart-sous a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.encart-sous a:hover { text-decoration: underline; }
+
+.encart-info {
+    margin-left: auto; width: 18px; height: 18px; flex: 0 0 auto; padding: 0;
+    background: none; border: 1px solid var(--line); border-radius: 50%;
+    color: var(--paper-dim); font-family: 'Oswald', sans-serif; font-size: 11px;
+    line-height: 1; cursor: pointer;
 }
+.encart-info:hover, .encart-info[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.encart-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.bulle {
+    display: none; position: absolute; top: calc(100% - 4px); left: 0; right: 0; z-index: 30;
+    background: #17171a; border: 1px solid var(--accent); border-radius: 6px;
+    padding: 12px 14px; font-size: 12.5px; line-height: 1.5; color: var(--paper);
+    box-shadow: 0 10px 26px rgba(0,0,0,.65); min-width: 230px;
+}
+/* Survol (bureau) ou clic/tap (mobile) : les deux ouvrent l'infobulle. */
+.encart:hover .bulle, .encart.ouvert .bulle { display: block; }
+.bulle p { margin: 0 0 8px; }
+.bulle p:last-child { margin-bottom: 0; }
+.bulle .cmd {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--accent);
+    background: rgba(0,0,0,.4); padding: 1px 7px; border-radius: 3px; white-space: nowrap;
+}
+
+@media (max-width: 900px) { .encarts { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 420px) { .encarts { grid-template-columns: 1fr; } }
 
 .titre-section {
     font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
@@ -174,7 +209,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     .entete-texte h1 { font-size: 20px; }
     .entete img.avatar { width: 44px; height: 44px; }
     .entete-texte p { font-size: 12px; }
-    .bloc-lootbox, .bloc-tickets { font-size: 13.5px; padding: 12px 14px; }
     .emplacements { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .emplacement { padding: 10px; }
     .grille { grid-template-columns: 1fr; gap: 10px; }
@@ -193,8 +227,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             <p>Sélectionnez plusieurs équipements à équiper afin d'avoir la commande à copier/coller directement dans le chat Twitch. Mis à jour toutes les 5-10 minutes.</p>
         </div>
     </div>
-    <div id="zoneTickets"></div>
-    <div id="zoneLootbox"></div>
+    <div id="encarts" class="encarts"></div>
     <div class="titre-section">Loadout actuel</div>
     <div id="emplacements" class="emplacements"></div>
     <div id="grille"></div>
@@ -645,6 +678,91 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         });
     }
 
+    // Quatre encarts de ressources, TOUJOURS affichés — y compris à zéro. Un bloc
+    // qui n'apparaît que lorsqu'on possède déjà la ressource n'apprend rien à
+    // celles et ceux qui n'en ont jamais eu ; ici chaque infobulle explique quoi
+    // taper pour s'en servir, ou comment en obtenir.
+    function construireEncarts(r) {
+        const lienShop = `shop.html?user=${encodeURIComponent(pseudo)}`;
+        const encarts = [
+            {
+                label: 'Médailles', accent: '#f2c230', icone: '🏅', valeur: r.medailles,
+                sous: `<a href="${lienShop}">Aller à la boutique</a>`,
+                bulle: `<p>La monnaie gagnée en combat. Elle s'échange chez le marchand contre
+                        des objets ou un ticket de reset.</p>
+                        <p>Revends ce dont tu ne te sers pas avec <span class="cmd">!vendre</span>,
+                        achète avec <span class="cmd">!acheter</span> — la page Boutique te prépare
+                        les commandes toutes faites.</p>`,
+            },
+            {
+                label: 'Tickets de duel', accent: '#FF8040', icone: '🎟️', valeur: r.tickets,
+                sous: r.tickets > 0 ? 'Prêt à combattre' : 'Aucun duel disponible',
+                bulle: `<p><span class="cmd">!ticketduel</span> engage un duel contre la personne
+                        de ton choix : c'est toi qui désignes la cible.</p>
+                        <p><span class="cmd">!ticketauto</span> lance un combat automatique contre
+                        un adversaire tiré au sort dans ta tranche de puissance.</p>`,
+            },
+            {
+                label: 'Lootbox', accent: '#5ddd7a', icone: '🎁', valeur: r.lootbox,
+                sous: r.lootbox > 0 ? 'À ouvrir' : 'Aucune en attente',
+                bulle: `<p><span class="cmd">!lootbox</span> ouvre une boîte et te donne un objet
+                        au hasard.</p>
+                        <p>Si tu possèdes déjà l'objet tiré, le doublon le fait monter d'un niveau
+                        au lieu d'être perdu.</p>`,
+            },
+            {
+                label: 'Tickets de reset', accent: '#4a9fd8', icone: '♻️', valeur: r.ticketsReset,
+                // Les points en attente priment sur tout le reste : c'est une action
+                // à faire, pas une simple information.
+                sous: r.creditsReset > 0
+                    ? `<b style="color:#4a9fd8">${r.creditsReset} point(s) à placer</b>`
+                    : (r.ticketsReset > 0 ? 'Prêt à réinitialiser' : 'S\'achète en boutique'),
+                bulle: `<p><span class="cmd">!reset</span> remet toutes tes statistiques à zéro et
+                        te rend la totalité des points investis.</p>
+                        <p>Tu les replaces ensuite où tu veux avec
+                        <span class="cmd">!ameliorer atk 5</span> (ou def, pv, vit, chance).</p>
+                        <p>Un ticket s'achète en boutique pour 60 médailles.</p>`,
+            },
+        ];
+
+        document.getElementById('encarts').innerHTML = encarts.map((e, i) => `
+            <div class="encart${e.valeur > 0 ? '' : ' vide'}" style="--accent:${e.accent}">
+                <div class="encart-tete">
+                    <span class="encart-label">${e.icone} ${e.label}</span>
+                    <button type="button" class="encart-info" data-i="${i}"
+                            aria-expanded="false" aria-label="Aide : ${e.label}">i</button>
+                </div>
+                <div class="encart-valeur">${e.valeur.toLocaleString('fr-FR')}</div>
+                <div class="encart-sous">${e.sous}</div>
+                <div class="bulle" role="tooltip">${e.bulle}</div>
+            </div>
+        `).join('');
+
+        // Le survol suffit sur ordinateur (CSS), mais pas au doigt : le clic ouvre
+        // et ferme l'infobulle, et une seule reste ouverte à la fois.
+        document.querySelectorAll('.encart-info').forEach(btn => {
+            btn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const carte = btn.closest('.encart');
+                const etaitOuvert = carte.classList.contains('ouvert');
+                document.querySelectorAll('.encart.ouvert').forEach(c => {
+                    c.classList.remove('ouvert');
+                    c.querySelector('.encart-info').setAttribute('aria-expanded', 'false');
+                });
+                if (!etaitOuvert) {
+                    carte.classList.add('ouvert');
+                    btn.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.encart.ouvert').forEach(c => {
+                c.classList.remove('ouvert');
+                c.querySelector('.encart-info').setAttribute('aria-expanded', 'false');
+            });
+        });
+    }
+
     function afficherJoueurIntrouvable() {
         document.getElementById('titreInventaire').innerHTML = pseudo ? `INVENTAIRE DE <span>${pseudo}</span>` : 'MON <span>INVENTAIRE</span>';
         document.getElementById('emplacements').style.display = 'none';
@@ -683,17 +801,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             };
             possedesParam = joueur.inventaire || [];
             nbLootbox = joueur.lootbox || 0;
-            const nbTickets = joueur.tickets || 0;
 
-            if (nbTickets > 0) {
-                document.getElementById('zoneTickets').innerHTML =
-                    `<div class="bloc-tickets">🎟️ Tu as <strong>${nbTickets}</strong> ticket(s) de duel — tape <span class="cmd">!ticketduel</span> dans le chat pour engager un duel contre quelqu'un, ou <span class="cmd">!ticketauto</span> pour lancer un combat automatique !</div>`;
-            }
-
-            if (nbLootbox > 0) {
-                document.getElementById('zoneLootbox').innerHTML =
-                    `<div class="bloc-lootbox">🎁 Tu as <strong>${nbLootbox}</strong> lootbox en attente — tape <span class="cmd">!lootbox</span> dans le chat pour l'ouvrir !</div>`;
-            }
+            construireEncarts({
+                medailles:    joueur.medailles    || 0,
+                tickets:      joueur.tickets      || 0,
+                lootbox:      nbLootbox,
+                ticketsReset: joueur.ticketsReset || 0,
+                creditsReset: joueur.creditsReset || 0,
+            });
 
             try {
                 afficherTout();
