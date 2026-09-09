@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitch RPG — Accueil</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+}
+* { box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif;
+    margin: 0; padding: 28px 18px 60px; line-height: 1.5; min-height: 100vh;
+}
+h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
+.page { max-width: 1040px; margin: 0 auto; }
+
+/* ============ OUVERTURE ============ */
+.ouverture { padding: 30px 0 26px; border-bottom: 3px solid var(--yellow); margin-bottom: 30px; }
+.ouverture h1 { font-size: 40px; font-weight: 700; line-height: 1.05; letter-spacing: .01em; }
+.ouverture h1 span { color: var(--yellow); }
+.ouverture p { color: var(--paper-dim); font-size: 15px; margin: 10px 0 0; max-width: 62ch; }
+@media (max-width: 620px) { .ouverture h1 { font-size: 30px; } }
+
+/* ============ RECHERCHE ============ */
+.bloc-recherche { margin-bottom: 34px; scroll-margin-top: 80px; }
+.bloc-recherche h2 { font-size: 17px; font-weight: 600; letter-spacing: .04em; margin-bottom: 4px; }
+.bloc-recherche > p { color: var(--paper-dim); font-size: 13.5px; margin: 0 0 12px; }
+#champRecherche {
+    width: 100%; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 15px; color: var(--paper); font-size: 15px; font-family: 'Barlow', sans-serif;
+}
+#champRecherche:focus { outline: none; border-color: var(--yellow); }
+#champRecherche::placeholder { color: #6f6b60; }
+
+.etat { color: var(--paper-dim); font-size: 13.5px; padding: 14px 2px; }
+.etat b { color: var(--paper); font-weight: 600; }
+
+.resultats { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.fiche {
+    display: flex; align-items: center; gap: 14px; background: var(--bg-panel);
+    border: 1px solid var(--line); border-left: 3px solid var(--line);
+    border-radius: 6px; padding: 11px 14px;
+}
+.fiche:hover { border-left-color: var(--yellow); }
+.fiche-avatar {
+    width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto; object-fit: cover;
+    background: #232326; border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-size: 17px; color: var(--paper-dim);
+}
+.fiche-ident { min-width: 0; flex: 1 1 auto; }
+.fiche-nom {
+    font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: .02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fiche-chiffres { color: var(--paper-dim); font-size: 12.5px; margin-top: 1px; }
+.fiche-chiffres b { color: var(--yellow); font-weight: 600; }
+.fiche-actions { display: flex; gap: 7px; flex: 0 0 auto; }
+.fiche-actions a {
+    font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 500; letter-spacing: .05em;
+    text-transform: uppercase; text-decoration: none; color: var(--paper-dim);
+    border: 1px solid var(--line); border-radius: 5px; padding: 7px 11px; white-space: nowrap;
+}
+.fiche-actions a:hover { color: var(--yellow); border-color: var(--yellow); }
+@media (max-width: 560px) {
+    .fiche { flex-wrap: wrap; }
+    .fiche-actions { width: 100%; }
+    .fiche-actions a { flex: 1; text-align: center; }
+}
+
+/* ============ SECTIONS ============ */
+.titre-rubrique {
+    font-size: 15px; font-weight: 600; letter-spacing: .06em; color: var(--paper-dim);
+    padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
+}
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 12px; }
+.tuile {
+    display: block; text-decoration: none; color: inherit; background: var(--bg-panel);
+    border: 1px solid var(--line); border-top: 3px solid var(--line);
+    border-radius: 6px; padding: 17px 17px 19px;
+}
+.tuile:hover { border-top-color: var(--yellow); }
+.tuile:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.tuile h3 { font-size: 16px; font-weight: 600; letter-spacing: .03em; color: var(--paper); }
+.tuile p { color: var(--paper-dim); font-size: 13px; margin: 6px 0 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+    <div class="ouverture">
+        <h1>Le RPG <span>du stream</span></h1>
+        <p>Chaque personne qui suit le stream a un personnage : des statistiques, un équipement à
+           faire monter en niveau, et des duels contre les autres. Cherche ton pseudo ci-dessous
+           pour retrouver ta fiche, ou explore les classements et le catalogue d'objets.</p>
+    </div>
+
+    <section class="bloc-recherche" id="recherche">
+        <h2>Trouver un personnage</h2>
+        <p>Tape un pseudo pour ouvrir directement sa fiche ou son inventaire.</p>
+        <input type="text" id="champRecherche" autocomplete="off" spellcheck="false"
+               placeholder="Ton pseudo Twitch, ou celui de quelqu'un d'autre...">
+        <div class="etat" id="etat">Chargement des personnages...</div>
+        <div class="resultats" id="resultats"></div>
+    </section>
+
+    <section>
+        <h2 class="titre-rubrique">Explorer</h2>
+        <div class="grille">
+            <a class="tuile" href="ranking.html">
+                <h3>Classements</h3>
+                <p>Le top 10 de chaque statistique suivie : puissance, victoires, dégâts, séries.</p>
+            </a>
+            <a class="tuile" href="codex.html">
+                <h3>Codex</h3>
+                <p>Tous les objets du catalogue, leurs statistiques et ce qu'ils font en combat.</p>
+            </a>
+            <a class="tuile" href="annonce-saison.html">
+                <h3>La saison</h3>
+                <p>Comment fonctionne le jeu, les règles des duels et ce qu'on peut gagner.</p>
+            </a>
+        </div>
+    </section>
+
+</div>
+
+<script>
+var TOP_PAR_DEFAUT = 5;   // personnages affichés avant toute recherche
+var MAX_RESULTATS  = 12;  // limite d'affichage pendant la recherche
+
+var champ     = document.getElementById('champRecherche');
+var zoneEtat  = document.getElementById('etat');
+var zoneRes   = document.getElementById('resultats');
+var personnages = [];
+
+function echapper(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
+function fiche(p) {
+    var lien = encodeURIComponent(p.cle);
+    var avatar = p.avatar
+        ? '<img class="fiche-avatar" src="' + echapper(p.avatar) + '" alt="" loading="lazy">'
+        : '<div class="fiche-avatar">' + echapper((p.nom || '?').charAt(0).toUpperCase()) + '</div>';
+    return '<div class="fiche">' + avatar +
+        '<div class="fiche-ident">' +
+            '<div class="fiche-nom">' + echapper(p.nom) + '</div>' +
+            '<div class="fiche-chiffres">Puissance <b>' + Math.round(p.power) + '</b>' +
+                (p.rang ? ' &nbsp;·&nbsp; ' + p.rang + '<sup>e</sup> sur ' + p.total : '') +
+                ' &nbsp;·&nbsp; ' + p.victoires + 'V / ' + p.defaites + 'D' +
+            '</div>' +
+        '</div>' +
+        '<div class="fiche-actions">' +
+            '<a href="stats.html?user=' + lien + '">Profil</a>' +
+            '<a href="inventaire.html?user=' + lien + '">Inventaire</a>' +
+        '</div>' +
+    '</div>';
+}
+
+function afficher() {
+    var q = champ.value.trim().toLowerCase();
+    var liste;
+
+    if (!q) {
+        liste = personnages.slice(0, TOP_PAR_DEFAUT);
+        zoneEtat.innerHTML = 'Les <b>' + TOP_PAR_DEFAUT + '</b> personnages les plus puissants ' +
+                             '— ou cherche un pseudo ci-dessus.';
+    } else {
+        liste = personnages.filter(function (p) {
+            return p.nom.toLowerCase().indexOf(q) !== -1 || p.cle.indexOf(q) !== -1;
+        });
+        if (!liste.length) {
+            zoneEtat.innerHTML = 'Aucun personnage ne correspond à « <b>' + echapper(champ.value.trim()) +
+                                 '</b> ». Vérifie l\'orthographe du pseudo Twitch.';
+            zoneRes.innerHTML = '';
+            return;
+        }
+        zoneEtat.innerHTML = liste.length + (liste.length > 1 ? ' personnages trouvés' : ' personnage trouvé') +
+                             (liste.length > MAX_RESULTATS ? ' — les ' + MAX_RESULTATS + ' premiers :' : '');
+        liste = liste.slice(0, MAX_RESULTATS);
+    }
+    zoneRes.innerHTML = liste.map(fiche).join('');
+}
+
+fetch('players.json?v=' + Date.now())
+    .then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+    })
+    .then(function (data) {
+        personnages = Object.keys(data).map(function (cle) {
+            var j = data[cle], s = j.stats || {}, c = j.classement || {}, cb = j.combat || {};
+            return {
+                cle: cle,
+                nom: j.nomAffichage || cle,
+                avatar: j.avatar || '',
+                power: s.powerLevel || 0,
+                rang: c.rangPower || 0,
+                total: c.totalPower || 0,
+                victoires: cb.victoires || 0,
+                defaites: cb.defaites || 0
+            };
+        }).sort(function (a, b) { return b.power - a.power; });
+        afficher();
+    })
+    .catch(function () {
+        zoneEtat.innerHTML = 'Les personnages n\'ont pas pu être chargés. ' +
+            'Recharge la page dans quelques instants — les données se mettent à jour toutes les 5 à 10 minutes.';
+    });
+
+champ.addEventListener('input', afficher);
+// Entrée ouvre directement le profil du premier résultat.
+champ.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var premier = zoneRes.querySelector('.fiche-actions a');
+    if (premier) location.href = premier.href;
+});
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>
