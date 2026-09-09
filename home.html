@@ -22,15 +22,19 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 a { color: inherit; }
 
 /* ====== PLUIE D'OBJETS ======
-   Les objets tombent au rythme du défilement, pas du temps : la page ne bouge
-   pas tant qu'on ne la parcourt pas. Purement décoratif, donc en retrait
-   derrière le contenu et masqué aux lecteurs d'écran. */
+   Elle tombe en continu, doucement, et accélère avec le défilement. Trois
+   plans de profondeur (taille, opacité, vitesse) donnent du relief sans
+   surcharger. Purement décoratif, donc en retrait et masqué aux lecteurs
+   d'écran. */
 #pluie {
     position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    /* Les objets s'estompent en haut et en bas au lieu d'apparaître d'un coup. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 88%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 88%, transparent);
 }
 #pluie img {
-    position: absolute; width: 46px; height: 46px; object-fit: contain;
-    opacity: .13; will-change: transform; filter: saturate(.7);
+    position: absolute; top: 0; left: 0; object-fit: contain;
+    will-change: transform; transform: translate3d(0, -200px, 0);
 }
 .page { max-width: 1040px; margin: 0 auto; position: relative; z-index: 1; }
 
@@ -274,56 +278,113 @@ a { color: inherit; }
 
 <script>
 /* ============================ PLUIE D'OBJETS ============================
-   Position pilotée par le défilement : chaque objet descend proportionnellement
-   au scroll, à sa propre vitesse, et reboucle en haut quand il sort du bas.
-   Rien ne bouge quand la page est immobile. */
-var NB_OBJETS = 20;
+   Deux moteurs superposés :
+     - le TEMPS, qui fait tomber les objets en continu, très lentement ;
+     - le DÉFILEMENT, qui les pousse vers le bas proportionnellement au scroll,
+       plus un coup d'accélérateur qui retombe progressivement.
+   Résultat : ça vit quand la page est immobile, et ça s'emballe quand on
+   parcourt la page. */
+
+/* Trois plans : le premier est gros et net, le dernier petit et flou. */
+var PLANS = [
+    { taille: 26, opacite: .07, vitesse: 5,  scroll: .10, flou: 1.6 },
+    { taille: 40, opacite: .12, vitesse: 11, scroll: .26, flou: .6 },
+    { taille: 58, opacite: .17, vitesse: 19, scroll: .46, flou: 0 }
+];
+var COULEUR_RARETE = { commun: '#8d8d8d', normal: '#5ddd7a', rare: '#4a9fd8', legendaire: '#f2c230' };
+
 var pluie = document.getElementById('pluie');
 var flocons = [];
 var animePluie = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var tempsEffectif = 0, boost = 0, dernierScroll = 0, dernierFrame = 0, cycle = 0;
 
-function lancerPluie(images) {
-    if (!animePluie || !images.length) return;
-    var h = window.innerHeight;
-    for (var i = 0; i < NB_OBJETS; i++) {
+function nbObjets() {
+    // Moins d'objets sur petit écran : même densité visuelle, moins de calcul.
+    return window.innerWidth < 700 ? 26 : 48;
+}
+
+function lancerPluie(items) {
+    if (!animePluie || !items.length) return;
+    cycle = window.innerHeight + 320;
+    dernierScroll = window.scrollY || 0;
+
+    var total = nbObjets();
+    for (var i = 0; i < total; i++) {
+        var item = items[i % items.length];
+        var plan = PLANS[i % PLANS.length];
         var img = document.createElement('img');
-        img.src = images[i % images.length];
+        img.src = item.image;
         img.alt = '';
-        var f = {
-            el: img,
-            x: Math.random() * 100,                    // % de largeur
-            depart: Math.random() * (h + 200),         // position initiale
-            vitesse: 0.25 + Math.random() * 0.75,      // fraction du scroll
-            rotation: (Math.random() - 0.5) * 0.35,    // degrés par pixel scrollé
-            taille: 0.7 + Math.random() * 0.6
-        };
-        img.style.left = f.x + '%';
-        img.style.transform = 'translateY(' + f.depart + 'px)';
+        img.style.width = img.style.height = plan.taille + 'px';
+        img.style.opacity = plan.opacite;
+        // Halo à la couleur de rareté de l'objet : les pièces rares se
+        // repèrent au fond, ce qui récompense un peu l'œil qui traîne.
+        var teinte = COULEUR_RARETE[item.rarete] || COULEUR_RARETE.commun;
+        img.style.filter = 'saturate(.75) drop-shadow(0 0 6px ' + teinte + ')' +
+                           (plan.flou ? ' blur(' + plan.flou + 'px)' : '');
         pluie.appendChild(img);
-        flocons.push(f);
+
+        flocons.push({
+            el: img,
+            x: Math.random() * 100,
+            depart: Math.random() * cycle,
+            vitesse: plan.vitesse * (0.75 + Math.random() * 0.5),   // px/seconde
+            scroll: plan.scroll * (0.8 + Math.random() * 0.4),      // fraction du scroll
+            rotation: (Math.random() - 0.5) * 26,                   // degrés/seconde
+            // Balancement latéral : une chute strictement verticale fait
+            // mécanique, un léger louvoiement fait tomber.
+            amplitude: 8 + Math.random() * 22,
+            periode: 3 + Math.random() * 5,
+            phase: Math.random() * Math.PI * 2
+        });
     }
-    placer();
-    window.addEventListener('scroll', demanderPlacement, { passive: true });
-    window.addEventListener('resize', placer);
+
+    window.addEventListener('scroll', surScroll, { passive: true });
+    window.addEventListener('resize', function () { cycle = window.innerHeight + 320; });
+    dernierFrame = performance.now();
+    requestAnimationFrame(boucle);
 }
 
-var enAttente = false;
-function demanderPlacement() {
-    if (enAttente) return;
-    enAttente = true;
-    requestAnimationFrame(function () { placer(); enAttente = false; });
+function surScroll() {
+    var y = window.scrollY || 0;
+    // Un scroll rapide donne un coup d'accélérateur, plafonné pour que la
+    // pluie reste lisible même sur un défilement brutal.
+    boost = Math.min(14, boost + Math.abs(y - dernierScroll) * 0.09);
+    dernierScroll = y;
 }
 
-function placer() {
-    var y = window.scrollY || window.pageYOffset;
-    var cycle = window.innerHeight + 200;
+function boucle(maintenant) {
+    var dt = Math.min(0.05, (maintenant - dernierFrame) / 1000); // borne les sauts d'onglet
+    dernierFrame = maintenant;
+
+    // Le boost retombe tout seul : l'accélération suit le geste, puis s'apaise.
+    boost *= Math.pow(0.06, dt);
+    if (boost < 0.01) boost = 0;
+
+    // Accumulateur : le temps effectif n'avance jamais en arrière, donc la
+    // pluie ne remonte pas quand on scrolle vers le haut — seul le terme de
+    // scroll ci-dessous s'en charge.
+    tempsEffectif += dt * (1 + boost);
+
+    var y = window.scrollY || 0;
+    var t = tempsEffectif;
+
     for (var i = 0; i < flocons.length; i++) {
         var f = flocons[i];
-        // Modulo positif : la remontée fonctionne aussi quand on scrolle vers le haut.
-        var pos = ((f.depart + y * f.vitesse) % cycle + cycle) % cycle - 100;
-        f.el.style.transform = 'translateY(' + pos + 'px) rotate(' + (y * f.rotation) + 'deg) scale(' + f.taille + ')';
+        var brut = f.depart + t * f.vitesse + y * f.scroll;
+        var pos = ((brut % cycle) + cycle) % cycle - 160;
+        var derive = Math.sin(t / f.periode * Math.PI * 2 + f.phase) * f.amplitude;
+        f.el.style.transform =
+            'translate3d(calc(' + f.x + 'vw + ' + derive.toFixed(1) + 'px), ' +
+            pos.toFixed(1) + 'px, 0) rotate(' + (t * f.rotation).toFixed(1) + 'deg)';
     }
+    requestAnimationFrame(boucle);
 }
+
+// Onglet en arrière-plan : on repart du temps courant pour éviter un saut.
+document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) dernierFrame = performance.now();
+});
 
 /* ============================ DONNÉES ============================ */
 var TOP_DEFAUT = 5, MAX_RESULTATS = 12;
@@ -446,8 +507,9 @@ fetch('catalogue_stats.json?v=' + Date.now())
         window.__objets = items.length;
         majCompteurs();
 
-        lancerPluie(items.filter(function (it) { return it.image; })
-                         .map(function (it) { return it.image; }));
+        // On passe les objets entiers (et plus seulement leur image) : la
+        // rareté sert à teinter le halo de chaque pièce qui tombe.
+        lancerPluie(items.filter(function (it) { return it.image; }));
     })
     .catch(function () {
         document.getElementById('objets').innerHTML =
