@@ -21,7 +21,7 @@ body {
 h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
 .page { max-width: 1080px; margin: 0 auto; }
 /* De la place en bas pour que la barre fixe ne recouvre jamais la dernière rangée. */
-.page { padding-bottom: 28px; }  /* ajuste dynamiquement par ajusterPaddingPage() quand la barre est visible */
+.page { padding-bottom: 28px; }
 
 .entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
 .entete h1 { font-size: 30px; font-weight: 700; }
@@ -124,14 +124,8 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     transition: box-shadow .15s, transform .1s;
 }
 .card.choisi { box-shadow: 0 0 0 3px var(--accent); transform: translateY(-2px); }
-.card-verrou {
-    position: absolute; top: 8px; left: 8px; font-size: 13px; line-height: 1;
-    background: rgba(0,0,0,.5); border-radius: 50%; width: 22px; height: 22px;
-    display: flex; align-items: center; justify-content: center;
-}
-.card-puce-rarete.a-gauche { left: 8px; right: auto; }
-/* Meme langage visuel que .carte-niveau sur la page inventaire (pastille
-   bordee jaune) -- ici pour la quantite possedee cote Vendre. */
+
+/* Badge de quantité pour la revente */
 .card-niveau {
     position: absolute; top: 8px; right: 8px; z-index: 2;
     font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 900; color: var(--yellow);
@@ -144,6 +138,8 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     letter-spacing: .8px; text-transform: uppercase; color: var(--accent);
     background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 3px;
 }
+.card-puce-rarete.a-gauche { left: 8px; right: auto; }
+
 .card-image { width: 100%; height: 74px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
 .card-image img { max-width: 100%; max-height: 74px; object-fit: contain; }
 .card-image .emoji { font-size: 42px; line-height: 1; }
@@ -170,66 +166,90 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .card-qte button {
     width: 26px; height: 26px; background: none; border: 1px solid var(--line);
     border-radius: 5px; color: var(--paper); font-size: 15px; line-height: 1; cursor: pointer;
-    font-family: 'Oswald', sans-serif; flex: 0 0 auto;
+    font-family: 'Oswald', sans-serif; flex: 0 0 auto; transition: 0.1s;
 }
-.card-qte button:hover:not([disabled]) { border-color: var(--accent); color: var(--accent); }
+.card-qte button:hover:not([disabled]) { border-color: var(--accent); color: var(--accent); background: rgba(255,255,255,0.05); }
 .card-qte button[disabled] { opacity: .3; cursor: default; }
 .card-qte .valeur { min-width: 20px; text-align: center; font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; }
 
 .message { color: var(--paper-dim); font-size: 14px; padding: 18px 2px; }
 .message b { color: var(--paper); }
-.cache { display: none; }
+.cache { display: none !important; }
 
-/* ===== Barre flottante, TOUJOURS visible dès qu'une sélection existe ===== */
+
+/* ===== BARRE FIXE (Popin de confirmation modernisée) ===== */
 .barre-fixe {
-    position: fixed; left: 18px; right: 18px; bottom: 16px; z-index: 50;
+    position: fixed; left: 18px; right: 18px; bottom: 20px; z-index: 50;
     max-width: 1044px; margin: 0 auto;
-    background: #17171a; border: 1px solid var(--yellow); border-radius: 10px;
-    padding: 15px 18px; box-shadow: 0 12px 34px rgba(0,0,0,.7);
+    background: rgba(15, 15, 18, 0.95);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--yellow); border-radius: 12px;
+    padding: 20px 24px; 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(242,194,48,0.15);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
+    animation: slideUp 0.3s ease-out forwards;
 }
-.barre-fixe.mode-vente { border-color: var(--vente); }
-.barre-fixe-chiffres { display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 11px; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.barre-fixe.mode-vente { 
+    border-color: var(--vente); 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(93,221,122,0.15);
+}
+
+.barre-fixe-gauche { display: flex; flex-direction: column; gap: 8px; flex: 1 1 auto; }
+.barre-fixe-droite { display: flex; flex-direction: column; gap: 8px; flex: 1 1 400px; max-width: 100%; }
+
+.barre-fixe-chiffres { display: flex; gap: 30px; flex-wrap: wrap; }
 .barre-fixe-chiffres div span {
-    display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
-    font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase; color: var(--paper-dim);
+    display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 12px;
+    font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim);
+    margin-bottom: 2px;
 }
-.barre-fixe-chiffres div b { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--yellow); }
+.barre-fixe-chiffres div b { 
+    font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700; color: var(--yellow); line-height: 1; 
+}
 .barre-fixe.mode-vente .barre-fixe-chiffres div b { color: var(--vente); }
 .barre-fixe-chiffres div.attention b { color: var(--red); }
+
 .barre-fixe-avertissement {
-    font-size: 12.5px; color: var(--yellow); background: rgba(242,194,48,.1);
-    border: 1px solid var(--yellow); border-radius: 5px; padding: 7px 11px; margin-bottom: 11px;
+    font-size: 12.5px; color: var(--yellow); background: rgba(242,194,48,.12);
+    border: 1px solid rgba(242,194,48,.3); border-radius: 6px; padding: 6px 12px;
+    display: inline-block; width: fit-content; margin-top: 4px;
 }
+
 .zone-commande-consigne {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
-    letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 7px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim);
 }
-/* Seuls le code et le bouton partagent la rangee : stretch les egalise
-   maintenant exactement, l'etiquette etant sortie au-dessus. */
-.zone-commande-ligne { display: flex; gap: 9px; align-items: stretch; }
-.zone-commande code {
-    display: block; background: #0b0b0d; border: 1px solid var(--line); border-radius: 5px;
-    padding: 10px 13px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
+.zone-commande-ligne { display: flex; gap: 10px; align-items: stretch; }
+.zone-commande-ligne code {
+    flex: 1; background: #070709; border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 16px; font-family: 'Barlow Condensed', sans-serif; font-size: 17px;
     font-weight: 700; color: var(--yellow); overflow-x: auto; white-space: nowrap;
     display: flex; align-items: center;
 }
-.barre-fixe.mode-vente .zone-commande code { color: var(--vente); }
-.zone-commande button {
-    font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em;
-    text-transform: uppercase; color: #17170f; background: var(--yellow); border: none;
-    border-radius: 5px; padding: 0 20px; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
-    min-height: 44px;
-}
-.barre-fixe.mode-vente .zone-commande button { background: var(--vente); }
-.zone-commande button:hover { filter: brightness(1.12); }
-.zone-commande button:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+.barre-fixe.mode-vente .zone-commande-ligne code { color: var(--vente); border-color: rgba(93,221,122,0.3); }
 
+.zone-commande-ligne button {
+    font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: .05em;
+    text-transform: uppercase; color: #17170f; background: var(--yellow); border: none;
+    border-radius: 6px; padding: 0 24px; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
+    transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
+}
+.barre-fixe.mode-vente .zone-commande-ligne button { background: var(--vente); color: #0b1c10; }
+.zone-commande-ligne button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(242,194,48,0.3); }
+.barre-fixe.mode-vente .zone-commande-ligne button:hover { box-shadow: 0 5px 15px rgba(93,221,122,0.3); }
+.zone-commande-ligne button:active { transform: translateY(0); }
+
+
+@media (max-width: 768px) {
+    .barre-fixe { flex-direction: column; align-items: stretch; padding: 18px; gap: 18px; }
+    .barre-fixe-chiffres { gap: 18px; }
+    .zone-commande-ligne { flex-direction: column; }
+    .zone-commande-ligne button { padding: 12px; }
+}
 @media (max-width: 620px) {
     .grille-cards { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
-    .barre-fixe { left: 10px; right: 10px; bottom: 10px; padding: 12px 14px; }
-    .barre-fixe-chiffres { gap: 16px; }
-    .zone-commande { flex-direction: column; }
-    .zone-commande button { padding: 11px; }
 }
 </style>
 </head>
@@ -246,7 +266,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
         <label for="chercheProfil">Qui es-tu&nbsp;? <span style="font-weight:400;text-transform:none;letter-spacing:0">(facultatif)</span></label>
         <div class="champ-profil">
             <input type="text" id="chercheProfil" autocomplete="off" spellcheck="false"
-                   placeholder="Tape ton pseudo Twitch pour voir ton solde et revendre tes objets..."
+                   placeholder="Entre ton pseudo Twitch pour voir ton solde et inventaire..."
                    role="combobox" aria-expanded="false" aria-controls="propositions" aria-autocomplete="list">
             <div class="propositions" id="propositions" role="listbox"></div>
         </div>
@@ -268,7 +288,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
         </div>
 
         <div class="section-produits">
-            <div class="sous-titre">🔒 Toujours en stock</div>
+            <div class="sous-titre">Toujours en stock</div>
             <div id="listeFixes" class="grille-fixes"></div>
         </div>
 
@@ -289,26 +309,20 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 <script>
 /* =====================================================================
    ÉCONOMIE — doit rester identique côté Streamer.bot (commandes !vendre
-   et !acheter), sinon la page annoncerait des prix ou une syntaxe que le
-   bot refuse. Voir la note sur le format de commande plus bas.
+   et !acheter)
    ===================================================================== */
 var PRIX_ACHAT  = { commun: 20, normal: 48, rare: 120, legendaire: 300 };
-var PRIX_VENTE  = { commun: 5,  normal: 12, rare: 30,  legendaire: 75  };  // = achat / 4
+var PRIX_VENTE  = { commun: 5,  normal: 12, rare: 30,  legendaire: 75  };
 var PRIX_RESET  = 60;
-// Calibrée sur le rendement moyen d'une victoire (~12 médailles) : une
-// lootbox coûte donc à peu près ce que rapporte UN duel gagné.
 var PRIX_LOOTBOX = 12;
-var STOCK = { commun: 4, normal: 3, rare: 2 };   // composition du réassort horaire
+var STOCK = { commun: 4, normal: 3, rare: 2 };
 
 var LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
 var ORDRE_RARETE = { legendaire: 0, rare: 1, normal: 2, commun: 3 };
 var LABEL_SLOT = { weapon: 'Arme', offhand: 'Main gauche', torso: 'Armure', strategeme: 'Stratagème' };
 
 /* ---------------------------------------------------------------------
-   TIRAGE DU STOCK — inchangé. Déterministe, à partir de l'heure écoulée
-   depuis 1970. Tout le monde voit le même étal sans qu'il faille le
-   stocker nulle part, et Streamer.bot recalcule le même résultat pour
-   valider un achat. À reproduire À L'IDENTIQUE côté C#.
+   TIRAGE DU STOCK
    --------------------------------------------------------------------- */
 function heureCourante() { return Math.floor(Date.now() / 3600000); }
 
@@ -344,8 +358,8 @@ function tirerStock(catalogue, heure) {
 /* ===================== ÉTAT ===================== */
 var CATALOGUE = {}, JOUEURS = {}, listeJoueurs = [];
 var pseudoActif = null, joueurActif = null;
-var panierAchat = {};   // { id: quantité } — id numérique (catalogue), "reset" ou "lootbox"
-var aVendre = {};       // { numero: quantité }
+var panierAchat = {};
+var aVendre = {};
 var ongletCourant = 'acheter';
 
 function echapper(t) {
@@ -430,7 +444,7 @@ function choisirProfil(cle) {
     url.searchParams.set('user', cle);
     history.replaceState(null, '', url);
     afficherSolde();
-    rendreAchat();   // même sélection, mais l'affordabilité affichée change
+    rendreAchat();
     rendreVente();
 }
 
@@ -445,24 +459,20 @@ function afficherSolde() {
         ' ' + iconeMedaille('icone-medaille grande') + '</div></div>';
 }
 
-    function iconeMedaille(classeExtra = '') {
-    // Remplace le chemin par celui de ton image dans le dossier assets
+function iconeMedaille(classeExtra = '') {
     return '<img src="assets/medaille.png" alt="Médailles" class="icone-medaille ' + classeExtra + '" style="height:1em; vertical-align:middle;">';
 }
 
 /* ===================== CARD GÉNÉRIQUE ===================== */
-// Un seul gabarit pour Acheter ET Vendre, afin que les deux se ressemblent
-// comme demandé — seule la couleur/le libellé du prix changent, pour que la
-// distinction achat/vente reste évidente même sans lire le texte.
 function carteProduit(cfg) {
     var accent = cfg.accent || 'var(--commun)';
     var puceRarete = cfg.rarete
         ? '<div class="card-puce-rarete' + (cfg.mode === 'vente' ? ' a-gauche' : '') + '">' + LABEL_RARETE[cfg.rarete] + '</div>'
         : '';
-    // Cote Vendre, la pastille de rarete prend la gauche : le badge de
-    // quantite possedee (style "niveau" de l'inventaire) prend la droite.
     var badgeQuantite = cfg.badgeQuantite !== undefined ? '<div class="card-niveau">×' + cfg.badgeQuantite + '</div>' : '';
-    var verrou = cfg.verrou ? '<div class="card-verrou">🔒</div>' : '';
+    
+    // On ne génère plus la div "card-verrou", le cadenas est désormais directement dans le nom de l'objet
+    
     var modeClasse = cfg.mode === 'vente' ? 'mode-vente' : 'mode-achat';
     var signe = cfg.mode === 'vente' ? '+' : '';
     var visuel = cfg.image !== undefined
@@ -470,7 +480,7 @@ function carteProduit(cfg) {
         : '<div class="emoji">' + echapper(cfg.icone || '?') + '</div>';
 
     return '<div class="card' + (cfg.quantite > 0 ? ' choisi' : '') + '" data-id="' + cfg.id + '" style="--accent:' + accent + '">' +
-        verrou + puceRarete + badgeQuantite +
+        puceRarete + badgeQuantite +
         '<div class="card-image">' + visuel + '</div>' +
         '<div class="card-nom">' + echapper(cfg.nom) + '</div>' +
         (cfg.sous ? '<div class="card-sous">' + cfg.sous + '</div>' : '') +
@@ -487,11 +497,6 @@ function carteProduit(cfg) {
 }
 
 /* ===================== ACHETER ===================== */
-function nomProduitAchat(id) {
-    if (id === 'reset') return 'Ticket de reset de stats';
-    if (id === 'lootbox') return 'Lootbox';
-    var it = parNumero(id); return it ? it.nom : id;
-}
 function prixProduitAchat(id) {
     if (id === 'reset') return PRIX_RESET;
     if (id === 'lootbox') return PRIX_LOOTBOX;
@@ -499,22 +504,22 @@ function prixProduitAchat(id) {
 }
 
 function rendreAchat() {
-    // --- Toujours en stock : reset (verrouillé) + lootbox ---
+    // --- Toujours en stock : Cadenas ajouté directement dans le nom de l'objet ---
     var carteReset = carteProduit({
-        id: 'reset', mode: 'achat', nom: 'Ticket de reset de stats', icone: '♻️',
-        accent: 'var(--special)', verrou: true, prix: PRIX_RESET,
-        sous: 'Réattribue tous tes points de stats déjà dépensés',
+        id: 'reset', mode: 'achat', nom: '🔒 Ticket de reset de stats', icone: '♻️',
+        accent: 'var(--special)', prix: PRIX_RESET,
+        sous: 'Réattribue tous tes points de stats',
         quantite: panierAchat.reset || 0,
     });
     var carteLootbox = carteProduit({
-        id: 'lootbox', mode: 'achat', nom: 'Lootbox', icone: '🎁',
+        id: 'lootbox', mode: 'achat', nom: '🔒 Lootbox', icone: '🎁',
         accent: 'var(--special)', prix: PRIX_LOOTBOX,
-        sous: 'Un objet aléatoire — environ le prix d\'une victoire',
+        sous: 'Un objet aléatoire de la boutique',
         quantite: panierAchat.lootbox || 0,
     });
     document.getElementById('listeFixes').innerHTML = carteReset + carteLootbox;
 
-    // --- Étal de l'heure, trié par rareté (le plus rare en premier) ---
+    // --- Étal de l'heure ---
     var stock = tirerStock(CATALOGUE, heureCourante());
     stock.sort(function (a, b) { return (ORDRE_RARETE[a.rarete] ?? 9) - (ORDRE_RARETE[b.rarete] ?? 9); });
     document.getElementById('listeRotation').innerHTML = stock.map(function (it) {
@@ -586,57 +591,72 @@ document.getElementById('listeVendre').addEventListener('click', function (e) {
     rendreVente();
 });
 
-/* ===================== BARRE FIXE (toujours visible à l'écran) ===================== */
+/* ===================== BARRE FIXE ===================== */
 function majBarreFixe() {
     var barre = document.getElementById('barreFixe');
 
     if (ongletCourant === 'acheter') {
         var ids = Object.keys(panierAchat);
         if (!ids.length) { barre.className = 'cache'; return; }
+        
         var total = 0, detail = [];
         ids.forEach(function (id) {
             var q = panierAchat[id];
             total += prixProduitAchat(id) * q;
             detail.push(id + 'x' + q);
         });
+        
         var commande = '!acheter ' + detail.join(' ');
         var apresChiffre, apresLabel = 'Solde après achat', classeApres = '';
+        
         if (joueurActif) {
             apresChiffre = soldeActuel() - total;
             if (apresChiffre < 0) { apresLabel = 'Il te manque'; apresChiffre = Math.abs(apresChiffre); classeApres = ' attention'; }
         }
+        
         barre.className = 'barre-fixe mode-achat';
         barre.innerHTML =
-            '<div class="barre-fixe-chiffres">' +
-                '<div><span>Coût total</span><b>' + total.toLocaleString('fr-FR') + '</b></div>' +
-                (joueurActif ? '<div class="' + classeApres.trim() + '"><span>' + apresLabel + '</span><b>' + apresChiffre.toLocaleString('fr-FR') + '</b></div>' : '') +
+            '<div class="barre-fixe-gauche">' +
+                '<div class="barre-fixe-chiffres">' +
+                    '<div><span>Coût total</span><b>' + total.toLocaleString('fr-FR') + ' ' + iconeMedaille() + '</b></div>' +
+                    (joueurActif ? '<div class="' + classeApres.trim() + '"><span>' + apresLabel + '</span><b>' + apresChiffre.toLocaleString('fr-FR') + ' ' + iconeMedaille() + '</b></div>' : '') +
+                '</div>' +
+                (!joueurActif ? '<div class="barre-fixe-avertissement">⚠️ Assure-toi d\'avoir assez de médailles en stock !</div>' : '') +
             '</div>' +
-            (!joueurActif ? '<div class="barre-fixe-avertissement">⚠️ Sois sûr·e d\'avoir le bon montant de médailles disponibles avant de valider !</div>' : '') +
-            '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
-            '<div class="zone-commande-ligne">' +
-                '<code id="cmdBarre">' + echapper(commande) + '</code>' +
-                '<button type="button" id="btnCopierBarre">Copier</button>' +
+            '<div class="barre-fixe-droite">' +
+                '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
+                '<div class="zone-commande-ligne">' +
+                    '<code id="cmdBarre">' + echapper(commande) + '</code>' +
+                    '<button type="button" id="btnCopierBarre">Copier</button>' +
+                '</div>' +
             '</div>';
+
     } else {
         var numeros = Object.keys(aVendre);
         if (!numeros.length) { barre.className = 'cache'; return; }
+        
         var gain = 0, pieces = [];
         numeros.forEach(function (n) {
             var it = parNumero(n);
             if (it) gain += (PRIX_VENTE[it.rarete || 'commun'] || 0) * aVendre[n];
             pieces.push(n + 'x' + aVendre[n]);
         });
+        
         var commandeV = '!vendre ' + pieces.join(' ');
         barre.className = 'barre-fixe mode-vente';
         barre.innerHTML =
-            '<div class="barre-fixe-chiffres">' +
-                '<div><span>Médailles obtenues</span><b>+' + gain.toLocaleString('fr-FR') + '</b></div>' +
-                (joueurActif ? '<div><span>Nouveau solde</span><b>' + (soldeActuel() + gain).toLocaleString('fr-FR') + '</b></div>' : '') +
+            '<div class="barre-fixe-gauche">' +
+                '<div class="barre-fixe-chiffres">' +
+                    '<div><span>Médailles obtenues</span><b>+' + gain.toLocaleString('fr-FR') + ' ' + iconeMedaille() + '</b></div>' +
+                    (joueurActif ? '<div><span>Nouveau solde</span><b>' + (soldeActuel() + gain).toLocaleString('fr-FR') + ' ' + iconeMedaille() + '</b></div>' : '') +
+                '</div>' +
             '</div>' +
-            '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
-            '<div class="zone-commande-ligne">' +
-                '<code id="cmdBarre">' + echapper(commandeV) + '</code>' +
-                '<button type="button" id="btnCopierBarre">Copier</button>' +
+            '<div class="barre-fixe-droite">' +
+                '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
+                '<div class="zone-commande-ligne">' +
+                    '<code id="cmdBarre">' + echapper(commandeV) + '</code>' +
+                    '<button type="button" id="btnCopierBarre">Copier</button>' +
+                '</div>' +
             '</div>';
     }
 
@@ -644,9 +664,6 @@ function majBarreFixe() {
     ajusterPaddingPage();
 }
 
-// Empeche la barre flottante de recouvrir la fin de page : sans ca, les
-// dernieres cards restent inaccessibles derriere elle des qu'elle affiche
-// plus d'une ligne (avertissement + commande longue sur mobile, etc).
 function ajusterPaddingPage() {
     var barre = document.getElementById('barreFixe');
     var page = document.querySelector('.page');
@@ -704,7 +721,6 @@ Promise.all([
                  medailles: j.medailles || 0, power: (j.stats && j.stats.powerLevel) || 0 };
     }).sort(function (a, b) { return b.power - a.power; });
 
-    // La rotation s'affiche immédiatement, profil ou non.
     rendreAchat();
 
     var demande = new URLSearchParams(location.search).get('user');
