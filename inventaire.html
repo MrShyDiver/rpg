@@ -34,6 +34,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     background: rgba(255,128,64,0.1); border: 1px solid #FF8040; border-radius: 6px;
     padding: 14px 18px; margin-bottom: 20px; font-size: 15px; color: #FF8040;
 }
+.bloc-tickets .cmd {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: #FF8040;
+    background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 3px;
+    white-space: nowrap;
+}
 
 .titre-section {
     font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
@@ -169,7 +174,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     .entete-texte h1 { font-size: 20px; }
     .entete img.avatar { width: 44px; height: 44px; }
     .entete-texte p { font-size: 12px; }
-    .bloc-lootbox { font-size: 13.5px; padding: 12px 14px; }
+    .bloc-lootbox, .bloc-tickets { font-size: 13.5px; padding: 12px 14px; }
     .emplacements { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .emplacement { padding: 10px; }
     .grille { grid-template-columns: 1fr; gap: 10px; }
@@ -682,7 +687,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
             if (nbTickets > 0) {
                 document.getElementById('zoneTickets').innerHTML =
-                    `<div class="bloc-tickets">🎟️ Tu as <strong>${nbTickets}</strong> ticket(s) de duel disponible(s).  — Tape dans le chat <span class="cmd">!ticketduel <pseudo></span> pour engager un duel contre quelqu'un ou <span class="cmd">!ticketauto</span> pour lancer un combat automatique !</div>`;
+                    `<div class="bloc-tickets">🎟️ Tu as <strong>${nbTickets}</strong> ticket(s) de duel — tape <span class="cmd">!ticketduel</span> dans le chat pour engager un duel contre quelqu'un, ou <span class="cmd">!ticketauto</span> pour lancer un combat automatique !</div>`;
             }
 
             if (nbLootbox > 0) {
