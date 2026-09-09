@@ -24,15 +24,18 @@
 
     // --- Pages du menu -----------------------------------------------------
     // Pour ajouter/retirer une entrée, il suffit de modifier cette liste.
-    // "profil: true" = la page a besoin d'un ?user=pseudo pour s'afficher,
-    // et reçoit donc aussi la barre de recherche de profil.
+    // "profil: true"  = la page a besoin d'un ?user=pseudo pour s'afficher,
+    //                   et reçoit donc aussi la barre de recherche de profil.
+    // "donnees: ..."  = le fichier dont la page tire son contenu. Sert à dater
+    //                   l'affichage ("mis à jour il y a X min"). Une page sans
+    //                   données (le concept) n'a rien à dater.
     var PAGES = [
-        { fichier: ACCUEIL,               label: "Accueil" },
+        { fichier: ACCUEIL,               label: "Accueil",                          donnees: "players.json" },
         { fichier: "annonce-saison.html", label: "Le concept" },
-        { fichier: "stats.html",          label: "Profil",     profil: true },
-        { fichier: "inventaire.html",     label: "Inventaire", profil: true },
-        { fichier: "ranking.html",        label: "Classements" },
-        { fichier: "codex.html",          label: "Codex" }
+        { fichier: "stats.html",          label: "Profil",     profil: true,         donnees: "players.json" },
+        { fichier: "inventaire.html",     label: "Inventaire", profil: true,         donnees: "players.json" },
+        { fichier: "ranking.html",        label: "Classements",                      donnees: "players.json" },
+        { fichier: "codex.html",          label: "Codex",                            donnees: "catalogue_stats.json" }
     ];
 
     // --- Page courante -----------------------------------------------------
@@ -125,6 +128,23 @@
         ".hdnav-option em{font-style:normal;font-family:'Oswald',sans-serif;font-size:12px;",
         "color:var(--hdnav-jaune);flex:0 0 auto;}",
         ".hdnav-vide{padding:11px;font-size:13px;color:var(--hdnav-attenue);}",
+
+        /* ---- Bandeau "dernière mise à jour" ---- */
+        ".hdnav-maj{border-top:1px solid var(--hdnav-bord);background:rgba(20,20,22,.75);}",
+        ".hdnav-maj-interieur{max-width:1040px;margin:0 auto;padding:5px 18px;display:flex;",
+        "align-items:center;gap:12px;min-height:30px;}",
+        ".hdnav-maj-texte{font-size:12px;color:var(--hdnav-attenue);flex:1 1 auto;",
+        "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+        ".hdnav-maj-texte b{color:var(--hdnav-texte);font-weight:600;}",
+        /* Au-delà de 15 min, les données sortent du rythme habituel de mise à */
+        /* jour (5-10 min) : on le signale au lieu de laisser croire au frais. */
+        ".hdnav-maj-texte.hdnav-vieux b{color:var(--hdnav-jaune);}",
+        ".hdnav-actu{background:none;border:1px solid var(--hdnav-bord);color:var(--hdnav-attenue);",
+        "font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.05em;text-transform:uppercase;",
+        "padding:4px 10px;border-radius:5px;cursor:pointer;flex:0 0 auto;}",
+        ".hdnav-actu:hover{border-color:var(--hdnav-jaune);color:var(--hdnav-jaune);}",
+        ".hdnav-actu:focus-visible{outline:2px solid var(--hdnav-jaune);outline-offset:2px;}",
+        ".hdnav-actu[disabled]{opacity:.55;cursor:default;}",
 
         /* Bouton mobile */
         ".hdnav-bouton{display:none;background:none;border:1px solid var(--hdnav-bord);",
@@ -346,6 +366,80 @@
     interieur.appendChild(liens);
 
     nav.appendChild(interieur);
+
+    // --- Bandeau "dernière mise à jour" ------------------------------------
+    // Les données sont republiées toutes les 5 à 10 minutes : sans repère de
+    // fraîcheur, impossible de savoir si un duel qu'on vient de jouer est déjà
+    // pris en compte. On lit la date réelle du fichier de données (en-tête
+    // Last-Modified) plutôt qu'une date écrite dans la page, qui mentirait.
+    var pageCourante = PAGES.filter(function (p) { return p.fichier === fichierCourant; })[0];
+
+    var maj = document.createElement("div");
+    maj.className = "hdnav-maj";
+    var majInterieur = document.createElement("div");
+    majInterieur.className = "hdnav-maj-interieur";
+
+    var majTexte = document.createElement("div");
+    majTexte.className = "hdnav-maj-texte";
+    majTexte.setAttribute("aria-live", "polite");
+    majTexte.textContent = pageCourante && pageCourante.donnees ? "Vérification des données..." : "";
+
+    var boutonActu = document.createElement("button");
+    boutonActu.className = "hdnav-actu";
+    boutonActu.type = "button";
+    boutonActu.textContent = "Actualiser";
+    boutonActu.title = "Recharger la page en ignorant le cache du navigateur";
+
+    majInterieur.appendChild(majTexte);
+    majInterieur.appendChild(boutonActu);
+    maj.appendChild(majInterieur);
+    nav.appendChild(maj);
+
+    // Recharge en contournant le cache : on change l'URL (paramètre "maj")
+    // plutôt que d'appeler reload(), dont le rechargement forcé n'est plus
+    // honoré par les navigateurs. Le pseudo consulté est conservé.
+    boutonActu.addEventListener("click", function () {
+        boutonActu.disabled = true;
+        boutonActu.textContent = "Chargement...";
+        var url = new URL(location.href);
+        url.searchParams.set("maj", Date.now());
+        location.href = url.toString();
+    });
+
+    function formuler(dateFichier) {
+        var minutes = Math.max(0, Math.round((Date.now() - dateFichier.getTime()) / 60000));
+        var quand;
+        if (minutes < 1)       quand = "à l'instant";
+        else if (minutes === 1) quand = "il y a 1 minute";
+        else if (minutes < 60)  quand = "il y a " + minutes + " minutes";
+        else {
+            var h = Math.floor(minutes / 60);
+            quand = "il y a " + h + (h === 1 ? " heure" : " heures");
+        }
+        majTexte.innerHTML = "Données mises à jour <b>" + quand + "</b>";
+        majTexte.classList.toggle("hdnav-vieux", minutes >= 15);
+        majTexte.title = "Dernière publication : " + dateFichier.toLocaleString("fr-FR");
+    }
+
+    if (pageCourante && pageCourante.donnees) {
+        fetch(pageCourante.donnees, { method: "HEAD", cache: "no-store" })
+            .then(function (r) {
+                var lm = r.headers.get("Last-Modified");
+                if (!lm) throw new Error("date absente");
+                var d = new Date(lm);
+                if (isNaN(d.getTime())) throw new Error("date illisible");
+                formuler(d);
+                // Le compteur continue d'avancer si la page reste ouverte
+                // longtemps (typiquement un second écran pendant le stream).
+                setInterval(function () { formuler(d); }, 30000);
+            })
+            .catch(function () {
+                // Pas de date disponible : on le dit, au lieu d'afficher une
+                // fraîcheur inventée.
+                majTexte.textContent = "Date de mise à jour indisponible";
+            });
+    }
+
     document.body.insertBefore(nav, document.body.firstChild);
 
     bouton.addEventListener("click", function () {
