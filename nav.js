@@ -17,12 +17,13 @@
     // Pour ajouter/retirer une entrée, il suffit de modifier cette liste.
     // "profil: true" = la page a besoin d'un ?user=pseudo pour s'afficher.
     var PAGES = [
-        { fichier: "index.html",          label: "Accueil" },
-        { fichier: "annonce-saison.html", label: "La saison" },
-        { fichier: "ranking.html",        label: "Classements" },
-        { fichier: "codex.html",          label: "Codex" },
+        { fichier: "home.html",          label: "Accueil" },
+        { fichier: "annonce-saison.html", label: "Le concept" },
         { fichier: "stats.html",          label: "Profil",     profil: true },
-        { fichier: "inventaire.html",     label: "Inventaire", profil: true }
+        { fichier: "inventaire.html",     label: "Inventaire", profil: true },
+        { fichier: "ranking.html",        label: "Classements" },
+        { fichier: "codex.html",          label: "Codex" }
+
     ];
 
     // --- Page courante -----------------------------------------------------
