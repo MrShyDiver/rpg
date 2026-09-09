@@ -21,7 +21,7 @@ body {
 h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
 .page { max-width: 1080px; margin: 0 auto; }
 /* De la place en bas pour que la barre fixe ne recouvre jamais la dernière rangée. */
-.page { padding-bottom: 110px; }
+.page { padding-bottom: 28px; }  /* ajuste dynamiquement par ajusterPaddingPage() quand la barre est visible */
 
 .entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
 .entete h1 { font-size: 30px; font-weight: 700; }
@@ -129,6 +129,15 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     background: rgba(0,0,0,.5); border-radius: 50%; width: 22px; height: 22px;
     display: flex; align-items: center; justify-content: center;
 }
+.card-puce-rarete.a-gauche { left: 8px; right: auto; }
+/* Meme langage visuel que .carte-niveau sur la page inventaire (pastille
+   bordee jaune) -- ici pour la quantite possedee cote Vendre. */
+.card-niveau {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 900; color: var(--yellow);
+    border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 6px;
+    background: rgba(242,194,48,0.12);
+}
 .card-puce-rarete {
     position: absolute; top: 8px; right: 8px;
     font-family: 'Barlow Condensed', sans-serif; font-size: 9.5px; font-weight: 700;
@@ -191,22 +200,25 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     font-size: 12.5px; color: var(--yellow); background: rgba(242,194,48,.1);
     border: 1px solid var(--yellow); border-radius: 5px; padding: 7px 11px; margin-bottom: 11px;
 }
-.zone-commande { display: flex; gap: 9px; align-items: stretch; flex-wrap: wrap; }
-.zone-commande-texte { flex: 1 1 220px; min-width: 0; }
 .zone-commande-consigne {
     font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
-    letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 4px;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 7px;
 }
+/* Seuls le code et le bouton partagent la rangee : stretch les egalise
+   maintenant exactement, l'etiquette etant sortie au-dessus. */
+.zone-commande-ligne { display: flex; gap: 9px; align-items: stretch; }
 .zone-commande code {
     display: block; background: #0b0b0d; border: 1px solid var(--line); border-radius: 5px;
     padding: 10px 13px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
     font-weight: 700; color: var(--yellow); overflow-x: auto; white-space: nowrap;
+    display: flex; align-items: center;
 }
 .barre-fixe.mode-vente .zone-commande code { color: var(--vente); }
 .zone-commande button {
     font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em;
     text-transform: uppercase; color: #17170f; background: var(--yellow); border: none;
     border-radius: 5px; padding: 0 20px; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
+    min-height: 44px;
 }
 .barre-fixe.mode-vente .zone-commande button { background: var(--vente); }
 .zone-commande button:hover { filter: brightness(1.12); }
@@ -430,7 +442,7 @@ function afficherSolde() {
     zone.innerHTML =
         '<div class="solde-barre"><div class="qui">' + nom + '</div>' +
         '<div class="montant">' + soldeActuel().toLocaleString('fr-FR') +
-        ' <span class="unite">médailles</span></div></div>';
+        ' ' + iconeMedaille('icone-medaille grande') + '</div></div>';
 }
 
 /* ===================== CARD GÉNÉRIQUE ===================== */
@@ -439,7 +451,12 @@ function afficherSolde() {
 // distinction achat/vente reste évidente même sans lire le texte.
 function carteProduit(cfg) {
     var accent = cfg.accent || 'var(--commun)';
-    var puceRarete = cfg.rarete ? '<div class="card-puce-rarete">' + LABEL_RARETE[cfg.rarete] + '</div>' : '';
+    var puceRarete = cfg.rarete
+        ? '<div class="card-puce-rarete' + (cfg.mode === 'vente' ? ' a-gauche' : '') + '">' + LABEL_RARETE[cfg.rarete] + '</div>'
+        : '';
+    // Cote Vendre, la pastille de rarete prend la gauche : le badge de
+    // quantite possedee (style "niveau" de l'inventaire) prend la droite.
+    var badgeQuantite = cfg.badgeQuantite !== undefined ? '<div class="card-niveau">×' + cfg.badgeQuantite + '</div>' : '';
     var verrou = cfg.verrou ? '<div class="card-verrou">🔒</div>' : '';
     var modeClasse = cfg.mode === 'vente' ? 'mode-vente' : 'mode-achat';
     var signe = cfg.mode === 'vente' ? '+' : '';
@@ -448,12 +465,12 @@ function carteProduit(cfg) {
         : '<div class="emoji">' + echapper(cfg.icone || '?') + '</div>';
 
     return '<div class="card' + (cfg.quantite > 0 ? ' choisi' : '') + '" data-id="' + cfg.id + '" style="--accent:' + accent + '">' +
-        verrou + puceRarete +
+        verrou + puceRarete + badgeQuantite +
         '<div class="card-image">' + visuel + '</div>' +
         '<div class="card-nom">' + echapper(cfg.nom) + '</div>' +
         (cfg.sous ? '<div class="card-sous">' + cfg.sous + '</div>' : '') +
-        '<div class="card-prix-bloc"><span class="label">' + (cfg.mode === 'vente' ? 'Revente' : 'Prix') + '</span>' +
-            '<div class="card-prix ' + modeClasse + '">🏅 ' + signe + cfg.prix + '</div></div>' +
+        '<div class="card-prix-bloc"><span class="label">' + (cfg.mode === 'vente' ? "Prix de revente" : "Prix d'achat") + '</span>' +
+            '<div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>' +
         '<div class="card-qte">' +
             '<button type="button" data-act="moins" aria-label="Retirer un ' + echapper(cfg.nom) + '"' +
                 (cfg.quantite <= 0 ? ' disabled' : '') + '>&minus;</button>' +
@@ -545,7 +562,7 @@ function rendreVente() {
         return carteProduit({
             id: ligne.numero, mode: 'vente', nom: it.nom, image: it.image, icone: it.icone,
             rarete: rarete, accent: 'var(--' + rarete + ')',
-            prix: PRIX_VENTE[rarete] || 0, sous: 'En stock \u00d7' + possede,
+            prix: PRIX_VENTE[rarete] || 0, badgeQuantite: possede,
             quantite: aVendre[ligne.numero] || 0, quantiteMax: possede,
         });
     }).join('');
@@ -590,10 +607,11 @@ function majBarreFixe() {
                 (joueurActif ? '<div class="' + classeApres.trim() + '"><span>' + apresLabel + '</span><b>' + apresChiffre.toLocaleString('fr-FR') + '</b></div>' : '') +
             '</div>' +
             (!joueurActif ? '<div class="barre-fixe-avertissement">⚠️ Sois sûr·e d\'avoir le bon montant de médailles disponibles avant de valider !</div>' : '') +
-            '<div class="zone-commande"><div class="zone-commande-texte">' +
-                '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
+            '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
+            '<div class="zone-commande-ligne">' +
                 '<code id="cmdBarre">' + echapper(commande) + '</code>' +
-            '</div><button type="button" id="btnCopierBarre">Copier</button></div>';
+                '<button type="button" id="btnCopierBarre">Copier</button>' +
+            '</div>';
     } else {
         var numeros = Object.keys(aVendre);
         if (!numeros.length) { barre.className = 'cache'; return; }
@@ -610,14 +628,27 @@ function majBarreFixe() {
                 '<div><span>Médailles obtenues</span><b>+' + gain.toLocaleString('fr-FR') + '</b></div>' +
                 (joueurActif ? '<div><span>Nouveau solde</span><b>' + (soldeActuel() + gain).toLocaleString('fr-FR') + '</b></div>' : '') +
             '</div>' +
-            '<div class="zone-commande"><div class="zone-commande-texte">' +
-                '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
+            '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
+            '<div class="zone-commande-ligne">' +
                 '<code id="cmdBarre">' + echapper(commandeV) + '</code>' +
-            '</div><button type="button" id="btnCopierBarre">Copier</button></div>';
+                '<button type="button" id="btnCopierBarre">Copier</button>' +
+            '</div>';
     }
 
     document.getElementById('btnCopierBarre').addEventListener('click', function () { copier('cmdBarre', this); });
+    ajusterPaddingPage();
 }
+
+// Empeche la barre flottante de recouvrir la fin de page : sans ca, les
+// dernieres cards restent inaccessibles derriere elle des qu'elle affiche
+// plus d'une ligne (avertissement + commande longue sur mobile, etc).
+function ajusterPaddingPage() {
+    var barre = document.getElementById('barreFixe');
+    var page = document.querySelector('.page');
+    var base = 28;
+    page.style.paddingBottom = (barre.classList.contains('cache') ? base : barre.offsetHeight + 32) + 'px';
+}
+window.addEventListener('resize', ajusterPaddingPage);
 
 function copier(idCode, bouton) {
     var texte = document.getElementById(idCode).textContent;
