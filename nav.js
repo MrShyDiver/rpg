@@ -7,40 +7,54 @@
    et décale le contenu pour ne rien recouvrir. Aucune modification du HTML
    ou du CSS existant de tes pages n'est nécessaire.
 
+   Sur les pages de profil (stats.html / inventaire.html), il ajoute en plus
+   une barre de recherche qui bascule sur quelqu'un d'autre SANS changer de
+   page : depuis l'inventaire d'Aurel, chercher "Ronon" ouvre l'inventaire de
+   Ronon — pas son profil.
+
    Tout est préfixé "hdnav-" pour ne jamais entrer en conflit avec les classes
    déjà utilisées (.page, .entete, .wrap, .hero...).
    ========================================================================== */
 (function () {
     "use strict";
 
+    // Page d'accueil du site — définie UNE fois, pour que le logo et les liens
+    // de repli suivent automatiquement si tu la renommes un jour.
+    var ACCUEIL = "home.html";
+
     // --- Pages du menu -----------------------------------------------------
     // Pour ajouter/retirer une entrée, il suffit de modifier cette liste.
-    // "profil: true" = la page a besoin d'un ?user=pseudo pour s'afficher.
+    // "profil: true" = la page a besoin d'un ?user=pseudo pour s'afficher,
+    // et reçoit donc aussi la barre de recherche de profil.
     var PAGES = [
-        { fichier: "home.html",          label: "Accueil" },
+        { fichier: ACCUEIL,               label: "Accueil" },
         { fichier: "annonce-saison.html", label: "Le concept" },
         { fichier: "stats.html",          label: "Profil",     profil: true },
         { fichier: "inventaire.html",     label: "Inventaire", profil: true },
         { fichier: "ranking.html",        label: "Classements" },
         { fichier: "codex.html",          label: "Codex" }
-
     ];
 
     // --- Page courante -----------------------------------------------------
-    var fichierCourant = (location.pathname.split("/").pop() || "index.html").toLowerCase();
-    if (fichierCourant === "") fichierCourant = "index.html";
+    var fichierCourant = (location.pathname.split("/").pop() || ACCUEIL).toLowerCase();
+    if (fichierCourant === "") fichierCourant = ACCUEIL;
 
     // Le pseudo consulté est transporté d'une page à l'autre : si tu regardes
     // le profil de quelqu'un et que tu cliques sur "Inventaire", tu restes sur
     // la même personne au lieu de retomber sur une page vide.
     var userCourant = new URLSearchParams(location.search).get("user");
 
+    // La page courante attend-elle un ?user= ? (= page de profil)
+    var estPageProfil = PAGES.some(function (p) {
+        return p.profil && p.fichier === fichierCourant;
+    });
+
     function lienDe(page) {
         if (!page.profil) return page.fichier;
         if (userCourant) return page.fichier + "?user=" + encodeURIComponent(userCourant);
         // Sans pseudo, ces pages n'ont rien à montrer : on renvoie vers la
         // recherche de l'accueil plutôt que vers un écran vide.
-        return "index.html#recherche";
+        return ACCUEIL + "#recherche";
     }
 
     // --- Polices (ne recharge pas si la page les a déjà) --------------------
@@ -65,7 +79,7 @@
         "backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);",
         "border-bottom:3px solid var(--hdnav-jaune);font-family:'Barlow',sans-serif;}",
 
-        ".hdnav-interieur{max-width:1040px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:18px;min-height:52px;}",
+        ".hdnav-interieur{max-width:1040px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:14px;min-height:52px;}",
 
         /* Marque : renvoie à l'accueil, avec un liseré jaune vertical qui   */
         /* reprend le motif de bordure des .entete existantes.               */
@@ -84,15 +98,49 @@
         ".hdnav-liens a[aria-current=page]{color:var(--hdnav-jaune);border-bottom-color:var(--hdnav-jaune);}",
         ".hdnav a:focus-visible{outline:2px solid var(--hdnav-jaune);outline-offset:2px;border-radius:2px;}",
 
+        /* ---- Recherche de profil (pages stats / inventaire seulement) ---- */
+        ".hdnav-rech{position:relative;flex:0 1 230px;min-width:150px;}",
+        ".hdnav-rech input{width:100%;background:var(--hdnav-bg);border:1px solid var(--hdnav-bord);",
+        "border-radius:6px;padding:7px 11px;color:var(--hdnav-texte);font-size:13px;",
+        "font-family:'Barlow',sans-serif;}",
+        ".hdnav-rech input::placeholder{color:#6f6b60;}",
+        ".hdnav-rech input:focus{outline:none;border-color:var(--hdnav-jaune);}",
+
+        ".hdnav-listbox{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:10;",
+        "background:var(--hdnav-bg);border:1px solid var(--hdnav-bord);border-top:3px solid var(--hdnav-jaune);",
+        "border-radius:0 0 6px 6px;max-height:min(58vh,340px);overflow-y:auto;display:none;",
+        "box-shadow:0 12px 28px rgba(0,0,0,.5);}",
+        ".hdnav-listbox.hdnav-ouvert{display:block;}",
+        ".hdnav-option{display:flex;align-items:center;gap:10px;padding:8px 11px;cursor:pointer;",
+        "border-bottom:1px solid var(--hdnav-bord);}",
+        ".hdnav-option:last-child{border-bottom:none;}",
+        ".hdnav-option:hover,.hdnav-option.hdnav-actif{background:#1e1e21;}",
+        ".hdnav-option.hdnav-actif{box-shadow:inset 2px 0 0 var(--hdnav-jaune);}",
+        ".hdnav-option img,.hdnav-option .hdnav-init{width:26px;height:26px;border-radius:50%;flex:0 0 auto;",
+        "object-fit:cover;background:#232326;border:1px solid var(--hdnav-bord);}",
+        ".hdnav-init{display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;",
+        "font-size:12px;color:var(--hdnav-attenue);}",
+        ".hdnav-option span{font-size:13px;color:var(--hdnav-texte);white-space:nowrap;overflow:hidden;",
+        "text-overflow:ellipsis;flex:1 1 auto;}",
+        ".hdnav-option em{font-style:normal;font-family:'Oswald',sans-serif;font-size:12px;",
+        "color:var(--hdnav-jaune);flex:0 0 auto;}",
+        ".hdnav-vide{padding:11px;font-size:13px;color:var(--hdnav-attenue);}",
+
         /* Bouton mobile */
-        ".hdnav-bouton{display:none;margin-left:auto;background:none;border:1px solid var(--hdnav-bord);",
+        ".hdnav-bouton{display:none;background:none;border:1px solid var(--hdnav-bord);",
         "color:var(--hdnav-texte);font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;",
-        "text-transform:uppercase;padding:7px 12px;border-radius:6px;cursor:pointer;}",
+        "text-transform:uppercase;padding:7px 12px;border-radius:6px;cursor:pointer;flex:0 0 auto;}",
         ".hdnav-bouton:hover{border-color:var(--hdnav-jaune);color:var(--hdnav-jaune);}",
 
+        "@media (max-width:860px){.hdnav-rech{flex-basis:180px;}}",
+
         "@media (max-width:760px){",
-        ".hdnav-bouton{display:block;}",
-        ".hdnav-liens{display:none;width:100%;margin:0;flex-direction:column;align-items:stretch;gap:0;",
+        ".hdnav-bouton{display:block;margin-left:auto;}",
+        /* Sur mobile la recherche passe sur sa propre ligne, pleine largeur, */
+        /* et reste visible même menu fermé : c'est l'action la plus utile    */
+        /* d'une page de profil.                                              */
+        ".hdnav-rech{order:3;flex:1 1 100%;min-width:0;margin-bottom:8px;}",
+        ".hdnav-liens{display:none;order:4;width:100%;margin:0;flex-direction:column;align-items:stretch;gap:0;",
         "padding-bottom:8px;border-top:1px solid var(--hdnav-bord);}",
         ".hdnav-liens.hdnav-ouvert{display:flex;}",
         ".hdnav-liens a{padding:11px 4px;border-bottom:1px solid var(--hdnav-bord);border-left:2px solid transparent;}",
@@ -104,6 +152,159 @@
     ].join("");
     document.head.appendChild(css);
 
+    // --- Recherche de profil ----------------------------------------------
+    function construireRecherche() {
+        var boite = document.createElement("div");
+        boite.className = "hdnav-rech";
+
+        var input = document.createElement("input");
+        input.type = "text";
+        input.autocomplete = "off";
+        input.spellcheck = false;
+        input.placeholder = "Voir quelqu'un d'autre...";
+        input.setAttribute("role", "combobox");
+        input.setAttribute("aria-expanded", "false");
+        input.setAttribute("aria-controls", "hdnav-listbox");
+        input.setAttribute("aria-autocomplete", "list");
+        input.setAttribute("aria-label", "Rechercher un autre personnage");
+
+        var listbox = document.createElement("div");
+        listbox.className = "hdnav-listbox";
+        listbox.id = "hdnav-listbox";
+        listbox.setAttribute("role", "listbox");
+
+        boite.appendChild(input);
+        boite.appendChild(listbox);
+
+        var personnages = null;   // null = pas encore chargé
+        var chargement = false;
+        var indexActif = -1;
+
+        function echapper(t) {
+            return String(t).replace(/[&<>"']/g, function (c) {
+                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+            });
+        }
+
+        // Chargé seulement au premier focus : une page de profil ne télécharge
+        // players.json que si on cherche réellement quelqu'un.
+        function charger() {
+            if (personnages || chargement) return Promise.resolve();
+            chargement = true;
+            return fetch("players.json?v=" + Date.now())
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (data) {
+                    personnages = Object.keys(data).map(function (cle) {
+                        var j = data[cle], s = j.stats || {};
+                        return {
+                            cle: cle,
+                            nom: j.nomAffichage || cle,
+                            avatar: j.avatar || "",
+                            power: s.powerLevel || 0
+                        };
+                    }).sort(function (a, b) { return b.power - a.power; });
+                    chargement = false;
+                })
+                .catch(function () {
+                    chargement = false;
+                    personnages = [];
+                    listbox.innerHTML = '<div class="hdnav-vide">Liste indisponible. Recharge la page.</div>';
+                    ouvrir();
+                });
+        }
+
+        function ouvrir() {
+            listbox.classList.add("hdnav-ouvert");
+            input.setAttribute("aria-expanded", "true");
+        }
+        function fermer() {
+            listbox.classList.remove("hdnav-ouvert");
+            input.setAttribute("aria-expanded", "false");
+            input.removeAttribute("aria-activedescendant");
+            indexActif = -1;
+        }
+
+        // On reste sur la MÊME page, seul le pseudo change.
+        function urlVers(cle) {
+            return fichierCourant + "?user=" + encodeURIComponent(cle);
+        }
+
+        function rendre() {
+            if (!personnages || !personnages.length) return;
+            var q = input.value.trim().toLowerCase();
+            var liste = personnages;
+            if (q) {
+                liste = personnages.filter(function (p) {
+                    return p.nom.toLowerCase().indexOf(q) !== -1 || p.cle.indexOf(q) !== -1;
+                });
+            }
+            // Sans frappe, on propose les plus puissants : une liste vide
+            // n'aiderait personne à démarrer.
+            var visibles = liste.slice(0, 8);
+            indexActif = -1;
+            input.removeAttribute("aria-activedescendant");
+
+            if (!visibles.length) {
+                listbox.innerHTML = '<div class="hdnav-vide">Aucun personnage ne correspond.</div>';
+                ouvrir();
+                return;
+            }
+            listbox.innerHTML = visibles.map(function (p, i) {
+                var img = p.avatar
+                    ? '<img src="' + echapper(p.avatar) + '" alt="" loading="lazy">'
+                    : '<div class="hdnav-init">' + echapper((p.nom || "?").charAt(0).toUpperCase()) + "</div>";
+                return '<div class="hdnav-option" role="option" id="hdnav-opt-' + i + '"' +
+                       ' aria-selected="false" data-cle="' + echapper(p.cle) + '">' +
+                       img + "<span>" + echapper(p.nom) + "</span>" +
+                       "<em>" + Math.round(p.power) + "</em></div>";
+            }).join("");
+            ouvrir();
+        }
+
+        function surligner(n) {
+            var options = listbox.querySelectorAll(".hdnav-option");
+            if (!options.length) return;
+            if (indexActif >= 0 && options[indexActif]) {
+                options[indexActif].classList.remove("hdnav-actif");
+                options[indexActif].setAttribute("aria-selected", "false");
+            }
+            indexActif = (n + options.length) % options.length;
+            options[indexActif].classList.add("hdnav-actif");
+            options[indexActif].setAttribute("aria-selected", "true");
+            input.setAttribute("aria-activedescendant", "hdnav-opt-" + indexActif);
+            options[indexActif].scrollIntoView({ block: "nearest" });
+        }
+
+        input.addEventListener("focus", function () { charger().then(rendre); });
+        input.addEventListener("input", function () { charger().then(rendre); });
+
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") { fermer(); input.blur(); return; }
+            var options = listbox.querySelectorAll(".hdnav-option");
+            if (e.key === "ArrowDown") { e.preventDefault(); if (options.length) surligner(indexActif + 1); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); if (options.length) surligner(indexActif - 1); }
+            else if (e.key === "Enter") {
+                e.preventDefault();
+                // Sans sélection au clavier, Entrée ouvre le premier résultat.
+                var cible = options[indexActif >= 0 ? indexActif : 0];
+                if (cible) location.href = urlVers(cible.getAttribute("data-cle"));
+            }
+        });
+
+        listbox.addEventListener("mousedown", function (e) {
+            // mousedown plutôt que click : le blur de l'input fermerait la
+            // liste avant que le clic n'aboutisse.
+            var opt = e.target.closest(".hdnav-option");
+            if (opt) { e.preventDefault(); location.href = urlVers(opt.getAttribute("data-cle")); }
+        });
+
+        document.addEventListener("click", function (e) {
+            if (!boite.contains(e.target)) fermer();
+        });
+
+        return boite;
+    }
+
     // --- Construction ------------------------------------------------------
     var nav = document.createElement("nav");
     nav.className = "hdnav";
@@ -114,9 +315,14 @@
 
     var marque = document.createElement("a");
     marque.className = "hdnav-marque";
-    marque.href = "index.html";
+    marque.href = ACCUEIL;
     marque.innerHTML = '<i></i><b>Twitch RPG</b>';
     interieur.appendChild(marque);
+
+    // La recherche n'apparaît que là où elle a un sens : sur les pages qui
+    // affichent UNE personne. Sur l'accueil, les classements ou le codex,
+    // elle ferait doublon avec les outils déjà présents.
+    if (estPageProfil) interieur.appendChild(construireRecherche());
 
     var bouton = document.createElement("button");
     bouton.className = "hdnav-bouton";
