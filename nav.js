@@ -129,22 +129,25 @@
         "color:var(--hdnav-jaune);flex:0 0 auto;}",
         ".hdnav-vide{padding:11px;font-size:13px;color:var(--hdnav-attenue);}",
 
-        /* ---- Bandeau "dernière mise à jour" ---- */
-        ".hdnav-maj{border-top:1px solid var(--hdnav-bord);background:rgba(20,20,22,.75);}",
-        ".hdnav-maj-interieur{max-width:1040px;margin:0 auto;padding:5px 18px;display:flex;",
-        "align-items:center;gap:12px;min-height:30px;}",
-        ".hdnav-maj-texte{font-size:12px;color:var(--hdnav-attenue);flex:1 1 auto;",
-        "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+        /* ---- Fraîcheur des données, intégrée à la barre ---- */
+        ".hdnav-maj{display:flex;align-items:center;gap:7px;flex:0 0 auto;padding-left:14px;",
+        "margin-left:6px;border-left:1px solid var(--hdnav-bord);}",
+        ".hdnav-maj-texte{font-size:11.5px;color:var(--hdnav-attenue);white-space:nowrap;}",
         ".hdnav-maj-texte b{color:var(--hdnav-texte);font-weight:600;}",
         /* Au-delà de 15 min, les données sortent du rythme habituel de mise à */
         /* jour (5-10 min) : on le signale au lieu de laisser croire au frais. */
         ".hdnav-maj-texte.hdnav-vieux b{color:var(--hdnav-jaune);}",
-        ".hdnav-actu{background:none;border:1px solid var(--hdnav-bord);color:var(--hdnav-attenue);",
-        "font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.05em;text-transform:uppercase;",
-        "padding:4px 10px;border-radius:5px;cursor:pointer;flex:0 0 auto;}",
+
+        ".hdnav-actu{display:flex;align-items:center;justify-content:center;width:28px;height:28px;",
+        "background:none;border:1px solid var(--hdnav-bord);border-radius:5px;color:var(--hdnav-attenue);",
+        "cursor:pointer;padding:0;flex:0 0 auto;}",
+        ".hdnav-actu svg{width:15px;height:15px;display:block;}",
         ".hdnav-actu:hover{border-color:var(--hdnav-jaune);color:var(--hdnav-jaune);}",
         ".hdnav-actu:focus-visible{outline:2px solid var(--hdnav-jaune);outline-offset:2px;}",
-        ".hdnav-actu[disabled]{opacity:.55;cursor:default;}",
+        ".hdnav-actu[disabled]{color:var(--hdnav-jaune);border-color:var(--hdnav-jaune);cursor:default;}",
+        ".hdnav-actu[disabled] svg{animation:hdnav-tourne .7s linear infinite;}",
+        "@keyframes hdnav-tourne{to{transform:rotate(360deg);}}",
+        "@media (prefers-reduced-motion:reduce){.hdnav-actu[disabled] svg{animation:none;}}",
 
         /* Bouton mobile */
         ".hdnav-bouton{display:none;background:none;border:1px solid var(--hdnav-bord);",
@@ -153,9 +156,17 @@
         ".hdnav-bouton:hover{border-color:var(--hdnav-jaune);color:var(--hdnav-jaune);}",
 
         "@media (max-width:860px){.hdnav-rech{flex-basis:180px;}}",
+        /* Sous 560px, on garde le chiffre mais on coupe le libellé : c'est la */
+        /* durée qui informe, pas les mots qui la précèdent.                   */
+        "@media (max-width:560px){.hdnav-maj-prefixe{display:none;}",
+        ".hdnav-maj{padding-left:10px;margin-left:2px;}}",
 
         "@media (max-width:760px){",
-        ".hdnav-bouton{display:block;margin-left:auto;}",
+        ".hdnav-bouton{display:block;}",
+        /* Les liens (qui portaient le margin-left:auto) sont repliés ici :   */
+        /* c'est le groupe fraîcheur qui prend le relais pour caler la fin de */
+        /* barre à droite.                                                    */
+        ".hdnav-maj{margin-left:auto;}",
         /* Sur mobile la recherche passe sur sa propre ligne, pleine largeur, */
         /* et reste visible même menu fermé : c'est l'action la plus utile    */
         /* d'une page de profil.                                              */
@@ -349,7 +360,8 @@
     bouton.type = "button";
     bouton.textContent = "Menu";
     bouton.setAttribute("aria-expanded", "false");
-    interieur.appendChild(bouton);
+    // Inséré plus bas, APRÈS le groupe de fraîcheur : la fin de barre doit se
+    // lire "liens · données · menu", aussi bien sur bureau que sur mobile.
 
     var liens = document.createElement("div");
     liens.className = "hdnav-liens";
@@ -365,9 +377,7 @@
     });
     interieur.appendChild(liens);
 
-    nav.appendChild(interieur);
-
-    // --- Bandeau "dernière mise à jour" ------------------------------------
+    // --- Fraîcheur des données, dans la barre elle-même --------------------
     // Les données sont republiées toutes les 5 à 10 minutes : sans repère de
     // fraîcheur, impossible de savoir si un duel qu'on vient de jouer est déjà
     // pris en compte. On lit la date réelle du fichier de données (en-tête
@@ -376,31 +386,30 @@
 
     var maj = document.createElement("div");
     maj.className = "hdnav-maj";
-    var majInterieur = document.createElement("div");
-    majInterieur.className = "hdnav-maj-interieur";
 
     var majTexte = document.createElement("div");
     majTexte.className = "hdnav-maj-texte";
     majTexte.setAttribute("aria-live", "polite");
-    majTexte.textContent = pageCourante && pageCourante.donnees ? "Vérification des données..." : "";
 
     var boutonActu = document.createElement("button");
     boutonActu.className = "hdnav-actu";
     boutonActu.type = "button";
-    boutonActu.textContent = "Actualiser";
-    boutonActu.title = "Recharger la page en ignorant le cache du navigateur";
+    boutonActu.title = "Recharger la page en ignorant le cache";
+    // Sans texte visible, le bouton a besoin d'un nom pour les lecteurs d'écran.
+    boutonActu.setAttribute("aria-label", "Actualiser la page");
+    boutonActu.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+        '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>';
 
-    majInterieur.appendChild(majTexte);
-    majInterieur.appendChild(boutonActu);
-    maj.appendChild(majInterieur);
-    nav.appendChild(maj);
+    maj.appendChild(majTexte);
+    maj.appendChild(boutonActu);
 
     // Recharge en contournant le cache : on change l'URL (paramètre "maj")
     // plutôt que d'appeler reload(), dont le rechargement forcé n'est plus
     // honoré par les navigateurs. Le pseudo consulté est conservé.
     boutonActu.addEventListener("click", function () {
-        boutonActu.disabled = true;
-        boutonActu.textContent = "Chargement...";
+        boutonActu.disabled = true;   // l'icône se met à tourner (voir CSS)
         var url = new URL(location.href);
         url.searchParams.set("maj", Date.now());
         location.href = url.toString();
@@ -410,15 +419,14 @@
         var minutes = Math.max(0, Math.round((Date.now() - dateFichier.getTime()) / 60000));
         var quand;
         if (minutes < 1)       quand = "à l'instant";
-        else if (minutes === 1) quand = "il y a 1 minute";
-        else if (minutes < 60)  quand = "il y a " + minutes + " minutes";
+        else if (minutes < 60) quand = "il y a " + minutes + " min";
         else {
             var h = Math.floor(minutes / 60);
-            quand = "il y a " + h + (h === 1 ? " heure" : " heures");
+            quand = "il y a " + h + " h";
         }
-        majTexte.innerHTML = "Données mises à jour <b>" + quand + "</b>";
+        majTexte.innerHTML = '<span class="hdnav-maj-prefixe">Données </span><b>' + quand + "</b>";
         majTexte.classList.toggle("hdnav-vieux", minutes >= 15);
-        majTexte.title = "Dernière publication : " + dateFichier.toLocaleString("fr-FR");
+        maj.title = "Dernière publication : " + dateFichier.toLocaleString("fr-FR");
     }
 
     if (pageCourante && pageCourante.donnees) {
@@ -435,11 +443,15 @@
             })
             .catch(function () {
                 // Pas de date disponible : on le dit, au lieu d'afficher une
-                // fraîcheur inventée.
-                majTexte.textContent = "Date de mise à jour indisponible";
+                // fraîcheur inventée. Le bouton, lui, reste utile.
+                majTexte.innerHTML = '<span class="hdnav-maj-prefixe">Date de mise à jour </span>indisponible';
             });
     }
 
+    interieur.appendChild(maj);
+    interieur.appendChild(bouton);
+
+    nav.appendChild(interieur);
     document.body.insertBefore(nav, document.body.firstChild);
 
     bouton.addEventListener("click", function () {
