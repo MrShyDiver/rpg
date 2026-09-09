@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitch RPG — Boutique</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+}
+* { box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif;
+    margin: 0; padding: 28px 18px 70px; line-height: 1.5;
+}
+h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
+.page { max-width: 1040px; margin: 0 auto; }
+
+.entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
+.entete h1 { font-size: 30px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 14px; margin: 7px 0 0; max-width: 68ch; }
+
+/* ===== Sélection de profil ===== */
+.choix-profil { margin-bottom: 22px; }
+.choix-profil label {
+    display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 12px;
+    font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+    color: var(--paper-dim); margin-bottom: 6px;
+}
+.champ-profil { position: relative; max-width: 420px; }
+#chercheProfil {
+    width: 100%; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 15px; color: var(--paper); font-size: 15px; font-family: 'Barlow', sans-serif;
+}
+#chercheProfil:focus { outline: none; border-color: var(--yellow); }
+#chercheProfil::placeholder { color: #6f6b60; }
+.propositions {
+    position: absolute; top: calc(100% + 5px); left: 0; right: 0; z-index: 20;
+    background: var(--bg-panel); border: 1px solid var(--line); border-top: 3px solid var(--yellow);
+    border-radius: 0 0 6px 6px; max-height: 300px; overflow-y: auto; display: none;
+    box-shadow: 0 12px 28px rgba(0,0,0,.5);
+}
+.propositions.ouvert { display: block; }
+.proposition {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer;
+    border-bottom: 1px solid var(--line);
+}
+.proposition:last-child { border-bottom: none; }
+.proposition:hover, .proposition.actif { background: #1e1e21; }
+.proposition img, .proposition .ini {
+    width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: 0 0 auto;
+    background: #232326; border: 1px solid var(--line); display: flex;
+    align-items: center; justify-content: center; font-family: 'Oswald', sans-serif;
+    font-size: 12px; color: var(--paper-dim);
+}
+.proposition span { font-size: 14px; flex: 1 1 auto; }
+.proposition em { font-style: normal; font-family: 'Oswald', sans-serif; font-size: 12px; color: var(--yellow); }
+
+/* ===== Bandeau solde ===== */
+.solde-barre {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: rgba(242,194,48,.08); border: 1px solid var(--yellow); border-radius: 6px;
+    padding: 14px 18px; margin-bottom: 26px;
+}
+.solde-barre .qui { font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 600; }
+.solde-barre .montant {
+    margin-left: auto; font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700;
+    color: var(--yellow); line-height: 1;
+}
+.solde-barre .unite {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 1.4px; text-transform: uppercase; color: var(--paper-dim);
+}
+
+/* ===== Onglets ===== */
+.onglets { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+.onglet {
+    font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--paper-dim); background: none; border: none;
+    border-bottom: 3px solid transparent; padding: 11px 18px; cursor: pointer; margin-bottom: -1px;
+}
+.onglet:hover { color: var(--paper); }
+.onglet[aria-selected="true"] { color: var(--yellow); border-bottom-color: var(--yellow); }
+.onglet:focus-visible { outline: 2px solid var(--yellow); outline-offset: -2px; }
+
+/* ===== Listes d'objets ===== */
+.lignes { display: flex; flex-direction: column; gap: 8px; }
+.ligne {
+    display: flex; align-items: center; gap: 13px; background: var(--bg-panel);
+    border: 1px solid var(--line); border-left: 3px solid var(--line);
+    border-radius: 6px; padding: 11px 14px;
+}
+.ligne.choisi { border-left-color: var(--yellow); background: #191917; }
+.ligne img { width: 40px; height: 40px; object-fit: contain; flex: 0 0 auto; }
+.ligne .emoji { font-size: 28px; width: 40px; text-align: center; flex: 0 0 auto; }
+.ligne-ident { flex: 1 1 auto; min-width: 0; }
+.ligne-nom { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; }
+.ligne-detail { font-size: 12.5px; color: var(--paper-dim); }
+.puce {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 1.1px; text-transform: uppercase; padding: 2px 8px; border-radius: 3px;
+}
+.puce.commun { background: rgba(141,141,141,.18); color: var(--commun); }
+.puce.normal { background: rgba(93,221,122,.15); color: var(--normal); }
+.puce.rare { background: rgba(74,159,216,.15); color: var(--rare); }
+.puce.legendaire { background: rgba(242,194,48,.15); color: var(--legendaire); }
+
+/* Compteur de quantité à revendre */
+.compteur-qte { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.compteur-qte button {
+    width: 30px; height: 30px; background: none; border: 1px solid var(--line);
+    border-radius: 5px; color: var(--paper); font-size: 17px; line-height: 1; cursor: pointer;
+    font-family: 'Oswald', sans-serif;
+}
+.compteur-qte button:hover:not([disabled]) { border-color: var(--yellow); color: var(--yellow); }
+.compteur-qte button[disabled] { opacity: .3; cursor: default; }
+.compteur-qte .valeur {
+    min-width: 46px; text-align: center; font-family: 'Oswald', sans-serif;
+    font-size: 16px; font-weight: 600;
+}
+.gain-ligne {
+    font-family: 'Oswald', sans-serif; font-size: 14px; color: var(--yellow);
+    min-width: 74px; text-align: right; flex: 0 0 auto;
+}
+.gain-ligne.rien { color: var(--paper-dim); }
+
+/* ===== Récapitulatif collant ===== */
+.recap {
+    position: sticky; bottom: 14px; z-index: 5; margin-top: 18px;
+    background: #17171a; border: 1px solid var(--yellow); border-radius: 6px;
+    padding: 15px 18px; box-shadow: 0 10px 30px rgba(0,0,0,.6);
+}
+.recap-chiffres { display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 12px; }
+.recap-chiffres div span {
+    display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
+    font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase; color: var(--paper-dim);
+}
+.recap-chiffres div b {
+    font-family: 'Oswald', sans-serif; font-size: 21px; font-weight: 700; color: var(--yellow);
+}
+.recap-chiffres div.apres b { color: var(--paper); }
+.zone-commande { display: flex; gap: 9px; align-items: stretch; }
+.zone-commande code {
+    flex: 1 1 auto; background: #0b0b0d; border: 1px solid var(--line); border-radius: 5px;
+    padding: 10px 13px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
+    font-weight: 700; color: var(--yellow); overflow-x: auto; white-space: nowrap;
+}
+.zone-commande button {
+    font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em;
+    text-transform: uppercase; color: #17170f; background: var(--yellow); border: none;
+    border-radius: 5px; padding: 10px 17px; cursor: pointer; white-space: nowrap;
+}
+.zone-commande button:hover { background: #ffd75a; }
+.zone-commande button:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+
+/* ===== Chrono de rotation ===== */
+.chrono {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 16px; margin-bottom: 18px; font-size: 14px; color: var(--paper-dim);
+}
+.chrono b {
+    font-family: 'Oswald', sans-serif; font-size: 19px; color: var(--yellow);
+    font-variant-numeric: tabular-nums;
+}
+
+.sous-titre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 1.4px; text-transform: uppercase; color: var(--paper-dim);
+    margin: 26px 0 11px;
+}
+.message { color: var(--paper-dim); font-size: 14px; padding: 18px 2px; }
+.message b { color: var(--paper); }
+.cache { display: none; }
+.trop-cher { opacity: .5; }
+.trop-cher .ligne-detail { color: var(--red); }
+
+@media (max-width: 620px) {
+    .ligne { flex-wrap: wrap; }
+    .compteur-qte { margin-left: auto; }
+    .gain-ligne { min-width: 0; }
+    .recap-chiffres { gap: 16px; }
+    .zone-commande { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+    <div class="entete">
+        <h1>La <span>boutique</span></h1>
+        <p>Écoule ce dont tu ne te sers pas, et repars avec ce qu'il te faut. Le marchand ne
+           propose qu'une poignée d'objets à la fois, renouvelés toutes les heures.</p>
+    </div>
+
+    <div class="choix-profil">
+        <label for="chercheProfil">Qui es-tu&nbsp;?</label>
+        <div class="champ-profil">
+            <input type="text" id="chercheProfil" autocomplete="off" spellcheck="false"
+                   placeholder="Tape ton pseudo Twitch..."
+                   role="combobox" aria-expanded="false" aria-controls="propositions" aria-autocomplete="list">
+            <div class="propositions" id="propositions" role="listbox"></div>
+        </div>
+    </div>
+
+    <div id="zoneSolde"></div>
+
+    <div id="zoneBoutique" class="cache">
+        <div class="onglets" role="tablist">
+            <button class="onglet" id="ongletVendre" role="tab" aria-selected="true" aria-controls="panneauVendre">Vendre</button>
+            <button class="onglet" id="ongletAcheter" role="tab" aria-selected="false" aria-controls="panneauAcheter">Acheter</button>
+        </div>
+
+        <div id="panneauVendre" role="tabpanel" aria-labelledby="ongletVendre">
+            <div id="listeVendre" class="lignes"></div>
+            <div id="recapVendre"></div>
+        </div>
+
+        <div id="panneauAcheter" role="tabpanel" aria-labelledby="ongletAcheter" class="cache">
+            <div class="chrono">
+                Prochain réassort dans <b id="chrono">--:--:--</b>
+                <span style="margin-left:auto;font-size:13px">Le stock change toutes les heures, pour tout le monde en même temps.</span>
+            </div>
+            <div id="listeAcheter" class="lignes"></div>
+            <div class="sous-titre">Toujours disponible</div>
+            <div id="listePermanent" class="lignes"></div>
+            <div id="recapAcheter"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+/* =====================================================================
+   ÉCONOMIE — doit rester identique côté Streamer.bot (commandes !vendre
+   et !acheter), sinon la page annoncerait des prix que le bot refuse.
+   ===================================================================== */
+var PRIX_ACHAT  = { commun: 20, normal: 48, rare: 120, legendaire: 300 };
+var PRIX_VENTE  = { commun: 5,  normal: 12, rare: 30,  legendaire: 75  };  // = achat / 4
+var PRIX_RESET  = 60;
+var STOCK = { commun: 4, normal: 3, rare: 2 };   // composition du réassort horaire
+
+var LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
+var LABEL_SLOT = { weapon: 'Arme', offhand: 'Main gauche', torso: 'Armure', strategeme: 'Stratagème' };
+
+/* ---------------------------------------------------------------------
+   TIRAGE DU STOCK — déterministe, à partir de l'heure écoulée depuis
+   1970. Tout le monde voit le même étal sans qu'il faille le stocker
+   nulle part, et Streamer.bot peut recalculer le même résultat pour
+   valider un achat. À reproduire À L'IDENTIQUE côté C#.
+   --------------------------------------------------------------------- */
+function heureCourante() { return Math.floor(Date.now() / 3600000); }
+
+// Générateur pseudo-aléatoire simple et reproductible (LCG 32 bits).
+function generateur(graine) {
+    var etat = (graine >>> 0);
+    return function () {
+        etat = (Math.imul(etat, 1103515245) + 12345) >>> 0;
+        return etat / 4294967296;
+    };
+}
+
+function tirerStock(catalogue, heure) {
+    // ⚠️ Dans catalogue_stats.json, le numéro d'un objet est la CLÉ de l'entrée,
+    // il n'existe aucun champ "numero" à l'intérieur. On l'attache ici une fois
+    // pour toutes, comme le font déjà codex.html et inventaire.html.
+    var parRarete = { commun: [], normal: [], rare: [] };
+    Object.keys(catalogue).forEach(function (cle) {
+        var it = catalogue[cle], r = it.rarete || 'commun';
+        if (parRarete[r]) parRarete[r].push(Object.assign({ numero: cle }, it));
+    });
+
+    var stock = [];
+    // Décalage par rareté : sans lui, les trois listes seraient mélangées
+    // dans le même ordre relatif à chaque heure.
+    var decalages = { commun: 1, normal: 2, rare: 3 };
+    Object.keys(STOCK).forEach(function (rarete) {
+        var liste = parRarete[rarete] || [];
+        // Tri stable par numéro : indispensable pour que JS et C# partent
+        // exactement du même ordre avant de mélanger.
+        liste.sort(function (a, b) { return parseInt(a.numero, 10) - parseInt(b.numero, 10); });
+        var alea = generateur(heure * 7919 + decalages[rarete] * 104729);
+        // Mélange de Fisher-Yates, du dernier au premier.
+        for (var i = liste.length - 1; i > 0; i--) {
+            var j = Math.floor(alea() * (i + 1));
+            var tmp = liste[i]; liste[i] = liste[j]; liste[j] = tmp;
+        }
+        stock = stock.concat(liste.slice(0, STOCK[rarete]));
+    });
+    return stock;
+}
+
+/* ===================== ÉTAT ===================== */
+var CATALOGUE = {}, JOUEURS = {}, listeJoueurs = [];
+var pseudoActif = null, joueurActif = null;
+var aVendre = {};        // { numero: quantité }
+var achatChoisi = null;  // { type:'objet'|'reset', numero, prix }
+
+function echapper(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+function parNumero(n) {
+    // Accès direct : la clé du catalogue EST le numéro utilisé dans players.json.
+    var it = CATALOGUE[String(n)];
+    return it ? Object.assign({ numero: String(n) }, it) : null;
+}
+function visuel(it) {
+    return it.image ? '<img src="' + echapper(it.image) + '" alt="" loading="lazy">'
+                    : '<div class="emoji">' + echapper(it.icone || '?') + '</div>';
+}
+
+/* ===================== SÉLECTION DU PROFIL ===================== */
+var champ = document.getElementById('chercheProfil');
+var propos = document.getElementById('propositions');
+var iActif = -1;
+
+function rendrePropositions() {
+    var q = champ.value.trim().toLowerCase();
+    var liste = listeJoueurs;
+    if (q) liste = listeJoueurs.filter(function (p) {
+        return p.nom.toLowerCase().indexOf(q) !== -1 || p.cle.indexOf(q) !== -1;
+    });
+    liste = liste.slice(0, 8);
+    iActif = -1;
+    if (!liste.length) {
+        propos.innerHTML = '<div class="proposition"><span>Aucun personnage trouvé</span></div>';
+        propos.classList.add('ouvert');
+        return;
+    }
+    propos.innerHTML = liste.map(function (p, i) {
+        var img = p.avatar ? '<img src="' + echapper(p.avatar) + '" alt="">'
+                           : '<div class="ini">' + echapper(p.nom.charAt(0).toUpperCase()) + '</div>';
+        return '<div class="proposition" role="option" aria-selected="false" data-cle="' +
+               echapper(p.cle) + '">' + img + '<span>' + echapper(p.nom) + '</span>' +
+               '<em>' + (p.medailles || 0) + '</em></div>';
+    }).join('');
+    propos.classList.add('ouvert');
+    champ.setAttribute('aria-expanded', 'true');
+}
+function fermerPropositions() {
+    propos.classList.remove('ouvert');
+    champ.setAttribute('aria-expanded', 'false');
+}
+champ.addEventListener('focus', rendrePropositions);
+champ.addEventListener('input', rendrePropositions);
+champ.addEventListener('keydown', function (e) {
+    var opts = propos.querySelectorAll('.proposition[data-cle]');
+    if (e.key === 'Escape') { fermerPropositions(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!opts.length) return;
+        if (iActif >= 0) opts[iActif].classList.remove('actif');
+        iActif = ((e.key === 'ArrowDown' ? iActif + 1 : iActif - 1) + opts.length) % opts.length;
+        opts[iActif].classList.add('actif');
+        opts[iActif].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        var cible = opts[iActif >= 0 ? iActif : 0];
+        if (cible) choisirProfil(cible.getAttribute('data-cle'));
+    }
+});
+propos.addEventListener('mousedown', function (e) {
+    var o = e.target.closest('.proposition[data-cle]');
+    if (o) { e.preventDefault(); choisirProfil(o.getAttribute('data-cle')); }
+});
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('.champ-profil')) fermerPropositions();
+});
+
+function choisirProfil(cle) {
+    pseudoActif = cle;
+    joueurActif = JOUEURS[cle];
+    champ.value = joueurActif.nomAffichage || cle;
+    fermerPropositions();
+    aVendre = {}; achatChoisi = null;
+    // L'URL suit la sélection : le lien reste partageable et la barre de
+    // navigation garde le bon pseudo.
+    var url = new URL(location.href);
+    url.searchParams.set('user', cle);
+    history.replaceState(null, '', url);
+    afficherTout();
+}
+
+/* ===================== AFFICHAGE ===================== */
+function soldeActuel() { return (joueurActif && joueurActif.medailles) || 0; }
+function gainVenteTotal() {
+    var t = 0;
+    Object.keys(aVendre).forEach(function (num) {
+        var it = parNumero(num);
+        if (it) t += (PRIX_VENTE[it.rarete || 'commun'] || 0) * aVendre[num];
+    });
+    return t;
+}
+
+function afficherTout() {
+    document.getElementById('zoneBoutique').classList.remove('cache');
+    var nom = echapper(joueurActif.nomAffichage || pseudoActif);
+    document.getElementById('zoneSolde').innerHTML =
+        '<div class="solde-barre"><div class="qui">' + nom + '</div>' +
+        '<div class="montant">' + soldeActuel().toLocaleString('fr-FR') +
+        ' <span class="unite">médailles</span></div></div>';
+    rendreVente();
+    rendreAchat();
+}
+
+/* ---------- VENDRE ---------- */
+function rendreVente() {
+    var inv = (joueurActif.inventaire || []).slice();
+    var zone = document.getElementById('listeVendre');
+    if (!inv.length) {
+        zone.innerHTML = '<div class="message">Cet inventaire est vide — rien à revendre pour le moment.</div>';
+        document.getElementById('recapVendre').innerHTML = '';
+        return;
+    }
+    // Le niveau N signifie N+1 exemplaires possédés (l'original + N doublons).
+    inv.sort(function (a, b) { return (b.niveau || 0) - (a.niveau || 0); });
+
+    zone.innerHTML = inv.map(function (ligne) {
+        var it = parNumero(ligne.numero);
+        if (!it) return '';
+        var rarete = it.rarete || 'commun';
+        var possede = (ligne.niveau || 0) + 1;
+        var choisi = aVendre[ligne.numero] || 0;
+        var unitaire = PRIX_VENTE[rarete] || 0;
+        return '<div class="ligne' + (choisi ? ' choisi' : '') + '" data-num="' + ligne.numero + '">' +
+            visuel(it) +
+            '<div class="ligne-ident"><div class="ligne-nom">' + echapper(it.nom) + '</div>' +
+            '<div class="ligne-detail"><span class="puce ' + rarete + '">' + LABEL_RARETE[rarete] +
+            '</span> &nbsp;' + possede + ' en stock &nbsp;·&nbsp; ' + unitaire + ' méd. l\'unité</div></div>' +
+            '<div class="compteur-qte">' +
+                '<button type="button" data-act="moins" aria-label="Retirer un ' + echapper(it.nom) + '"' +
+                    (choisi <= 0 ? ' disabled' : '') + '>&minus;</button>' +
+                '<div class="valeur">' + choisi + ' / ' + possede + '</div>' +
+                '<button type="button" data-act="plus" aria-label="Ajouter un ' + echapper(it.nom) + '"' +
+                    (choisi >= possede ? ' disabled' : '') + '>+</button>' +
+            '</div>' +
+            '<div class="gain-ligne' + (choisi ? '' : ' rien') + '">' +
+                (choisi ? '+' + (choisi * unitaire) : '—') + '</div>' +
+        '</div>';
+    }).join('');
+    rendreRecapVente();
+}
+
+document.getElementById('listeVendre').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    var ligne = btn.closest('.ligne');
+    var num = ligne.getAttribute('data-num');
+    var entree = (joueurActif.inventaire || []).filter(function (x) { return String(x.numero) === String(num); })[0];
+    var max = (entree.niveau || 0) + 1;
+    var actuel = aVendre[num] || 0;
+    actuel += (btn.getAttribute('data-act') === 'plus') ? 1 : -1;
+    if (actuel <= 0) delete aVendre[num]; else aVendre[num] = Math.min(actuel, max);
+    rendreVente();
+});
+
+function rendreRecapVente() {
+    var gain = gainVenteTotal();
+    var nbObjets = Object.keys(aVendre).reduce(function (s, k) { return s + aVendre[k]; }, 0);
+    var zone = document.getElementById('recapVendre');
+    if (!nbObjets) {
+        zone.innerHTML = '<div class="message">Choisis les objets dont tu veux te séparer : ' +
+            'la boutique te dira exactement ce que ça rapporte.</div>';
+        return;
+    }
+    var pieces = Object.keys(aVendre).map(function (n) { return n + 'x' + aVendre[n]; });
+    var commande = '!vendre ' + pieces.join(' ');
+    zone.innerHTML =
+        '<div class="recap"><div class="recap-chiffres">' +
+            '<div><span>Objets vendus</span><b>' + nbObjets + '</b></div>' +
+            '<div><span>Médailles gagnées</span><b>+' + gain + '</b></div>' +
+            '<div class="apres"><span>Nouveau solde</span><b>' +
+                (soldeActuel() + gain).toLocaleString('fr-FR') + '</b></div>' +
+        '</div><div class="zone-commande">' +
+            '<code id="cmdVendre">' + echapper(commande) + '</code>' +
+            '<button type="button" onclick="copier(\'cmdVendre\', this)">Copier</button>' +
+        '</div></div>';
+}
+
+/* ---------- ACHETER ---------- */
+function ligneAchat(it, prix, id, motif) {
+    var rarete = it ? (it.rarete || 'commun') : 'legendaire';
+    var abordable = soldeActuel() >= prix;
+    var choisi = achatChoisi && achatChoisi.id === id;
+    return '<div class="ligne' + (choisi ? ' choisi' : '') + (abordable ? '' : ' trop-cher') +
+           '" data-achat="' + id + '" data-prix="' + prix + '" style="cursor:pointer">' +
+        (it ? visuel(it) : '<div class="emoji">♻️</div>') +
+        '<div class="ligne-ident"><div class="ligne-nom">' + echapper(it ? it.nom : 'Ticket de reset de stats') + '</div>' +
+        '<div class="ligne-detail">' +
+            (it ? '<span class="puce ' + rarete + '">' + LABEL_RARETE[rarete] + '</span> &nbsp;' +
+                  (LABEL_SLOT[it.slot] || '') : motif) +
+            (abordable ? '' : ' &nbsp;·&nbsp; il te manque ' + (prix - soldeActuel()) + ' méd.') +
+        '</div></div>' +
+        '<div class="gain-ligne">' + prix + ' méd.</div>' +
+    '</div>';
+}
+
+function rendreAchat() {
+    var stock = tirerStock(CATALOGUE, heureCourante());
+    document.getElementById('listeAcheter').innerHTML = stock.map(function (it) {
+        return ligneAchat(it, PRIX_ACHAT[it.rarete || 'commun'], 'obj-' + it.numero, '');
+    }).join('');
+    document.getElementById('listePermanent').innerHTML =
+        ligneAchat(null, PRIX_RESET, 'reset',
+                   'Réattribue tous les points de statistiques déjà dépensés');
+    rendreRecapAchat();
+}
+
+function surClicAchat(e) {
+    var l = e.target.closest('.ligne[data-achat]');
+    if (!l) return;
+    var id = l.getAttribute('data-achat');
+    achatChoisi = (achatChoisi && achatChoisi.id === id)
+        ? null
+        : { id: id, prix: parseInt(l.getAttribute('data-prix'), 10) };
+    rendreAchat();
+}
+document.getElementById('listeAcheter').addEventListener('click', surClicAchat);
+document.getElementById('listePermanent').addEventListener('click', surClicAchat);
+
+function rendreRecapAchat() {
+    var zone = document.getElementById('recapAcheter');
+    if (!achatChoisi) {
+        zone.innerHTML = '<div class="message">Choisis un article pour obtenir la commande à coller dans le chat.</div>';
+        return;
+    }
+    var prix = achatChoisi.prix;
+    var reste = soldeActuel() - prix;
+    var commande = achatChoisi.id === 'reset'
+        ? '!acheter reset'
+        : '!acheter ' + achatChoisi.id.replace('obj-', '');
+    var manque = reste < 0;
+    zone.innerHTML =
+        '<div class="recap"><div class="recap-chiffres">' +
+            '<div><span>Coût</span><b>' + prix + '</b></div>' +
+            '<div class="apres"><span>' + (manque ? 'Il te manque' : 'Solde après achat') + '</span><b>' +
+                (manque ? Math.abs(reste) : reste).toLocaleString('fr-FR') + '</b></div>' +
+        '</div>' +
+        (manque
+            ? '<div class="message" style="padding:0">Tu n\'as pas encore de quoi te l\'offrir — ' +
+              'revends des objets dont tu ne te sers pas, ou remporte des duels.</div>'
+            : '<div class="zone-commande"><code id="cmdAchat">' + echapper(commande) + '</code>' +
+              '<button type="button" onclick="copier(\'cmdAchat\', this)">Copier</button></div>') +
+        '</div>';
+}
+
+/* ---------- Copie ---------- */
+function copier(idCode, bouton) {
+    var texte = document.getElementById(idCode).textContent;
+    var fini = function () {
+        var avant = bouton.textContent;
+        bouton.textContent = 'Copié !';
+        setTimeout(function () { bouton.textContent = avant; }, 1600);
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(texte).then(fini, fini);
+    else {
+        // Repli pour les navigateurs sans presse-papiers moderne (ou hors HTTPS).
+        var z = document.createElement('textarea');
+        z.value = texte; document.body.appendChild(z); z.select();
+        try { document.execCommand('copy'); } catch (err) {}
+        document.body.removeChild(z); fini();
+    }
+}
+
+/* ---------- Onglets ---------- */
+function basculer(versAchat) {
+    document.getElementById('ongletVendre').setAttribute('aria-selected', String(!versAchat));
+    document.getElementById('ongletAcheter').setAttribute('aria-selected', String(versAchat));
+    document.getElementById('panneauVendre').classList.toggle('cache', versAchat);
+    document.getElementById('panneauAcheter').classList.toggle('cache', !versAchat);
+}
+document.getElementById('ongletVendre').addEventListener('click', function () { basculer(false); });
+document.getElementById('ongletAcheter').addEventListener('click', function () { basculer(true); });
+
+/* ---------- Chrono ---------- */
+setInterval(function () {
+    var reste = 3600000 - (Date.now() % 3600000);
+    var h = Math.floor(reste / 3600000), m = Math.floor(reste % 3600000 / 60000), s = Math.floor(reste % 60000 / 1000);
+    document.getElementById('chrono').textContent =
+        String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    // Le réassort vient de tomber : on rafraîchit l'étal sans recharger la page.
+    if (reste > 3599000 && joueurActif) { achatChoisi = null; rendreAchat(); }
+}, 1000);
+
+/* ===================== CHARGEMENT ===================== */
+Promise.all([
+    fetch('players.json?v=' + Date.now()).then(function (r) { return r.json(); }),
+    fetch('catalogue_stats.json?v=' + Date.now()).then(function (r) { return r.json(); })
+]).then(function (res) {
+    JOUEURS = res[0]; CATALOGUE = res[1];
+    listeJoueurs = Object.keys(JOUEURS).map(function (cle) {
+        var j = JOUEURS[cle];
+        return { cle: cle, nom: j.nomAffichage || cle, avatar: j.avatar || '',
+                 medailles: j.medailles || 0, power: (j.stats && j.stats.powerLevel) || 0 };
+    }).sort(function (a, b) { return b.power - a.power; });
+
+    // Pseudo déjà dans l'URL (venu de l'inventaire ou de la navigation) :
+    // on ouvre directement sur la bonne personne.
+    var demande = new URLSearchParams(location.search).get('user');
+    if (demande && JOUEURS[demande]) choisirProfil(demande);
+}).catch(function () {
+    document.getElementById('zoneSolde').innerHTML =
+        '<div class="message">Les données n\'ont pas pu être chargées. Réessaie dans un instant.</div>';
+});
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>
