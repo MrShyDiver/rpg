@@ -81,7 +81,7 @@ section + section .section-head { border-top: 1px solid var(--line); }
 .stat-spd { border-left-color: var(--spd); } .stat-spd .valeur { color: var(--spd); }
 .stat-luck{ border-left-color: var(--luck);} .stat-luck .valeur{ color: var(--luck); }
 
-/* ============ LOOT : ROULETTE + LOOTBOX ============ */
+/* ============ LOOT : ROULETTE + LOOTBOX / MONNAIES ============ */
 .loot-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 44px; }
 @media (max-width: 720px) { .loot-grille { grid-template-columns: 1fr; } }
 .loot-carte {
@@ -92,6 +92,7 @@ section + section .section-head { border-top: 1px solid var(--line); }
     display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px;
     letter-spacing: 1px; color: var(--bg); background: var(--yellow); padding: 4px 12px; border-radius: 4px; margin-bottom: 14px;
 }
+.loot-carte .cout.mono { background: rgba(93,221,122,0.18); color: var(--normal); }
 .loot-carte p { color: var(--paper-dim); font-size: 15px; }
 
 .raretes { display: flex; gap: 10px; margin-top: 22px; }
@@ -162,6 +163,19 @@ section + section .section-head { border-top: 1px solid var(--line); }
 .evolution-degats { font-size: 22px; font-weight: 800; font-family: 'Oswald', sans-serif; }
 .evolution-degats.plus { color: var(--yellow); }
 
+/* ============ BOUTIQUE ============ */
+.boutique-fixes-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+@media (max-width: 720px) { .boutique-fixes-grille { grid-template-columns: 1fr; } }
+.boutique-fixe-carte {
+    background: var(--bg-panel); border: 1px solid rgba(242,194,48,0.35); border-radius: 10px; padding: 22px;
+    position: relative;
+}
+.boutique-fixe-carte .verrou {
+    position: absolute; top: 18px; right: 20px; font-size: 15px; opacity: 0.7;
+}
+.boutique-fixe-carte h4 { font-size: 17px; margin-bottom: 6px; }
+.boutique-fixe-carte p { color: var(--paper-dim); font-size: 14px; }
+
 /* ============ COMBAT ============ */
 .methodes-grille { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 48px; }
 @media (max-width: 780px) { .methodes-grille { grid-template-columns: 1fr; } }
@@ -182,23 +196,36 @@ section + section .section-head { border-top: 1px solid var(--line); }
 .gains-table .tranche-tag { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; }
 .tt-equitable { color: var(--normal); } .tt-dessus { color: var(--rare); } .tt-dessous { color: var(--paper-dim); }
 .gains-table .pts { font-weight: 700; color: var(--yellow); font-family: 'Oswald', sans-serif; }
+.gains-table .med { font-weight: 700; color: var(--paper); font-family: 'Oswald', sans-serif; }
 .gains-wrap { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; padding: 4px 0; }
+.gains-wrap { overflow-x: auto; }
 
 /* ============ BOUCLE FINALE ============ */
 .boucle {
     display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; margin: 20px 0 8px;
 }
-.boucle-etape { display: flex; flex-direction: column; align-items: center; text-align: center; width: 160px; }
+.boucle-etape { display: flex; flex-direction: column; align-items: center; text-align: center; width: 150px; }
 .boucle-etape .rond {
-    width: 74px; height: 74px; border-radius: 50%; border: 2px solid var(--yellow); display: flex; align-items: center;
-    justify-content: center; font-size: 28px; margin-bottom: 14px; background: rgba(242,194,48,0.06);
+    width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--yellow); display: flex; align-items: center;
+    justify-content: center; font-size: 27px; margin-bottom: 14px; background: rgba(242,194,48,0.06);
 }
-.boucle-etape .mot { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.3px; }
-.boucle-lien { color: var(--paper-dim); font-size: 22px; margin: 0px 6px; align-self: center; margin-bottom: 30px; }
+.boucle-etape .mot { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.3px; }
+.boucle-lien { color: var(--paper-dim); font-size: 22px; margin: 0px 4px; align-self: center; margin-bottom: 28px; }
 @media (max-width: 720px) { .boucle-lien { transform: rotate(90deg);margin: 20px 6px; } 
 .boucle {
     display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; margin: 20px 0 8px; flex-direction: column; flex-wrap: wrap;
 }
+}
+
+/* ============ AIDE-MÉMOIRE DES COMMANDES ============ */
+.commandes-table code {
+    background: #000; border: 1px solid var(--line); padding: 3px 9px; border-radius: 4px;
+    font-family: 'Barlow Condensed', sans-serif; color: var(--yellow); font-size: 13.5px; font-weight: 700; white-space: nowrap;
+}
+.commandes-table .desc { color: var(--paper-dim); font-size: 13.5px; }
+.commandes-table .cat {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--paper-dim); opacity: 0.75;
 }
 
 /* ============ TEASER SAISON ============ */
@@ -250,7 +277,7 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
 <section class="hero">
     <div class="hero-badge"><span class="point"></span> SAISON 4 - PROGRAMME DE COMBAT</div>
     <h1>Le chat prend <span>les armes</span></h1>
-    <p class="lede">Un RPG entier propulsé par tes SC (points de chaîne) : monte tes stats, équipe-toi, scout tes ennemis, puis prouve ta valeur en duel contre le reste du chat. Serez-vous lâche, juste ou valeureux ? Seul le temps nous le dira...</p>
+    <p class="lede">Un RPG entier propulsé par tes SC (points de chaîne) : monte tes stats, équipe-toi, scoute tes ennemis, puis prouve ta valeur en duel contre le reste du chat. Serez-vous lâche, juste ou valeureux ? Seul le temps nous le dira...</p>
     <div class="hero-stars">
         <svg viewBox="0 0 24 24"><path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 16.9l-6.18 3.12L7 13.14 2 8.27l6.91-1.01z"/></svg>
         <svg viewBox="0 0 24 24"><path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 16.9l-6.18 3.12L7 13.14 2 8.27l6.91-1.01z"/></svg>
@@ -260,7 +287,28 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
 
 <div class="wrap">
 
-<!-- ================= SECTION 1 : STATS ================= -->
+<!-- ================= SECTION 00 : LES DEUX MONNAIES / LIEN AVEC TWITCH ================= -->
+<section id="monnaies">
+    <div class="section-head">
+        <div class="section-num">00 — LE LIEN AVEC TWITCH</div>
+        <h2>Deux monnaies, un seul jeu</h2>
+        <p>Tout part de la chaîne de points Twitch : chaque récompense que tu échanges déclenche une action ou te donne un ticket, que tu actives ensuite avec une commande dans le chat. Une fois lancé, ton personnage gagne une seconde monnaie, gagnée en jeu et non plus sur Twitch.</p>
+    </div>
+    <div class="loot-grille">
+        <div class="loot-carte">
+            <h3>Les SC (Super Crédits)</h3>
+            <div class="cout">Récompenses de chaîne Twitch</div>
+            <p>Ta monnaie de départ. Tu les échanges contre des récompenses de chaîne pour monter tes stats, tirer à la Roulette, scouter un adversaire ou déclencher un duel — chaque récompense t'indique ensuite la commande à taper dans le chat pour l'activer.</p>
+        </div>
+        <div class="loot-carte">
+            <h3>Les Médailles</h3>
+            <div class="cout mono">🏅 Gagnées en combat ou à la revente</div>
+            <p>Ta monnaie de progression. Elles ne s'achètent pas avec des SC — tu les gagnes en te battant (même en défaite, une petite compensation t'attend) ou en revendant au marchand les objets dont tu ne te sers pas. Elles se dépensent uniquement à la <b>Boutique</b>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= SECTION 01 : STATS ================= -->
 <section id="stats">
     <div class="section-head">
         <div class="section-num">01 — LA BASE</div>
@@ -274,14 +322,18 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
         <div class="stat-carte stat-spd"><div class="valeur">SPD</div><div class="label">Vitesse</div><div class="detail">Dicte le nombre de tours pris, en fonction de la vitesse adverse.</div></div>
         <div class="stat-carte stat-luck"><div class="valeur">LUCK</div><div class="label">Chance</div><div class="detail">Augmente ta probabilité de coup critique.</div></div>
     </div>
+
+    <div class="legendaire-note" style="margin-bottom:60px;border-top:1px solid var(--line);padding-top:22px;">
+        <b>Pas satisfait de ta répartition ?</b> Un <b>ticket de reset</b> (en vente à la Boutique) remet toutes tes stats à zéro et te rend l'intégralité des points investis — à toi de les replacer où tu veux. Détails en section 04.
+    </div>
 </section>
 
-<!-- ================= SECTION 2 : LOOT ================= -->
+<!-- ================= SECTION 02 : LOOT ================= -->
 <section id="loot">
     <div class="section-head">
         <div class="section-num">02 — Débloquez votre propre équipement</div>
         <h2>Deux façons de looter</h2>
-        <p>Les stats montent ton personnage, mais c'est l'équipement qui fait ton style de jeu. Deux chemins y mènent.</p>
+        <p>Les stats montent ton personnage, mais c'est l'équipement qui fait ton style de jeu. Deux chemins y mènent — et un troisième t'attend à la Boutique.</p>
     </div>
     <div class="loot-grille">
         <div class="loot-carte">
@@ -291,8 +343,8 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
         </div>
         <div class="loot-carte">
             <h3>Les Lootbox</h3>
-            <div class="cout">Gagnées en duel / Offertes</div>
-            <p>Certaines victoires / défaites peuvent vous rapporter des tickets de lootbox, vous permettant de lancer une roulette gratuitement. Ouvre-les avec <code style="background:#000;border:1px solid var(--line);padding:2px 7px;border-radius:4px;color:var(--paper)">!lootbox</code> quand tu es prêt.</p>
+            <div class="cout">Offertes, ou achetables en Boutique</div>
+            <p>Un ticket de lootbox te donne un tirage gratuit, à ouvrir quand tu veux avec <code style="background:#000;border:1px solid var(--line);padding:2px 7px;border-radius:4px;color:var(--paper)">!lootbox</code>. Tu peux aussi en acheter directement au marchand pour l'équivalent d'une victoire de duel — voir section 04.</p>
         </div>
     </div>
     <div class="loot-carte" style="margin-bottom:50px;">
@@ -305,7 +357,7 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
     </div>
 </section>
 
-<!-- ================= SECTION 3 : ÉQUIPEMENT ================= -->
+<!-- ================= SECTION 03 : ÉQUIPEMENT ================= -->
 <section id="equipement">
     <div class="section-head">
         <div class="section-num">03 — L'ARSENAL</div>
@@ -368,7 +420,7 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
             </div>
         </div>
 
-                <div class="objet-carte normal">
+        <div class="objet-carte normal">
             <div class="objet-nom-ligne">
                 <div class="objet-icone-zone"><img src="gear/gas_orbital.png" alt=""></div>
                 <div><div class="objet-nom">Gas Orbital</div><div class="objet-rarete-tag" style="color:var(--normal)">Normal</div></div>
@@ -401,10 +453,6 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
             </div>
         </div>
 
-
-
-        <!-- GAS ORBITAL -->
-
     </div>
 
 
@@ -429,15 +477,55 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
 
 </section>
 
-<!-- ================= SECTION 4 : COMBAT ================= -->
+<!-- ================= SECTION 04 : BOUTIQUE ================= -->
+<section id="boutique">
+    <div class="section-head">
+        <div class="section-num">04 — LE MARCHAND</div>
+        <h2>La Boutique</h2>
+        <p>Un objet en double dont tu ne te sers plus ? Revends-le. Il te manque une pièce précise pour ton build ? Achète-la. La Boutique tourne aux Médailles — jamais aux SC.</p>
+    </div>
+
+    <div class="boutique-fixes-grille">
+        <div class="boutique-fixe-carte">
+            <span class="verrou">🔒</span>
+            <h4>Ticket de reset de stats</h4>
+            <div class="loot-carte cout" style="margin:8px 0 10px;">🏅 60 médailles</div>
+            <p>Toujours en stock, jamais soumis à la rotation. Consomme-le avec <code>!reset</code> : toutes tes stats reviennent à zéro, et tu récupères l'intégralité des points investis sous forme de crédits — à replacer avec <code>!ameliorer atk 5</code> (ou def, pv, vit, chance).</p>
+        </div>
+        <div class="boutique-fixe-carte">
+            <span class="verrou">🔒</span>
+            <h4>Lootbox</h4>
+            <div class="loot-carte cout" style="margin:8px 0 10px;">🏅 12 médailles</div>
+            <p>Elle aussi toujours disponible, sans rotation. Son prix correspond à peu près à ce que rapporte une victoire de duel — acheter une lootbox, c'est un peu comme s'offrir un tirage supplémentaire sans repasser par la case combat.</p>
+        </div>
+    </div>
+
+    <div class="legendaire-note" style="margin-bottom:40px;">
+        <b>Le reste de l'étal change chaque heure</b>, identique pour tout le monde : <b>4 objets communs</b>, <b>3 normaux</b> et <b>2 rares</b> tirés au hasard dans le catalogue. Reviens régulièrement si l'objet que tu vises n'y est pas encore.
+    </div>
+
+    <div class="gains-wrap" style="margin-bottom:30px;">
+        <table class="gains-table">
+            <tr><th>Rareté</th><th>Prix d'achat</th><th>Prix de revente</th></tr>
+            <tr><td><span class="tranche-tag" style="color:var(--commun)">Commun</span></td><td><span class="pts">🏅 60</span></td><td><span class="med">🏅 15</span></td></tr>
+            <tr><td><span class="tranche-tag" style="color:var(--normal)">Normal</span></td><td><span class="pts">🏅 144</span></td><td><span class="med">🏅 36</span></td></tr>
+            <tr><td><span class="tranche-tag" style="color:var(--rare)">Rare</span></td><td><span class="pts">🏅 364</span></td><td><span class="med">🏅 91</span></td></tr>
+        </table>
+    </div>
+    <div class="legendaire-note" style="margin-bottom:56px;">
+        La revente vaut toujours <b>le quart</b> du prix d'achat : vendre <b>4 objets</b> d'une rareté donnée finance exactement <b>1 objet</b> de cette même rareté.
+    </div>
+</section>
+
+<!-- ================= SECTION 05 : COMBAT ================= -->
 <section id="combat">
     <div class="section-head">
-        <div class="section-num">04 — LE DUEL</div>
+        <div class="section-num">05 — LE DUEL</div>
         <h2>Trois outils pour se battre</h2>
         <p>Une fois équipé, il ne reste qu'à combattre. Une méthode combinant scouting et duel provoqué, afin de choisir sa cible stratégiquement, et une méthode permettant de lancer des batailles automatiques.</p>
     </div>
     <div class="methodes-grille">
-                <div class="methode-carte">
+        <div class="methode-carte">
             <div class="tag">RECONNAISSANCE</div>
             <h4>Scouter l'adversaire</h4>
             <div class="cout">100 SC</div>
@@ -446,29 +534,56 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
         <div class="methode-carte">
             <div class="tag">CIBLÉ</div>
             <h4>Engager un duel</h4>
-            <div class="cout">1 000 SC</div>
-            <p>Choisis-toi même qui attaquer avec la récompense de chaîne "Duel" qui coûte 1000 SC.<br><br>Le combat le plus risqué — mais le plus payant.<br><br>Il est possible de gagner contre un adversaire plus fort que toi en jouant un type de build qui le contre ! A toi de jouer et trouver le bon build.</p>
+            <div class="cout">500 SC</div>
+            <p>Choisis-toi même qui attaquer avec la récompense de chaîne "Duel", qui te donne un ticket à utiliser avec <code>!ticketduel &lt;pseudo&gt;</code>.<br><br>Le combat le plus risqué — mais le plus payant.<br><br>Il est possible de gagner contre un adversaire plus fort que toi en jouant un type de build qui le contre ! A toi de jouer et trouver le bon build.</p>
         </div>
         <div class="methode-carte">
             <div class="tag">AUTOMATIQUE</div>
             <h4>Déclencher une Auto Battle</h4>
-            <div class="cout">1 000 SC</div>
-            <p>Le jeu te trouve un adversaire dans ta tranche de PowerLevel dite <b><span class="tranche-tag tt-equitable">équitable</span></b>. Pratique pour combattre sans réfléchir à la cible.<br><br>Etant donné la nature plus confortable de cette méthode de combat, les gains en cas de victoire sont divisés par 50%.</p>
+            <div class="cout">500 SC</div>
+            <p>Le jeu te trouve un adversaire dans ta tranche de PowerLevel dite <b><span class="tranche-tag tt-equitable">équitable</span></b>, à activer avec <code>!ticketauto</code>. Pratique pour combattre sans réfléchir à la cible.<br><br>Etant donné la nature plus confortable de cette méthode de combat, les gains en cas de victoire sont divisés par rapport à un duel ciblé.</p>
         </div>
     </div>
 
-    <div class="section-head" style="padding-top:40px;">
+    <div class="legendaire-note" style="margin-bottom:48px;">
+        <b>Personne dans ta tranche ?</b> Une Auto Battle ne reste jamais bloquée : si aucun combattant équitable n'est disponible au moment où tu la déclenches, tu affrontes <b>Totomaton</b>, un adversaire automatique dont les stats et l'équipement sont générés aléatoirement à chaque combat. Il ne rejoint aucun classement — c'est uniquement un adversaire de secours pour que tu puisses toujours te battre.
+    </div>
+
+    <div class="section-head" style="padding-top:20px;">
         <div class="section-num">LA RÈGLE</div>
         <h2 style="font-size:24px;">Viser plus fort rapporte plus</h2>
-        <p>Le Power Level de chacun place le duel dans une tranche. S'attaquer à plus fort que soi est risqué, mais bien plus généreux en cas de victoire — et quoi qu'il arrive, personne ne perd jamais un seul point.</p>
+        <p>Le Power Level de chacun place le duel dans une tranche. S'attaquer à plus fort que soi est risqué, mais bien plus généreux en cas de victoire — et quoi qu'il arrive, personne ne perd jamais un seul point. Chaque combat rapporte désormais aussi des <b>Médailles</b>, même en cas de défaite.</p>
     </div>
     <div class="gains-wrap">
         <table class="gains-table">
             <tr><th>Tranche</th><th>Ton gain si tu gagnes</th><th>Ton gain si l'adversaire gagne</th><th>Le gain de l'adversaire s'il gagne</th><th>Le gain de l'adversaire s'il perd</th></tr>
-            <tr><td><span class="tranche-tag tt-equitable">Équitable</span> <span style="font-size:12px;">(Entre -%30 et +30% de ton Powerlevel)</span></td><td><span class="pts">1500</span> pts + 1 lootbox</td><td>0</td><td>1000 pts</td><td>0</td></tr>
-            <tr><td><span class="tranche-tag tt-dessus">Plus fort que toi</span> <span style="font-size:12px;">(Avec une différence supérieure à 30% de ton Powerlevel)</span></td><td><span class="pts">2250</span> pts + 2 lootbox</td><td>0</td><td>500 pts</td><td>0</td></tr>
-            <tr><td><span class="tranche-tag tt-dessous">Plus faible que toi</span> <span style="font-size:12px;">(Avec une différence inférieure à 30% de ton Powerlevel)</span></td><td>0 pt</td><td>0</td><td><span class="pts">1500</span> pts + 2 lootbox</td><td>1000 pts + lootbox</td></tr>
+            <tr>
+                <td><span class="tranche-tag tt-equitable">Équitable</span> <span style="font-size:12px;">(entre -30% et +30% de ton Powerlevel)</span></td>
+                <td><span class="pts">1500 pts</span> + <span class="med">🏅 12</span></td>
+                <td><span class="med">🏅 2</span></td>
+                <td><span class="pts">1000 pts</span> + <span class="med">🏅 10</span></td>
+                <td><span class="med">🏅 2</span></td>
+            </tr>
+            <tr>
+                <td><span class="tranche-tag tt-dessus">Plus fort que toi</span> <span style="font-size:12px;">(écart supérieur à 30%)</span></td>
+                <td><span class="pts">2250 pts</span> + <span class="med">🏅 20</span></td>
+                <td><span class="med">🏅 2</span></td>
+                <td><span class="pts">500 pts</span> + <span class="med">🏅 4</span></td>
+                <td><span class="med">🏅 2</span></td>
+            </tr>
+            <tr>
+                <td><span class="tranche-tag tt-dessous">Plus faible que toi</span> <span style="font-size:12px;">(écart inférieur à 30%)</span></td>
+                <td><span class="med">🏅 3</span></td>
+                <td><span class="med">🏅 1</span></td>
+                <td><span class="pts">1500 pts</span> + <span class="med">🏅 22</span></td>
+                <td><span class="pts">1000 pts</span> + <span class="med">🏅 10</span></td>
+            </tr>
         </table>
+    </div>
+    <div class="legendaire-note" style="margin-bottom:20px;">
+        <b>En cas d'égalité</b>, les points de duel restent stables et chacun repart tout de même avec quelques Médailles de consolation (5 partout en tranche équitable, jusqu'à 15 pour le défenseur si l'écart de puissance était important).
+        <br><br>
+        <b>Auto Battle</b> : mêmes principes, avec des gains de points divisés par rapport à un duel ciblé — et <span class="med">🏅 8</span> en cas de victoire, <span class="med">🏅 3</span> en cas de défaite, <span class="med">🏅 5</span> en cas d'égalité.
     </div>
 </section>
 
@@ -485,8 +600,35 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
         <div class="boucle-lien">→</div>
         <div class="boucle-etape"><div class="rond">⚔️</div><div class="mot">Combattre</div></div>
         <div class="boucle-lien">→</div>
+        <div class="boucle-etape"><div class="rond">🛒</div><div class="mot">Échanger en Boutique</div></div>
+        <div class="boucle-lien">→</div>
         <div class="boucle-etape"><div class="rond">🏆</div><div class="mot">Monter au classement</div></div>
     </div>
+</section>
+
+<!-- ================= SECTION 06 : AIDE-MÉMOIRE DES COMMANDES ================= -->
+<section id="commandes" style="padding-bottom:20px;">
+    <div class="section-head">
+        <div class="section-num">06 — RÉFÉRENCE RAPIDE</div>
+        <h2>Toutes les commandes</h2>
+        <p>Chaque commande active un ticket obtenu par une récompense de chaîne, ou déclenche directement une action sur ton personnage.</p>
+    </div>
+    <div class="gains-wrap" style="margin-bottom:20px;">
+        <table class="gains-table commandes-table">
+            <tr><th>Commande</th><th>Coût</th><th>Effet</th></tr>
+            <tr><td><code>!stats</code></td><td class="desc">gratuit</td><td class="desc">Affiche tes statistiques et ton équipement — visibles de tout le monde dans le chat.</td></tr>
+            <tr><td><code>!scout &lt;pseudo&gt;</code></td><td class="desc">100 SC</td><td class="desc">Révèle le PowerLevel et l'équipement d'un adversaire potentiel, et te dit s'il est équitable, fort ou faible.</td></tr>
+            <tr><td><code>!equip &lt;numéro(s)&gt;</code></td><td class="desc">gratuit</td><td class="desc">Équipe un ou plusieurs objets de ton inventaire.</td></tr>
+            <tr><td><code>!lootbox</code></td><td class="desc">gratuit (si tu en as)</td><td class="desc">Ouvre une lootbox en attente et te donne un objet au hasard.</td></tr>
+            <tr><td><code>!ticketduel &lt;pseudo&gt;</code></td><td class="desc">500 SC</td><td class="desc">Engage un duel ciblé contre la personne de ton choix.</td></tr>
+            <tr><td><code>!ticketauto</code></td><td class="desc">500 SC</td><td class="desc">Lance un combat automatique contre un adversaire équitable — ou Totomaton si personne n'est disponible.</td></tr>
+            <tr><td><code>!acheter &lt;n°&gt;x&lt;qté&gt; ...</code></td><td class="desc">en médailles</td><td class="desc">Achète un ou plusieurs objets de l'étal, un ticket de reset (<code>resetx1</code>) et/ou des lootbox (<code>lootx1</code>) — tout en une seule commande.</td></tr>
+            <tr><td><code>!vendre &lt;n°&gt;x&lt;qté&gt; ...</code></td><td class="desc">rapporte des médailles</td><td class="desc">Revend un ou plusieurs objets de ton inventaire au marchand.</td></tr>
+            <tr><td><code>!reset</code></td><td class="desc">1 ticket de reset</td><td class="desc">Remet toutes tes stats à zéro et te rend les points investis, à replacer avec <code>!ameliorer</code>.</td></tr>
+            <tr><td><code>!ameliorer &lt;stat&gt; &lt;n&gt;</code></td><td class="desc">gratuit (crédits de reset)</td><td class="desc">Replace des points obtenus par un reset dans la stat de ton choix (atk, def, pv, vit, chance).</td></tr>
+        </table>
+    </div>
+    <p class="desc" style="font-size:13px;">Toutes ces pages (profil, inventaire, classements, codex, boutique) restent accessibles depuis le menu en haut de chaque page, et se mettent à jour automatiquement toutes les 5 à 10 minutes.</p>
 </section>
 
 </div><!-- /wrap -->
@@ -527,4 +669,4 @@ footer { text-align: center; padding: 44px 28px 60px; color: var(--paper-dim); f
 
 <script src="nav.js" defer></script>
 </body>
-</html>
+            </html>
