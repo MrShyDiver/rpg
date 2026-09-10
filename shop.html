@@ -293,12 +293,24 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .btn-vider:hover { background: var(--red); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(168, 39, 31, 0.3); }
 
+/* ===================================================================
+   MOBILE — la popin de commande etait bien trop haute : la mise en page
+   forcait TROIS elements (code / bouton Copier / bouton corbeille) en
+   colonne pleine largeur (zone-commande-ligne passait en column), plus
+   des paddings/marges de bureau non reduits. Un panier avec un long
+   recapitulatif pouvait ainsi occuper l'ecran entier.
+   Correctif : le code, Copier et la corbeille RESTENT sur une seule
+   ligne (le code defile horizontalement si besoin, overflow-x:auto est
+   deja pose plus haut) ; seuls les espacements et tailles de police sont
+   reduits pour tenir sur un petit ecran.
+   =================================================================== */
 @media (max-width: 768px) {
-    .barre-fixe { flex-direction: column; align-items: stretch; padding: 18px; gap: 18px; }
-    .barre-fixe-chiffres { gap: 18px; }
-    .zone-commande-ligne { flex-direction: column; }
-    .btn-action { padding: 12px; }
-    .btn-vider { padding: 12px; }
+    .barre-fixe { padding: 14px 16px; gap: 12px; border-radius: 10px; }
+    .barre-fixe-chiffres { gap: 16px; }
+    .barre-fixe-chiffres div b { font-size: 19px; }
+    .zone-commande-ligne code { font-size: 13px; padding: 8px 10px; }
+    .btn-action { padding: 0 14px; font-size: 12px; min-height: 38px; }
+    .btn-vider { padding: 0 12px; font-size: 14px; min-height: 38px; }
 }
 @media (max-width: 620px) {
     .grille-cards { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
@@ -571,9 +583,14 @@ function carteProduit(cfg) {
 }
 
 /* ===================== ACHETER ===================== */
+// ⚠️ Mot-cle interne 'loot' (et non 'lootbox') : "lootbox" contient lui-meme un
+// 'x', ce qui entre en collision avec le separateur quantite -- "lootboxx3".split('x')
+// se brise (['lootbo','','3']) et l'objet disparaissait du panier SANS erreur visible.
+// Le nom AFFICHE au joueur reste "Lootbox", seul l'identifiant technique change.
+// commande-acheter.cs (Streamer.bot) doit reconnaitre EXACTEMENT ce meme mot-cle.
 function prixProduitAchat(id) {
     if (id === 'reset') return PRIX_RESET;
-    if (id === 'lootbox') return PRIX_LOOTBOX;
+    if (id === 'loot') return PRIX_LOOTBOX;
     var it = parNumero(id); return it ? (PRIX_ACHAT[it.rarete || 'commun'] || 0) : 0;
 }
 
@@ -585,10 +602,10 @@ function rendreAchat() {
         quantite: panierAchat.reset || 0,
     });
     var carteLootbox = carteProduit({
-        id: 'lootbox', mode: 'achat', nom: 'Lootbox', icone: '🎁',
+        id: 'loot', mode: 'achat', nom: 'Lootbox', icone: '🎁',
         accent: 'var(--special)', verrou: true, prix: PRIX_LOOTBOX,
         sous: 'Un objet aléatoire de la boutique',
-        quantite: panierAchat.lootbox || 0,
+        quantite: panierAchat.loot || 0,
     });
     document.getElementById('listeFixes').innerHTML = carteReset + carteLootbox;
 
