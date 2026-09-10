@@ -18,7 +18,7 @@
         { fichier: "annonce-saison.html", label: "Le concept" },
         { fichier: "stats.html",          label: "Profil",     profil: true,        donnees: "players.json" },
         { fichier: "inventaire.html",     label: "Inventaire", profil: true,        donnees: "players.json" },
-        { fichier: "scout.html",          label: "Scout",     profil: true,        donnees: "players.json" },
+        { fichier: "scout.html",          label: "Cibles",     profil: true,        donnees: "players.json" },
         { fichier: "shop.html",           label: "Boutique",   profil: true, rechercheNav: false, donnees: "players.json" },
         { fichier: "ranking.html",        label: "Classements",                     donnees: "players.json" },
         { fichier: "codex.html",          label: "Codex",                           donnees: "catalogue_stats.json" }
@@ -34,10 +34,11 @@
         return p.profil && p.rechercheNav !== false && p.fichier === fichierCourant;
     });
 
-    // CORRECTION : On renvoie toujours vers la page cliquée.
-    // On ajoute le paramètre ?user= uniquement s'il y a déjà un joueur actif.
+    // CORRECTION : On propage systématiquement le paramètre utilisateur
+    // sur TOUTES les pages (même l'accueil ou le concept).
+    // Ainsi l'utilisateur ne "perd" jamais son profil en cours de navigation.
     function lienDe(page) {
-        if (page.profil && userCourant) {
+        if (userCourant) {
             return page.fichier + "?user=" + encodeURIComponent(userCourant);
         }
         return page.fichier;
@@ -296,7 +297,8 @@
 
     var marque = document.createElement("a");
     marque.className = "hdnav-marque";
-    marque.href = ACCUEIL;
+    // Le clic sur le logo conserve lui aussi la session en cours
+    marque.href = userCourant ? ACCUEIL + "?user=" + encodeURIComponent(userCourant) : ACCUEIL;
     marque.innerHTML = '<i></i><b>Twitch RPG</b>';
     interieur.appendChild(marque);
 
