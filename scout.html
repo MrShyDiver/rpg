@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitch RPG — Cibles</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --equitable: #5ddd7a; --dessus: #4a9fd8; --dessous: #8d8d8d;
+}
+* { box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif;
+    margin: 0; padding: 28px 18px 60px; line-height: 1.5;
+}
+h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
+.page { max-width: 1040px; margin: 0 auto; }
+
+.entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
+.entete h1 { font-size: 28px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 14px; margin: 7px 0 0; max-width: 68ch; }
+
+.solde-barre {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: rgba(242,194,48,.08); border: 1px solid var(--yellow); border-radius: 6px;
+    padding: 13px 18px; margin-bottom: 28px;
+}
+.solde-barre .qui { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; }
+.solde-barre .pl { margin-left: auto; font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--yellow); }
+.solde-barre .pl span { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-left: 6px; }
+
+.message { color: var(--paper-dim); font-size: 14px; padding: 40px 2px; text-align: center; }
+.message b { color: var(--paper); }
+
+/* ===== Sections de tranche ===== */
+.tranche-section { margin-bottom: 34px; }
+.tranche-tete {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 14px;
+}
+.tranche-tete h2 { font-size: 18px; font-weight: 600; }
+.tranche-tete .compte {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    color: var(--paper-dim); letter-spacing: .5px;
+}
+.tranche-tete p { color: var(--paper-dim); font-size: 13px; margin: 0; flex-basis: 100%; }
+.tranche-section.equitable .tranche-tete h2 { color: var(--equitable); }
+.tranche-section.dessus .tranche-tete h2 { color: var(--dessus); }
+.tranche-section.dessous .tranche-tete h2 { color: var(--dessous); }
+
+/* ===== Lignes cible ===== */
+.cibles { display: flex; flex-direction: column; gap: 8px; }
+.cible {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--line);
+    border-radius: 6px; padding: 12px 16px;
+}
+.tranche-section.equitable .cible { border-left-color: var(--equitable); }
+.tranche-section.dessus .cible { border-left-color: var(--dessus); }
+.tranche-section.dessous .cible { border-left-color: var(--dessous); }
+
+.cible-avatar {
+    width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex: 0 0 auto;
+    background: #232326; border: 1px solid var(--line); display: flex;
+    align-items: center; justify-content: center; font-family: 'Oswald', sans-serif;
+    font-size: 15px; color: var(--paper-dim);
+}
+.cible-ident { min-width: 150px; flex: 1 1 150px; }
+.cible-nom { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; }
+.cible-detail { font-size: 12px; color: var(--paper-dim); }
+.cible-detail b { color: var(--paper); }
+.cible-ecart { font-weight: 700; }
+.tranche-section.equitable .cible-ecart { color: var(--equitable); }
+.tranche-section.dessus .cible-ecart { color: var(--dessus); }
+.tranche-section.dessous .cible-ecart { color: var(--dessous); }
+
+.issues { display: flex; gap: 16px; flex: 0 0 auto; }
+.issue { text-align: center; min-width: 56px; }
+.issue .label {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: .8px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
+}
+.issue .val { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 700; }
+.issue.victoire .val { color: var(--yellow); }
+.issue.defaite .val { color: var(--paper-dim); }
+.issue.egalite .val { color: var(--paper); }
+
+.cible-action { flex: 0 0 auto; }
+.cible-action button {
+    font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--paper-dim); background: none;
+    border: 1px solid var(--line); border-radius: 5px; padding: 7px 12px; cursor: pointer; white-space: nowrap;
+}
+.cible-action button:hover { color: var(--yellow); border-color: var(--yellow); }
+.cible-action button.copie { color: var(--yellow); border-color: var(--yellow); }
+
+@media (max-width: 640px) {
+    .cible { padding: 11px 13px; }
+    .issues { width: 100%; justify-content: space-between; order: 3; }
+    .cible-action { width: 100%; order: 4; }
+    .cible-action button { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+    <div class="entete">
+        <h1>Choisir sa <span>cible</span></h1>
+        <p>Toutes les personnes à ta portée, classées par tranche de PowerLevel, avec les médailles que
+           rapporterait un duel contre chacune — victoire, défaite ou égalité.</p>
+    </div>
+
+    <div id="zoneSolde"></div>
+    <div id="zoneContenu">
+        <div class="message">Cherche ton pseudo dans le menu en haut de la page pour voir tes cibles.</div>
+    </div>
+
+</div>
+
+<script>
+/* =====================================================================
+   MÉDAILLES ATTENDUES — copie fidèle des constantes de duel.cs/auto-battle.cs
+   (perspective ATTAQUANT, puisque c'est ce que le visiteur ferait avec
+   !ticketduel). Purement informatif ici : aucune médaille n'est attribuée
+   par cette page, seul le moteur de combat décide réellement du résultat.
+   Si ces constantes changent côté C#, les reporter ici à l'identique.
+   ===================================================================== */
+var MEDAILLES = {
+    equitable: { victoire: 12, defaite: 2, egalite: 5 },
+    dessus:    { victoire: 20, defaite: 2, egalite: 12 },
+    dessous:   { victoire: 3,  defaite: 1, egalite: 1 },
+};
+var SEUIL_TRANCHE = 0.30;   // ±30%, identique au seuil utilisé par le moteur de combat
+
+// Comptes exclus des classements et du matchmaking réel — ne doivent pas
+// apparaître comme cibles proposées.
+var EXCLUS = ['mrshydiver', 'mikumosana', 'totomaton'];
+
+function echapper(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+function avatarHtml(url, nom) {
+    return url ? '<img class="cible-avatar" src="' + echapper(url) + '" alt="">'
+               : '<div class="cible-avatar">' + echapper((nom || '?').charAt(0).toUpperCase()) + '</div>';
+}
+
+function ligneCible(c) {
+    var m = MEDAILLES[c.tranche];
+    var signe = c.ecart >= 0 ? '+' : '';
+    return '<div class="cible">' +
+        avatarHtml(c.avatar, c.nom) +
+        '<div class="cible-ident">' +
+            '<div class="cible-nom">' + echapper(c.nom) + '</div>' +
+            '<div class="cible-detail">PowerLevel <b>' + Math.round(c.power) + '</b> ' +
+                '<span class="cible-ecart">(' + signe + c.ecart.toFixed(0) + '%)</span></div>' +
+        '</div>' +
+        '<div class="issues">' +
+            '<div class="issue victoire"><div class="label">Victoire</div><div class="val">🏅 +' + m.victoire + '</div></div>' +
+            '<div class="issue egalite"><div class="label">Égalité</div><div class="val">🏅 +' + m.egalite + '</div></div>' +
+            '<div class="issue defaite"><div class="label">Défaite</div><div class="val">🏅 +' + m.defaite + '</div></div>' +
+        '</div>' +
+        '<div class="cible-action"><button type="button" data-pseudo="' + echapper(c.cle) + '">Copier la commande</button></div>' +
+    '</div>';
+}
+
+function sectionTranche(cle, titre, description, cibles) {
+    if (!cibles.length) return '';
+    return '<section class="tranche-section ' + cle + '">' +
+        '<div class="tranche-tete">' +
+            '<h2>' + titre + '</h2>' +
+            '<span class="compte">' + cibles.length + ' personne' + (cibles.length > 1 ? 's' : '') + '</span>' +
+            '<p>' + description + '</p>' +
+        '</div>' +
+        '<div class="cibles">' + cibles.map(ligneCible).join('') + '</div>' +
+    '</section>';
+}
+
+function afficher(viewer, tousLesJoueurs) {
+    document.getElementById('zoneSolde').innerHTML =
+        '<div class="solde-barre"><div class="qui">' + echapper(viewer.nom) + '</div>' +
+        '<div class="pl">' + Math.round(viewer.power) + '<span>PowerLevel</span></div></div>';
+
+    var equitables = [], dessus = [], dessous = [];
+    tousLesJoueurs.forEach(function (c) {
+        if (c.cle === viewer.cle) return;   // pas soi-même
+        if (EXCLUS.indexOf(c.cle.toLowerCase()) !== -1) return;
+        if (!viewer.power || !c.power) return;
+
+        var ecartRatio = (c.power - viewer.power) / viewer.power;
+        c.ecart = ecartRatio * 100;
+
+        if (ecartRatio > SEUIL_TRANCHE) { c.tranche = 'dessus'; dessus.push(c); }
+        else if (ecartRatio < -SEUIL_TRANCHE) { c.tranche = 'dessous'; dessous.push(c); }
+        else { c.tranche = 'equitable'; equitables.push(c); }
+    });
+
+    // Dans les trois tranches : l'écart de PowerLevel le plus PETIT (le combat
+    // le plus serré) apparaît en premier, qu'on soit au-dessus ou en dessous —
+    // seul le sens numérique de l'écart change de signe selon le côté.
+    var parEcart = function (a, b) { return Math.abs(a.ecart) - Math.abs(b.ecart); };
+    equitables.sort(parEcart);
+    dessus.sort(parEcart);
+    dessous.sort(parEcart);
+
+    document.getElementById('zoneContenu').innerHTML =
+        sectionTranche('equitable', 'Dans ta tranche',
+            'Écart de ±30% — le duel le plus prévisible, dans les deux sens.', equitables) +
+        sectionTranche('dessus', 'Plus fort que toi',
+            'Risqué, mais nettement plus généreux en cas de victoire. Les plus proches de toi en premier.', dessus) +
+        sectionTranche('dessous', 'Plus faible que toi',
+            'Peu de médailles à gagner, et un adversaire moins faible peut te faire perdre gros. Les moins faibles en premier.', dessous);
+
+    if (!equitables.length && !dessus.length && !dessous.length) {
+        document.getElementById('zoneContenu').innerHTML =
+            '<div class="message">Personne d\'autre n\'est actuellement disponible comme cible.</div>';
+    }
+}
+
+document.getElementById('zoneContenu').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-pseudo]');
+    if (!btn) return;
+    var commande = '!ticketduel ' + btn.getAttribute('data-pseudo');
+    var fini = function () {
+        var avant = btn.textContent;
+        btn.classList.add('copie');
+        btn.textContent = 'Copié !';
+        setTimeout(function () { btn.classList.remove('copie'); btn.textContent = avant; }, 1600);
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(commande).then(fini, fini);
+    else {
+        var z = document.createElement('textarea');
+        z.value = commande; document.body.appendChild(z); z.select();
+        try { document.execCommand('copy'); } catch (err) {}
+        document.body.removeChild(z); fini();
+    }
+});
+
+/* ===================== CHARGEMENT ===================== */
+fetch('players.json?v=' + Date.now())
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        var tous = Object.keys(data).map(function (cle) {
+            var j = data[cle], s = j.stats || {};
+            return { cle: cle, nom: j.nomAffichage || cle, avatar: j.avatar || '', power: s.powerLevel || 0 };
+        });
+
+        var demande = new URLSearchParams(location.search).get('user');
+        if (!demande || !data[demande]) return;   // le message par défaut reste affiché
+
+        var viewer = tous.filter(function (c) { return c.cle === demande; })[0];
+        afficher(viewer, tous);
+    })
+    .catch(function () {
+        document.getElementById('zoneContenu').innerHTML =
+            '<div class="message">Les données n\'ont pas pu être chargées. Réessaie dans un instant.</div>';
+    });
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>
