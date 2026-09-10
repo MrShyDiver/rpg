@@ -375,8 +375,11 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 /* =====================================================================
    ÉCONOMIE
    ===================================================================== */
-var PRIX_ACHAT  = { commun: 20, normal: 48, rare: 120, legendaire: 300 };
-var PRIX_VENTE  = { commun: 5,  normal: 12, rare: 30,  legendaire: 75  };
+// Ancrage recalibre : 30 victoires (~30x12,1 medailles) pour un rare, au lieu de 10.
+// Raison : cibler un rare precis en boutique ecrasait totalement la Roulette (120 med.
+// = 10 victoires, contre une mediane de 31 500 SC pour esperer LE meme rare a la roue).
+var PRIX_ACHAT  = { commun: 60, normal: 144, rare: 364, legendaire: 300 };
+var PRIX_VENTE  = { commun: 15, normal: 36,  rare: 91,  legendaire: 75  };
 var PRIX_RESET  = 60;
 var PRIX_LOOTBOX = 12;
 var STOCK = { commun: 4, normal: 3, rare: 2 };
@@ -866,4 +869,4 @@ Promise.all([
 </script>
 <script src="nav.js" defer></script>
 </body>
-</html>
+    </html>
