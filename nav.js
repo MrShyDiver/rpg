@@ -24,16 +24,21 @@
 
     // --- Pages du menu -----------------------------------------------------
     // Pour ajouter/retirer une entrée, il suffit de modifier cette liste.
-    // "profil: true"  = la page a besoin d'un ?user=pseudo pour s'afficher,
-    //                   et reçoit donc aussi la barre de recherche de profil.
+    // "profil: true"  = la page a besoin d'un ?user=pseudo pour s'afficher ; le
+    //                   pseudo consulté est reporté d'une page à l'autre.
+    // "rechercheNav"  = false pour les pages qui ont DÉJÀ leur propre sélecteur
+    //                   de personnage (la boutique), afin de ne pas afficher
+    //                   deux champs de recherche concurrents.
     // "donnees: ..."  = le fichier dont la page tire son contenu. Sert à dater
     //                   l'affichage ("mis à jour il y a X min"). Une page sans
     //                   données (le concept) n'a rien à dater.
     var PAGES = [
-        { fichier: ACCUEIL,               label: "Accueil",                          donnees: "players.json" },
+        { fichier: ACCUEIL,                label: "Accueil",                         donnees: "players.json" },
         { fichier: "annonce-saison.html", label: "Le concept" },
         { fichier: "stats.html",          label: "Profil",     profil: true,         donnees: "players.json" },
         { fichier: "inventaire.html",     label: "Inventaire", profil: true,         donnees: "players.json" },
+        { fichier: "scout.html",           label: "Cibles",     profil: true,         donnees: "players.json" },
+        { fichier: "shop.html",           label: "Boutique",   profil: true, rechercheNav: false, donnees: "players.json" },
         { fichier: "ranking.html",        label: "Classements",                      donnees: "players.json" },
         { fichier: "codex.html",          label: "Codex",                            donnees: "catalogue_stats.json" }
     ];
@@ -47,9 +52,10 @@
     // la même personne au lieu de retomber sur une page vide.
     var userCourant = new URLSearchParams(location.search).get("user");
 
-    // La page courante attend-elle un ?user= ? (= page de profil)
+    // La page courante doit-elle recevoir la barre de recherche du menu ?
+    // (= page de profil qui n'a pas déjà son propre sélecteur)
     var estPageProfil = PAGES.some(function (p) {
-        return p.profil && p.fichier === fichierCourant;
+        return p.profil && p.rechercheNav !== false && p.fichier === fichierCourant;
     });
 
     function lienDe(page) {
@@ -97,7 +103,7 @@
         "text-transform:uppercase;color:var(--hdnav-attenue);text-decoration:none;padding:8px 11px;",
         "border-bottom:2px solid transparent;transition:color .12s,border-color .12s;white-space:nowrap;}",
         ".hdnav-liens a:hover{color:var(--hdnav-texte);border-bottom-color:var(--hdnav-bord);}",
-        /* La page courante est signalée par le même jaune que les titres.   */
+        /* La page courante est signalée par le même jaune que les titres.    */
         ".hdnav-liens a[aria-current=page]{color:var(--hdnav-jaune);border-bottom-color:var(--hdnav-jaune);}",
         ".hdnav a:focus-visible{outline:2px solid var(--hdnav-jaune);outline-offset:2px;border-radius:2px;}",
 
@@ -165,7 +171,7 @@
         ".hdnav-bouton{display:block;}",
         /* Les liens (qui portaient le margin-left:auto) sont repliés ici :   */
         /* c'est le groupe fraîcheur qui prend le relais pour caler la fin de */
-        /* barre à droite.                                                    */
+        /* barre à droite.                                                  */
         ".hdnav-maj{margin-left:auto;}",
         /* Sur mobile la recherche passe sur sa propre ligne, pleine largeur, */
         /* et reste visible même menu fermé : c'est l'action la plus utile    */
@@ -406,7 +412,7 @@
     maj.appendChild(boutonActu);
 
     // Recharge en contournant le cache : on change l'URL (paramètre "maj")
-    // plutôt que d'appeler reload(), dont le rechargement forcé n'est plus
+    // plutôt qu'appeler reload(), dont le rechargement forcé n'est plus
     // honoré par les navigateurs. Le pseudo consulté est conservé.
     boutonActu.addEventListener("click", function () {
         boutonActu.disabled = true;   // l'icône se met à tourner (voir CSS)
@@ -418,7 +424,7 @@
     function formuler(dateFichier) {
         var minutes = Math.max(0, Math.round((Date.now() - dateFichier.getTime()) / 60000));
         var quand;
-        if (minutes < 1)       quand = "à l'instant";
+        if (minutes < 1)        quand = "à l'instant";
         else if (minutes < 60) quand = "il y a " + minutes + " min";
         else {
             var h = Math.floor(minutes / 60);
