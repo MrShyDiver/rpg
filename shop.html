@@ -64,17 +64,40 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .proposition span { font-size: 14px; flex: 1 1 auto; }
 .proposition em { font-style: normal; font-family: 'Oswald', sans-serif; font-size: 12px; color: var(--yellow); }
 
-/* ===== Bandeau solde ===== */
-.solde-barre {
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-    background: rgba(242,194,48,.08); border: 1px solid var(--yellow); border-radius: 6px;
-    padding: 14px 18px; margin-bottom: 26px;
+/* ===== Carte Profil Actif ===== */
+.profil-actif-carte {
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    background: rgba(242,194,48,.08); border: 1px solid var(--yellow); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 26px; max-width: 420px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
 }
-.solde-barre .qui { font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 600; }
-.solde-barre .montant {
-    margin-left: auto; font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700;
-    color: var(--yellow); line-height: 1;
+.profil-actif-avatar {
+    width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--yellow); flex: 0 0 auto; background: var(--bg-panel);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-size: 22px; color: var(--paper-dim);
 }
+.profil-actif-infos {
+    display: flex; flex-direction: column; flex: 1 1 auto;
+}
+.profil-actif-titre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; font-weight: 700;
+    letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
+}
+.profil-actif-nom {
+    font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: var(--paper); line-height: 1;
+}
+.profil-actif-medailles {
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+    font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--yellow);
+}
+.btn-deselectionner {
+    background: none; border: 1px solid var(--line); color: var(--paper-dim);
+    border-radius: 4px; padding: 3px 8px; font-size: 10px; font-family: 'Barlow Condensed', sans-serif;
+    cursor: pointer; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;
+    margin-top: 6px; align-self: flex-start; transition: 0.15s;
+}
+.btn-deselectionner:hover { border-color: var(--yellow); color: var(--yellow); }
 
 /* ===== Onglets ===== */
 .onglets { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
@@ -192,8 +215,13 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 /* ===== BARRE FIXE ===== */
 .barre-fixe {
-    position: fixed; left: 18px; right: 18px; bottom: 20px; z-index: 50;
-    max-width: 1044px; margin: 0 auto;
+    position: fixed; 
+    bottom: 20px; 
+    z-index: 50;
+    /* Centrage parfait par rapport à l'écran, calé sur la grille */
+    left: 50%;
+    width: calc(100% - 36px);
+    max-width: 1044px; 
     background: rgba(15, 15, 18, 0.95);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--yellow); border-radius: 12px;
@@ -202,7 +230,10 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
     animation: slideUp 0.3s ease-out forwards;
 }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideUp { 
+    from { transform: translate(-50%, 20px); opacity: 0; } 
+    to { transform: translate(-50%, 0); opacity: 1; } 
+}
 
 .barre-fixe.mode-vente { 
     border-color: var(--vente); 
@@ -284,10 +315,10 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     </div>
 
     <div class="choix-profil">
-        <label for="chercheProfil">Qui es-tu&nbsp;? <span style="font-weight:400;text-transform:none;letter-spacing:0">(facultatif)</span></label>
+        <label for="chercheProfil">Rechercher votre inventaire <span style="font-weight:400;text-transform:none;letter-spacing:0">(facultatif)</span></label>
         <div class="champ-profil">
             <input type="text" id="chercheProfil" autocomplete="off" spellcheck="false"
-                   placeholder="Entre ton pseudo Twitch pour voir ton solde et inventaire..."
+                   placeholder="Tapez votre pseudo Twitch..."
                    role="combobox" aria-expanded="false" aria-controls="propositions" aria-autocomplete="list">
             <div class="propositions" id="propositions" role="listbox"></div>
         </div>
@@ -295,6 +326,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
            assure-toi juste d'avoir assez de médailles avant de la coller dans le chat.</p>
     </div>
 
+    <!-- C'est ici que la carte du profil apparaîtra -->
     <div id="zoneSolde"></div>
 
     <div class="onglets" role="tablist">
@@ -453,10 +485,22 @@ document.addEventListener('click', function (e) {
 function choisirProfil(cle) {
     pseudoActif = cle;
     joueurActif = JOUEURS[cle];
-    champ.value = joueurActif.nomAffichage || cle;
+    champ.value = ''; // On vide le champ de recherche pour faire propre
     fermerPropositions();
     var url = new URL(location.href);
     url.searchParams.set('user', cle);
+    history.replaceState(null, '', url);
+    afficherSolde();
+    rendreAchat();
+    rendreVente();
+}
+
+// Fonction pour retirer le profil actuel
+function deselectProfil() {
+    pseudoActif = null;
+    joueurActif = null;
+    var url = new URL(location.href);
+    url.searchParams.delete('user');
     history.replaceState(null, '', url);
     afficherSolde();
     rendreAchat();
@@ -467,11 +511,24 @@ function afficherSolde() {
     var zone = document.getElementById('zoneSolde');
     if (!joueurActif) { zone.innerHTML = ''; document.getElementById('aideProfil').classList.remove('cache'); return; }
     document.getElementById('aideProfil').classList.add('cache');
+    
     var nom = echapper(joueurActif.nomAffichage || pseudoActif);
+    var avatar = joueurActif.avatar 
+        ? '<img src="' + echapper(joueurActif.avatar) + '" alt="" class="profil-actif-avatar">'
+        : '<div class="profil-actif-avatar">' + echapper(nom.charAt(0).toUpperCase()) + '</div>';
+    
     zone.innerHTML =
-        '<div class="solde-barre"><div class="qui">' + nom + '</div>' +
-        '<div class="montant">' + soldeActuel().toLocaleString('fr-FR') +
-        ' ' + iconeMedaille('icone-medaille grande') + '</div></div>';
+        '<div class="profil-actif-carte">' +
+            avatar +
+            '<div class="profil-actif-infos">' +
+                '<div class="profil-actif-titre">Profil de</div>' +
+                '<div class="profil-actif-nom">' + nom + '</div>' +
+                '<button class="btn-deselectionner" onclick="deselectProfil()">Changer d\'inventaire</button>' +
+            '</div>' +
+            '<div class="profil-actif-medailles">' +
+                soldeActuel().toLocaleString('fr-FR') + ' ' + iconeMedaille('icone-medaille grande') +
+            '</div>' +
+        '</div>';
 }
 
 function iconeMedaille(classeExtra = '') {
@@ -485,8 +542,6 @@ function carteProduit(cfg) {
         ? '<div class="card-puce-rarete' + (cfg.mode === 'vente' ? ' a-gauche' : '') + '">' + LABEL_RARETE[cfg.rarete] + '</div>'
         : '';
     var badgeQuantite = cfg.badgeQuantite !== undefined ? '<div class="card-niveau">×' + cfg.badgeQuantite + '</div>' : '';
-    
-    // Ajout du verrou (Cadenas)
     var verrou = cfg.verrou ? '<div class="card-verrou">🔒</div>' : '';
     
     var modeClasse = cfg.mode === 'vente' ? 'mode-vente' : 'mode-achat';
@@ -495,7 +550,6 @@ function carteProduit(cfg) {
         ? (cfg.image ? '<img src="' + echapper(cfg.image) + '" alt="">' : '<div class="emoji">' + echapper(cfg.icone || '?') + '</div>')
         : '<div class="emoji">' + echapper(cfg.icone || '?') + '</div>';
 
-    // Bouton MAX pour la revente (optionnel)
     var btnMax = (cfg.quantiteMax !== undefined && cfg.mode === 'vente') 
         ? '<button type="button" data-act="max" class="btn-max" title="Tout sélectionner" ' + (cfg.quantite >= cfg.quantiteMax ? 'disabled' : '') + '>MAX</button>' 
         : '';
@@ -552,7 +606,7 @@ function rendreAchat() {
     majBarreFixe();
 }
 
-// Gestion Clics Boutons (+, -, MAX)
+// Gestion Clics Boutons (+, -)
 document.getElementById('panneauAcheter').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -566,7 +620,7 @@ document.getElementById('panneauAcheter').addEventListener('click', function (e)
     rendreAchat();
 });
 
-// Saisie libre de la quantité (Mise à jour quand l'utilisateur tape un nombre)
+// Saisie libre de la quantité (Achat)
 document.getElementById('panneauAcheter').addEventListener('change', function (e) {
     if (e.target.classList.contains('valeur-input')) {
         var id = e.target.closest('.card').getAttribute('data-id');
@@ -581,7 +635,7 @@ document.getElementById('panneauAcheter').addEventListener('change', function (e
 function rendreVente() {
     var zone = document.getElementById('listeVendre');
     if (!joueurActif) {
-        zone.innerHTML = '<div class="message">Cherche ton pseudo tout en haut pour voir les objets ' +
+        zone.innerHTML = '<div class="message">Recherche ton pseudo tout en haut pour voir les objets ' +
             'que tu peux revendre — sans profil sélectionné, la boutique ne connaît pas ton inventaire.</div>';
         majBarreFixe();
         return;
@@ -630,7 +684,7 @@ document.getElementById('listeVendre').addEventListener('click', function (e) {
     rendreVente();
 });
 
-// Saisie libre de la quantité
+// Saisie libre de la quantité (Vente)
 document.getElementById('listeVendre').addEventListener('change', function (e) {
     if (e.target.classList.contains('valeur-input')) {
         var num = e.target.closest('.card').getAttribute('data-id');
@@ -718,7 +772,6 @@ function majBarreFixe() {
 
     document.getElementById('btnCopierBarre').addEventListener('click', function () { copier('cmdBarre', this); });
     
-    // Fonctionnalité pour vider le panier/sélection
     document.getElementById('btnViderBarre').addEventListener('click', function () { 
         if (ongletCourant === 'acheter') panierAchat = {}; else aVendre = {};
         rendreAchat();
