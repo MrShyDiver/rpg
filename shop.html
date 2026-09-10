@@ -285,6 +285,44 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(242,194,48,0.3); }
 .barre-fixe.mode-vente .btn-action:hover { box-shadow: 0 5px 15px rgba(93,221,122,0.3); }
 
+/* ===== Barre fixe, variante Troc (couleur dediee, distincte de vente) ===== */
+.barre-fixe.mode-troc { border-color: var(--special); box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(201,167,232,0.18); }
+.barre-fixe.mode-troc .barre-fixe-chiffres div b { color: var(--special); }
+.barre-fixe.mode-troc .zone-commande-ligne code { color: var(--special); border-color: rgba(201,167,232,0.35); }
+.barre-fixe.mode-troc .btn-action { background: var(--special); color: #1e1030; }
+.barre-fixe.mode-troc .btn-action:hover { box-shadow: 0 5px 15px rgba(201,167,232,0.3); }
+
+/* ===== Resume du troc, en haut du panneau ===== */
+.troc-sommaire { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px; }
+@media (max-width: 640px) { .troc-sommaire { grid-template-columns: 1fr; } }
+.troc-flux {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 16px;
+}
+.troc-cote { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1 1 0; min-width: 0; }
+.troc-pastille {
+    width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-weight: 800; font-size: 17px; border: 2px solid var(--accent-troc);
+    color: var(--accent-troc); background: rgba(255,255,255,0.06);
+    background: color-mix(in srgb, var(--accent-troc) 12%, transparent);
+}
+.troc-cote .nom-rarete {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--paper-dim);
+}
+.troc-cote .compte { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; color: var(--paper); }
+.troc-cote .compte b { color: var(--accent-troc); }
+.troc-fleche { font-size: 22px; color: var(--paper-dim); flex: 0 0 auto; }
+.troc-flux.pret .troc-fleche { color: var(--special); }
+/* La destination reste un mystere tant qu'on ne sait pas quel objet precis sortira. */
+.troc-mystere {
+    width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: var(--paper-dim); border: 2px dashed var(--line); background: rgba(0,0,0,0.25);
+}
+.troc-flux.pret .troc-mystere { border-color: var(--special); color: var(--special); border-style: solid; }
+.troc-resultat { font-size: 11.5px; color: var(--paper-dim); text-align: center; }
+.troc-resultat b { color: var(--special); font-family: 'Oswald', sans-serif; }
+
 .btn-vider {
     font-family: 'Oswald', sans-serif; font-size: 16px; background: rgba(168, 39, 31, 0.15); 
     border: 1px solid var(--red); color: var(--paper); border-radius: 6px; padding: 0 16px; 
@@ -344,6 +382,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     <div class="onglets" role="tablist">
         <button class="onglet" id="ongletAcheter" role="tab" aria-selected="true" aria-controls="panneauAcheter">Acheter</button>
         <button class="onglet" id="ongletVendre" role="tab" aria-selected="false" aria-controls="panneauVendre">Vendre</button>
+        <button class="onglet" id="ongletTroc" role="tab" aria-selected="false" aria-controls="panneauTroc">Troc</button>
     </div>
 
     <div id="panneauAcheter" role="tabpanel" aria-labelledby="ongletAcheter">
@@ -367,21 +406,35 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
         <div id="listeVendre" class="grille-cards"></div>
     </div>
 
+    <div id="panneauTroc" role="tabpanel" aria-labelledby="ongletTroc" class="cache">
+        <p style="color:var(--paper-dim);font-size:13.5px;margin-bottom:18px;max-width:60ch;">
+            Échange des doublons dont tu ne te sers pas contre un objet de la rareté au-dessus, tiré au
+            hasard. Aucune médaille n'entre en jeu — c'est un troc, pas un achat.
+        </p>
+        <div id="trocSommaire" class="troc-sommaire"></div>
+        <div id="listeTroc" class="grille-cards"></div>
+    </div>
+
 </div>
 
 <div id="barreFixe" class="cache"></div>
 
 <script>
 /* =====================================================================
-   ÉCONOMIE
+   ÉCONOMIE — nouvelle grille de prix (achat cher, revente symbolique) : le
+   troc (voir plus bas) devient la vraie voie d'écoulement des doublons,
+   la revente au marchand n'étant plus qu'un pis-aller pour ce qui ne sert
+   à rien du tout, y compris pour un troc.
    ===================================================================== */
-// Ancrage recalibre : 30 victoires (~30x12,1 medailles) pour un rare, au lieu de 10.
-// Raison : cibler un rare precis en boutique ecrasait totalement la Roulette (120 med.
-// = 10 victoires, contre une mediane de 31 500 SC pour esperer LE meme rare a la roue).
-var PRIX_ACHAT  = { commun: 60, normal: 144, rare: 364, legendaire: 300 };
-var PRIX_VENTE  = { commun: 15, normal: 36,  rare: 91,  legendaire: 75  };
+var PRIX_ACHAT  = { commun: 25, normal: 120, rare: 450, legendaire: 900 };
+var PRIX_VENTE  = { commun: 1,  normal: 6,   rare: 30,  legendaire: 90  };
 var PRIX_RESET  = 60;
 var PRIX_LOOTBOX = 12;
+// Vérifié : espérance de revente d'une lootbox = .55×1 + .35×6 + .10×30 = 5,65 médailles,
+// largement sous son prix (12) — marge de sécurité de 53% contre la boucle vendre→racheter.
+// Troc : acheter 10 communs (250) pour les échanger contre un normal (120 en achat direct) coûte
+// plus cher que l'achat direct — le troc ne peut donc servir qu'à écouler des doublons déjà possédés.
+var TROC = { commun: { cout: 10, versRarete: 'normal' }, normal: { cout: 10, versRarete: 'rare' } };
 var STOCK = { commun: 4, normal: 3, rare: 2 };
 
 var LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
@@ -423,6 +476,7 @@ var CATALOGUE = {}, JOUEURS = {}, listeJoueurs = [];
 var pseudoActif = null, joueurActif = null;
 var panierAchat = {};
 var aVendre = {};
+var aTroc = { commun: {}, normal: {} };   // { rarete: { numero: quantite } }
 var ongletCourant = 'acheter';
 
 function echapper(t) {
@@ -508,6 +562,7 @@ function choisirProfil(cle) {
     afficherSolde();
     rendreAchat();
     rendreVente();
+    rendreTroc();
 }
 
 // Fonction pour retirer le profil actuel
@@ -520,6 +575,7 @@ function deselectProfil() {
     afficherSolde();
     rendreAchat();
     rendreVente();
+    rendreTroc();
 }
 
 function afficherSolde() {
@@ -565,17 +621,22 @@ function carteProduit(cfg) {
         ? (cfg.image ? '<img src="' + echapper(cfg.image) + '" alt="">' : '<div class="emoji">' + echapper(cfg.icone || '?') + '</div>')
         : '<div class="emoji">' + echapper(cfg.icone || '?') + '</div>';
 
-    var btnMax = (cfg.quantiteMax !== undefined && cfg.mode === 'vente') 
+    var btnMax = (cfg.quantiteMax !== undefined && cfg.mode !== 'achat') 
         ? '<button type="button" data-act="max" class="btn-max" title="Tout sélectionner" ' + (cfg.quantite >= cfg.quantiteMax ? 'disabled' : '') + '>MAX</button>' 
         : '';
+
+    // Le troc n'implique aucune médaille : on affiche juste combien d'exemplaires
+    // sont mis de côté pour l'échange, pas un prix.
+    var blocPrix = cfg.mode === 'troc'
+        ? '<div class="card-prix-bloc"><div class="card-prix" style="color:var(--paper-dim);font-size:13px">Mis de côté : ' + cfg.quantite + '</div></div>'
+        : '<div class="card-prix-bloc"><div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>';
 
     return '<div class="card' + (cfg.quantite > 0 ? ' choisi' : '') + '" data-id="' + cfg.id + '" style="--accent:' + accent + '">' +
         verrou + puceRarete + badgeQuantite +
         '<div class="card-image">' + visuel + '</div>' +
         '<div class="card-nom">' + echapper(cfg.nom) + '</div>' +
         (cfg.sous ? '<div class="card-sous">' + cfg.sous + '</div>' : '') +
-        '<div class="card-prix-bloc">' +
-            '<div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>' +
+        blocPrix +
         '<div class="card-qte">' +
             '<button type="button" data-act="moins" aria-label="Retirer" ' + (cfg.quantite <= 0 ? ' disabled' : '') + '>&minus;</button>' +
             '<input type="number" class="valeur-input" value="' + cfg.quantite + '" min="0" ' + (cfg.quantiteMax !== undefined ? 'max="' + cfg.quantiteMax + '"' : '') + '>' +
@@ -686,6 +747,100 @@ function rendreVente() {
     majBarreFixe();
 }
 
+/* ===================== TROC ===================== */
+// Réutilise carteProduit en détournant l'affichage du prix pour montrer une
+// progression "X / 10" au lieu d'un coût en médailles : aucune médaille
+// n'entre en jeu ici, seule la quantité compte.
+// Résumé visuel en haut de page : combien de chaque rareté est mis de côté,
+// une flèche vers la rareté cible, et une icône "?" tant que l'objet précis
+// obtenu reste inconnu (le tirage n'a lieu qu'à l'exécution de la commande).
+function rendreTrocSommaire() {
+    var html = '';
+    ['commun', 'normal'].forEach(function (rarete) {
+        var cible = TROC[rarete].versRarete;
+        var qteChoisie = Object.keys(aTroc[rarete]).reduce(function (s, n) { return s + aTroc[rarete][n]; }, 0);
+        var pret = Math.floor(qteChoisie / TROC[rarete].cout);
+        var reste = qteChoisie % TROC[rarete].cout;
+
+        html += '<div class="troc-flux' + (pret > 0 ? ' pret' : '') + '" style="--accent-troc:var(--' + rarete + ')">' +
+            '<div class="troc-cote">' +
+                '<div class="troc-pastille">' + qteChoisie + '</div>' +
+                '<div class="nom-rarete">' + LABEL_RARETE[rarete] + '</div>' +
+                '<div class="compte"><b>' + reste + '</b> / ' + TROC[rarete].cout + '</div>' +
+            '</div>' +
+            '<div class="troc-fleche">→</div>' +
+            '<div class="troc-cote">' +
+                '<div class="troc-mystere">?</div>' +
+                '<div class="nom-rarete">' + LABEL_RARETE[cible] + '</div>' +
+                '<div class="troc-resultat">' +
+                    (pret > 0 ? '<b>' + pret + '</b> prêt' + (pret > 1 ? 's' : '') : 'objet inconnu') +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    });
+    document.getElementById('trocSommaire').innerHTML = html;
+}
+
+function rendreTroc() {
+    if (!joueurActif) {
+        document.getElementById('trocSommaire').innerHTML = '';
+        document.getElementById('listeTroc').innerHTML =
+            '<div class="message">Recherche ton pseudo tout en haut pour voir tes doublons échangeables.</div>';
+        majBarreFixe();
+        return;
+    }
+    rendreTrocSommaire();
+    var inv = (joueurActif.inventaire || []).slice();
+    var html = '';
+    ['commun', 'normal'].forEach(function (rarete) {
+        var cible = TROC[rarete].versRarete;
+        var items = inv.filter(function (l) {
+            var it = parNumero(l.numero);
+            return it && (it.rarete || 'commun') === rarete;
+        });
+        var qteChoisie = Object.keys(aTroc[rarete]).reduce(function (s, n) { return s + aTroc[rarete][n]; }, 0);
+        var pret = Math.floor(qteChoisie / TROC[rarete].cout);
+
+        html += '<div class="section-produits"><div class="sous-titre">' +
+            TROC[rarete].cout + ' ' + LABEL_RARETE[rarete] + 's → 1 ' + LABEL_RARETE[cible] + ' aléatoire' +
+            '<span style="margin-left:auto;color:' + (pret > 0 ? 'var(--vente)' : 'var(--paper-dim)') + ';font-size:12.5px">' +
+            qteChoisie + ' / ' + TROC[rarete].cout + (pret > 0 ? ' — ' + pret + ' échange(s) prêt(s)' : '') +
+            '</span></div>';
+
+        if (!items.length) {
+            html += '<div class="message">Aucun ' + LABEL_RARETE[rarete].toLowerCase() + ' dans cet inventaire.</div></div>';
+            return;
+        }
+        html += '<div class="grille-cards">' + items.map(function (ligne) {
+            var it = parNumero(ligne.numero);
+            var possede = (ligne.niveau || 0) + 1;
+            var choisi = (aTroc[rarete][ligne.numero] || 0);
+            return carteProduit({
+                id: rarete + ':' + ligne.numero, mode: 'troc', nom: it.nom, image: it.image, icone: it.icone,
+                rarete: rarete, accent: 'var(--' + rarete + ')',
+                quantite: choisi, quantiteMax: possede, badgeQuantite: possede,
+            });
+        }).join('') + '</div></div>';
+    });
+    document.getElementById('listeTroc').innerHTML = html;
+    majBarreFixe();
+}
+
+document.getElementById('listeTroc').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    var idComposite = btn.closest('.card').getAttribute('data-id');
+    var sep = idComposite.indexOf(':');
+    var rarete = idComposite.slice(0, sep), num = idComposite.slice(sep + 1);
+    var entree = (joueurActif.inventaire || []).filter(function (x) { return String(x.numero) === String(num); })[0];
+    var max = (entree.niveau || 0) + 1;
+    var actuel = aTroc[rarete][num] || 0;
+    if (btn.getAttribute('data-act') === 'plus') actuel += 1;
+    else if (btn.getAttribute('data-act') === 'moins') actuel -= 1;
+    if (actuel <= 0) delete aTroc[rarete][num]; else aTroc[rarete][num] = Math.min(actuel, max);
+    rendreTroc();
+});
+
 // Gestion Clics Boutons (+, -, MAX)
 document.getElementById('listeVendre').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-act]');
@@ -760,7 +915,7 @@ function majBarreFixe() {
                 '</div>' +
             '</div>';
 
-    } else {
+    } else if (ongletCourant === 'vendre') {
         var numeros = Object.keys(aVendre);
         if (!numeros.length) { barre.className = 'cache'; return; }
         
@@ -788,14 +943,51 @@ function majBarreFixe() {
                     '<button type="button" id="btnViderBarre" class="btn-vider" title="Vider la sélection">🗑️</button>' +
                 '</div>' +
             '</div>';
+
+    } else {
+        // Troc : pas de médailles en jeu, on récapitule en nombre d'échanges.
+        var raretesTroc = Object.keys(aTroc).filter(function (r) { return Object.keys(aTroc[r]).length; });
+        if (!raretesTroc.length) { barre.className = 'cache'; return; }
+
+        var totalEchanges = 0, morceauxTroc = [];
+        raretesTroc.forEach(function (rarete) {
+            var pieces = [];
+            var qteTotale = 0;
+            Object.keys(aTroc[rarete]).forEach(function (n) {
+                pieces.push(n + 'x' + aTroc[rarete][n]);
+                qteTotale += aTroc[rarete][n];
+            });
+            totalEchanges += Math.floor(qteTotale / TROC[rarete].cout);
+            morceauxTroc.push(pieces.join(' '));
+        });
+
+        var commandeT = '!echanger ' + morceauxTroc.join(' ');
+        barre.className = 'barre-fixe mode-troc';
+        barre.innerHTML =
+            '<div class="barre-fixe-gauche">' +
+                '<div class="barre-fixe-chiffres">' +
+                    '<div><span>Échanges prêts</span><b>' + totalEchanges + '</b></div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="barre-fixe-droite">' +
+                '<div class="zone-commande-consigne">À coller dans le chat Twitch</div>' +
+                '<div class="zone-commande-ligne">' +
+                    '<code id="cmdBarre">' + echapper(commandeT) + '</code>' +
+                    '<button type="button" id="btnCopierBarre" class="btn-action">Copier</button>' +
+                    '<button type="button" id="btnViderBarre" class="btn-vider" title="Vider la sélection">🗑️</button>' +
+                '</div>' +
+            '</div>';
     }
 
     document.getElementById('btnCopierBarre').addEventListener('click', function () { copier('cmdBarre', this); });
     
     document.getElementById('btnViderBarre').addEventListener('click', function () { 
-        if (ongletCourant === 'acheter') panierAchat = {}; else aVendre = {};
+        if (ongletCourant === 'acheter') panierAchat = {};
+        else if (ongletCourant === 'vendre') aVendre = {};
+        else aTroc = { commun: {}, normal: {} };
         rendreAchat();
         rendreVente();
+        rendreTroc();
     });
     
     ajusterPaddingPage();
@@ -826,16 +1018,18 @@ function copier(idCode, bouton) {
 }
 
 /* ---------- Onglets ---------- */
-function basculer(versVente) {
-    ongletCourant = versVente ? 'vendre' : 'acheter';
-    document.getElementById('ongletAcheter').setAttribute('aria-selected', String(!versVente));
-    document.getElementById('ongletVendre').setAttribute('aria-selected', String(versVente));
-    document.getElementById('panneauAcheter').classList.toggle('cache', versVente);
-    document.getElementById('panneauVendre').classList.toggle('cache', !versVente);
+function basculer(nom) {
+    ongletCourant = nom;
+    ['Acheter', 'Vendre', 'Troc'].forEach(function (n) {
+        var cle = n.toLowerCase();
+        document.getElementById('onglet' + n).setAttribute('aria-selected', String(cle === nom));
+        document.getElementById('panneau' + n).classList.toggle('cache', cle !== nom);
+    });
     majBarreFixe();
 }
-document.getElementById('ongletAcheter').addEventListener('click', function () { basculer(false); });
-document.getElementById('ongletVendre').addEventListener('click', function () { basculer(true); });
+document.getElementById('ongletAcheter').addEventListener('click', function () { basculer('acheter'); });
+document.getElementById('ongletVendre').addEventListener('click', function () { basculer('vendre'); });
+document.getElementById('ongletTroc').addEventListener('click', function () { basculer('troc'); });
 
 /* ---------- Chrono ---------- */
 setInterval(function () {
@@ -859,8 +1053,8 @@ Promise.all([
     }).sort(function (a, b) { return b.power - a.power; });
 
     rendreAchat();
+    rendreTroc();
 
-    var demande = new URLSearchParams(location.search).get('user');
     if (demande && JOUEURS[demande]) choisirProfil(demande);
 }).catch(function () {
     document.getElementById('listeRotation').innerHTML =
@@ -869,4 +1063,4 @@ Promise.all([
 </script>
 <script src="nav.js" defer></script>
 </body>
-    </html>
+</html>
