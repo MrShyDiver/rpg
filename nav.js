@@ -18,7 +18,7 @@
         { fichier: "annonce-saison.html", label: "Le concept" },
         { fichier: "stats.html",          label: "Profil",     profil: true,        donnees: "players.json" },
         { fichier: "inventaire.html",     label: "Inventaire", profil: true,        donnees: "players.json" },
-        { fichier: "scout.html",          label: "Cibles",     profil: true,        donnees: "players.json" },
+        { fichier: "scout.html",          label: "Scout",     profil: true,        donnees: "players.json" },
         { fichier: "shop.html",           label: "Boutique",   profil: true, rechercheNav: false, donnees: "players.json" },
         { fichier: "ranking.html",        label: "Classements",                     donnees: "players.json" },
         { fichier: "codex.html",          label: "Codex",                           donnees: "catalogue_stats.json" }
@@ -34,10 +34,13 @@
         return p.profil && p.rechercheNav !== false && p.fichier === fichierCourant;
     });
 
+    // CORRECTION : On renvoie toujours vers la page cliquée.
+    // On ajoute le paramètre ?user= uniquement s'il y a déjà un joueur actif.
     function lienDe(page) {
-        if (!page.profil) return page.fichier;
-        if (userCourant) return page.fichier + "?user=" + encodeURIComponent(userCourant);
-        return ACCUEIL + "#recherche";
+        if (page.profil && userCourant) {
+            return page.fichier + "?user=" + encodeURIComponent(userCourant);
+        }
+        return page.fichier;
     }
 
     if (!document.querySelector('link[href*="fonts.googleapis.com"]')) {
@@ -388,8 +391,6 @@
         document.body.style.paddingTop = (paddingInitial + hauteurNav) + "px";
     }
     
-    // Si la page a besoin d'une recherche, on l'injecte quand le DOM est prêt.
-    // L'attribut defer permet normalement d'exécuter ce script après parsing du DOM.
     if (estPageProfil) {
         injecterRecherchePage();
     }
