@@ -200,7 +200,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .valeur-input::-webkit-outer-spin-button, .valeur-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .valeur-input:focus { outline: none; border-color: var(--accent); }
 
-/* Bouton MAX exclusif à la vente */
+/* Bouton MAX exclusif à la vente/troc */
 .card-qte .btn-max {
     font-size: 10px; font-weight: 700; width: auto; padding: 0 6px; margin-left: 2px;
     background: rgba(93,221,122,0.1); color: var(--vente); border-color: var(--vente);
@@ -285,14 +285,14 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(242,194,48,0.3); }
 .barre-fixe.mode-vente .btn-action:hover { box-shadow: 0 5px 15px rgba(93,221,122,0.3); }
 
-/* ===== Barre fixe, variante Troc (couleur dediee, distincte de vente) ===== */
+/* ===== Barre fixe, variante Troc ===== */
 .barre-fixe.mode-troc { border-color: var(--special); box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(201,167,232,0.18); }
 .barre-fixe.mode-troc .barre-fixe-chiffres div b { color: var(--special); }
 .barre-fixe.mode-troc .zone-commande-ligne code { color: var(--special); border-color: rgba(201,167,232,0.35); }
 .barre-fixe.mode-troc .btn-action { background: var(--special); color: #1e1030; }
 .barre-fixe.mode-troc .btn-action:hover { box-shadow: 0 5px 15px rgba(201,167,232,0.3); }
 
-/* ===== Resume du troc, en haut du panneau ===== */
+/* ===== Resume du troc ===== */
 .troc-sommaire { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px; }
 @media (max-width: 640px) { .troc-sommaire { grid-template-columns: 1fr; } }
 .troc-flux {
@@ -304,7 +304,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-family: 'Oswald', sans-serif; font-weight: 800; font-size: 17px; border: 2px solid var(--accent-troc);
     color: var(--accent-troc); background: rgba(255,255,255,0.06);
-    background: color-mix(in srgb, var(--accent-troc) 12%, transparent);
 }
 .troc-cote .nom-rarete {
     font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px;
@@ -314,7 +313,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .troc-cote .compte b { color: var(--accent-troc); }
 .troc-fleche { font-size: 22px; color: var(--paper-dim); flex: 0 0 auto; }
 .troc-flux.pret .troc-fleche { color: var(--special); }
-/* La destination reste un mystere tant qu'on ne sait pas quel objet precis sortira. */
 .troc-mystere {
     width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-size: 22px; font-weight: 800; color: var(--paper-dim); border: 2px dashed var(--line); background: rgba(0,0,0,0.25);
@@ -331,17 +329,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .btn-vider:hover { background: var(--red); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(168, 39, 31, 0.3); }
 
-/* ===================================================================
-   MOBILE — la popin de commande etait bien trop haute : la mise en page
-   forcait TROIS elements (code / bouton Copier / bouton corbeille) en
-   colonne pleine largeur (zone-commande-ligne passait en column), plus
-   des paddings/marges de bureau non reduits. Un panier avec un long
-   recapitulatif pouvait ainsi occuper l'ecran entier.
-   Correctif : le code, Copier et la corbeille RESTENT sur une seule
-   ligne (le code defile horizontalement si besoin, overflow-x:auto est
-   deja pose plus haut) ; seuls les espacements et tailles de police sont
-   reduits pour tenir sur un petit ecran.
-   =================================================================== */
 @media (max-width: 768px) {
     .barre-fixe { padding: 14px 16px; gap: 12px; border-radius: 10px; }
     .barre-fixe-chiffres { gap: 16px; }
@@ -376,7 +363,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
            assure-toi juste d'avoir assez de médailles avant de la coller dans le chat.</p>
     </div>
 
-    <!-- C'est ici que la carte du profil apparaîtra -->
     <div id="zoneSolde"></div>
 
     <div class="onglets" role="tablist">
@@ -421,19 +407,12 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 <script>
 /* =====================================================================
-   ÉCONOMIE — nouvelle grille de prix (achat cher, revente symbolique) : le
-   troc (voir plus bas) devient la vraie voie d'écoulement des doublons,
-   la revente au marchand n'étant plus qu'un pis-aller pour ce qui ne sert
-   à rien du tout, y compris pour un troc.
+   ÉCONOMIE 
    ===================================================================== */
 var PRIX_ACHAT  = { commun: 25, normal: 120, rare: 450, legendaire: 900 };
 var PRIX_VENTE  = { commun: 1,  normal: 6,   rare: 30,  legendaire: 90  };
 var PRIX_RESET  = 60;
 var PRIX_LOOTBOX = 12;
-// Vérifié : espérance de revente d'une lootbox = .55×1 + .35×6 + .10×30 = 5,65 médailles,
-// largement sous son prix (12) — marge de sécurité de 53% contre la boucle vendre→racheter.
-// Troc : acheter 10 communs (250) pour les échanger contre un normal (120 en achat direct) coûte
-// plus cher que l'achat direct — le troc ne peut donc servir qu'à écouler des doublons déjà possédés.
 var TROC = { commun: { cout: 10, versRarete: 'normal' }, normal: { cout: 10, versRarete: 'rare' } };
 var STOCK = { commun: 4, normal: 3, rare: 2 };
 
@@ -476,7 +455,7 @@ var CATALOGUE = {}, JOUEURS = {}, listeJoueurs = [];
 var pseudoActif = null, joueurActif = null;
 var panierAchat = {};
 var aVendre = {};
-var aTroc = { commun: {}, normal: {} };   // { rarete: { numero: quantite } }
+var aTroc = { commun: {}, normal: {} };   
 var ongletCourant = 'acheter';
 
 function echapper(t) {
@@ -554,7 +533,7 @@ document.addEventListener('click', function (e) {
 function choisirProfil(cle) {
     pseudoActif = cle;
     joueurActif = JOUEURS[cle];
-    champ.value = ''; // On vide le champ de recherche pour faire propre
+    champ.value = ''; 
     fermerPropositions();
     var url = new URL(location.href);
     url.searchParams.set('user', cle);
@@ -565,7 +544,6 @@ function choisirProfil(cle) {
     rendreTroc();
 }
 
-// Fonction pour retirer le profil actuel
 function deselectProfil() {
     pseudoActif = null;
     joueurActif = null;
@@ -625,10 +603,9 @@ function carteProduit(cfg) {
         ? '<button type="button" data-act="max" class="btn-max" title="Tout sélectionner" ' + (cfg.quantite >= cfg.quantiteMax ? 'disabled' : '') + '>MAX</button>' 
         : '';
 
-    // Le troc n'implique aucune médaille : on affiche juste combien d'exemplaires
-    // sont mis de côté pour l'échange, pas un prix.
+    // Si on est en Troc, on masque le prix tout en gardant l'espacement pour l'alignement
     var blocPrix = cfg.mode === 'troc'
-        ? '<div class="card-prix-bloc"><div class="card-prix" style="color:var(--paper-dim);font-size:13px">Mis de côté : ' + cfg.quantite + '</div></div>'
+        ? '<div class="card-prix-bloc" style="min-height: 28px;"></div>'
         : '<div class="card-prix-bloc"><div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>';
 
     return '<div class="card' + (cfg.quantite > 0 ? ' choisi' : '') + '" data-id="' + cfg.id + '" style="--accent:' + accent + '">' +
@@ -647,11 +624,6 @@ function carteProduit(cfg) {
 }
 
 /* ===================== ACHETER ===================== */
-// ⚠️ Mot-cle interne 'loot' (et non 'lootbox') : "lootbox" contient lui-meme un
-// 'x', ce qui entre en collision avec le separateur quantite -- "lootboxx3".split('x')
-// se brise (['lootbo','','3']) et l'objet disparaissait du panier SANS erreur visible.
-// Le nom AFFICHE au joueur reste "Lootbox", seul l'identifiant technique change.
-// commande-acheter.cs (Streamer.bot) doit reconnaitre EXACTEMENT ce meme mot-cle.
 function prixProduitAchat(id) {
     if (id === 'reset') return PRIX_RESET;
     if (id === 'loot') return PRIX_LOOTBOX;
@@ -687,7 +659,6 @@ function rendreAchat() {
     majBarreFixe();
 }
 
-// Gestion Clics Boutons (+, -)
 document.getElementById('panneauAcheter').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -701,7 +672,6 @@ document.getElementById('panneauAcheter').addEventListener('click', function (e)
     rendreAchat();
 });
 
-// Saisie libre de la quantité (Achat)
 document.getElementById('panneauAcheter').addEventListener('change', function (e) {
     if (e.target.classList.contains('valeur-input')) {
         var id = e.target.closest('.card').getAttribute('data-id');
@@ -748,12 +718,6 @@ function rendreVente() {
 }
 
 /* ===================== TROC ===================== */
-// Réutilise carteProduit en détournant l'affichage du prix pour montrer une
-// progression "X / 10" au lieu d'un coût en médailles : aucune médaille
-// n'entre en jeu ici, seule la quantité compte.
-// Résumé visuel en haut de page : combien de chaque rareté est mis de côté,
-// une flèche vers la rareté cible, et une icône "?" tant que l'objet précis
-// obtenu reste inconnu (le tirage n'a lieu qu'à l'exécution de la commande).
 function rendreTrocSommaire() {
     var html = '';
     ['commun', 'normal'].forEach(function (rarete) {
@@ -835,13 +799,17 @@ document.getElementById('listeTroc').addEventListener('click', function (e) {
     var entree = (joueurActif.inventaire || []).filter(function (x) { return String(x.numero) === String(num); })[0];
     var max = (entree.niveau || 0) + 1;
     var actuel = aTroc[rarete][num] || 0;
-    if (btn.getAttribute('data-act') === 'plus') actuel += 1;
-    else if (btn.getAttribute('data-act') === 'moins') actuel -= 1;
+    
+    var act = btn.getAttribute('data-act');
+    if (act === 'plus') actuel += 1;
+    else if (act === 'moins') actuel -= 1;
+    else if (act === 'max') actuel = max;
+
     if (actuel <= 0) delete aTroc[rarete][num]; else aTroc[rarete][num] = Math.min(actuel, max);
     rendreTroc();
 });
 
-// Gestion Clics Boutons (+, -, MAX)
+
 document.getElementById('listeVendre').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -859,7 +827,6 @@ document.getElementById('listeVendre').addEventListener('click', function (e) {
     rendreVente();
 });
 
-// Saisie libre de la quantité (Vente)
 document.getElementById('listeVendre').addEventListener('change', function (e) {
     if (e.target.classList.contains('valeur-input')) {
         var num = e.target.closest('.card').getAttribute('data-id');
@@ -945,11 +912,12 @@ function majBarreFixe() {
             '</div>';
 
     } else {
-        // Troc : pas de médailles en jeu, on récapitule en nombre d'échanges.
         var raretesTroc = Object.keys(aTroc).filter(function (r) { return Object.keys(aTroc[r]).length; });
         if (!raretesTroc.length) { barre.className = 'cache'; return; }
 
         var totalEchanges = 0, morceauxTroc = [];
+        var gainsHtml = [];
+
         raretesTroc.forEach(function (rarete) {
             var pieces = [];
             var qteTotale = 0;
@@ -957,16 +925,29 @@ function majBarreFixe() {
                 pieces.push(n + 'x' + aTroc[rarete][n]);
                 qteTotale += aTroc[rarete][n];
             });
-            totalEchanges += Math.floor(qteTotale / TROC[rarete].cout);
+            var echanges = Math.floor(qteTotale / TROC[rarete].cout);
+            totalEchanges += echanges;
             morceauxTroc.push(pieces.join(' '));
+
+            if (echanges > 0) {
+                var cible = TROC[rarete].versRarete;
+                var lblRarete = (cible === 'normal' && echanges > 1) ? 'Normaux' : LABEL_RARETE[cible] + (echanges > 1 ? 's' : '');
+                var lblObjet = echanges > 1 ? 'Objets' : 'Objet';
+                gainsHtml.push('<span style="color: var(--' + cible + ');">' + echanges + ' ' + lblObjet + ' ' + lblRarete + '</span>');
+            }
         });
+
+        // Texte pour les objets obtenus. Si 0 échange prêt = message d'avertissement
+        var affichageGain = gainsHtml.length > 0 
+            ? gainsHtml.join('<span style="color: var(--paper-dim); font-size: 18px;"> + </span>') 
+            : '<span style="color: var(--paper-dim); font-size: 16px; font-weight: 500;">Sélection incomplète (' + TROC.commun.cout + ' requis)</span>';
 
         var commandeT = '!echanger ' + morceauxTroc.join(' ');
         barre.className = 'barre-fixe mode-troc';
         barre.innerHTML =
             '<div class="barre-fixe-gauche">' +
                 '<div class="barre-fixe-chiffres">' +
-                    '<div><span>Échanges prêts</span><b>' + totalEchanges + '</b></div>' +
+                    '<div><span>Tu vas obtenir</span><b style="font-size: 24px;">' + affichageGain + '</b></div>' +
                 '</div>' +
             '</div>' +
             '<div class="barre-fixe-droite">' +
@@ -1055,6 +1036,7 @@ Promise.all([
     rendreAchat();
     rendreTroc();
 
+    var demande = new URLSearchParams(location.search).get('user');
     if (demande && JOUEURS[demande]) choisirProfil(demande);
 }).catch(function () {
     document.getElementById('listeRotation').innerHTML =
