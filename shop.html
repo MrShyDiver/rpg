@@ -594,8 +594,9 @@ function carteProduit(cfg) {
         ? '<button type="button" data-act="max" class="btn-max" title="Tout sélectionner" ' + (cfg.quantite >= cfg.quantiteMax ? 'disabled' : '') + '>MAX</button>' 
         : '';
 
+    // Correctif Troc : Retrait complet du bloc de prix pour ne pas allonger artificiellement la carte
     var blocPrix = cfg.mode === 'troc'
-        ? '<div class="card-prix-bloc" style="min-height: 28px;"></div>'
+        ? ''
         : '<div class="card-prix-bloc"><div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>';
 
     return '<div class="card' + (cfg.quantite > 0 ? ' choisi' : '') + '" data-id="' + cfg.id + '" style="--accent:' + accent + '">' +
@@ -706,7 +707,7 @@ function rendreVente() {
     majBarreFixe();
 }
 
-/* ===================== TROC RESTRUCTURÉ ===================== */
+/* ===================== TROC RESTRUCTURÉ & CORRIGÉ ===================== */
 function rendreTroc() {
     var zone = document.getElementById('listeTroc');
     if (!joueurActif) {
@@ -729,10 +730,19 @@ function rendreTroc() {
         var pret = Math.floor(qteChoisie / TROC[rarete].cout);
         var reste = qteChoisie % TROC[rarete].cout;
 
-        // Détermination dynamique du pluriel exact (ex: Normaux sélectionnés)
+        // Correctif orthographique exact du pluriel (ex: "2 Normaux sélectionnés")
         var nomRaretePluriel = (rarete === 'normal' && qteChoisie > 1) 
             ? 'Normaux' 
             : LABEL_RARETE[rarete] + (qteChoisie > 1 ? 's' : '');
+
+        // Correctif du libellé de résultat (ex: "2 Objets Normaux prêts")
+        var lblCiblePluriel = (cible === 'normal' && pret > 1) 
+            ? 'Normaux' 
+            : LABEL_RARETE[cible] + (pret > 1 ? 's' : '');
+
+        var statusText = pret > 0 
+            ? pret + ' Objet' + (pret > 1 ? 's ' : ' ') + lblCiblePluriel + ' prêt' + (pret > 1 ? 's ✓' : ' ✓')
+            : 'Sélection incomplète';
 
         html += '<div class="troc-palier-bloc">' +
             '<div class="troc-flux-large' + (pret > 0 ? ' pret' : '') + '">' +
@@ -748,7 +758,7 @@ function rendreTroc() {
                     '<div class="troc-mystere-large">' + (pret > 0 ? '✓' : '?') + '</div>' +
                     '<div class="troc-infos-large">' +
                         '<div class="nom-rarete">Objet ' + LABEL_RARETE[cible] + ' aléatoire</div>' +
-                        '<div class="troc-status-badge">' + (pret > 0 ? pret + ' ' + LABEL_RARETE[cible] + (pret > 1 ? 's' : '') + ' prêt' + (pret > 1 ? 's' : '') : 'Sélection incomplète') + '</div>' +
+                        '<div class="troc-status-badge">' + statusText + '</div>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -983,7 +993,9 @@ function basculer(nom) {
     ongletCourant = nom;
     ['Acheter', 'Vendre', 'Troc'].forEach(function (n) {
         var cle = n.toLowerCase();
-        document.getElementById('onglet' + n).setAttribute('aria-selected', String(cle === nom));
+        document.getElementById('ongletAcheter').setAttribute('aria-selected', String(cle === 'acheter'));
+        document.getElementById('ongletVendre').setAttribute('aria-selected', String(cle === 'vendre'));
+        document.getElementById('ongletTroc').setAttribute('aria-selected', String(cle === 'troc'));
         document.getElementById('panneau' + n).classList.toggle('cache', cle !== nom);
     });
     majBarreFixe();
