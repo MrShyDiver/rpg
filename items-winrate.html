@@ -3,411 +3,363 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Statistiques & Méta Globales</title>
+<title>Winrate & Méta des objets et statistiques</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
-    --paper: #e9e3d2; --paper-dim: #b8b2a0;
-    --line: #2c2c2e;
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f; --vert: #5ddd7a;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 40px 20px; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 28px 18px 60px; }
 h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
-.page { max-width: 1080px; margin: 0 auto; }
+.page { max-width: 1100px; margin: 0 auto; }
 
-.entete { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 3px solid var(--yellow); margin-bottom: 26px; }
-.entete img.avatar { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--yellow); flex-shrink: 0; }
-.entete-texte h1 { font-size: 26px; font-weight: 700; }
-.entete-texte h1 span { color: var(--yellow); }
-.entete-texte p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
+.entete { padding-bottom: 18px; border-bottom: 3px solid var(--yellow); margin-bottom: 22px; }
+.entete h1 { font-size: 26px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
+
+.onglets { display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.onglet {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13.5px; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--paper-dim); background: var(--bg-panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 10px 16px; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s ease;
+    position: relative;
+}
+.onglet:hover { color: var(--paper); border-color: #444; }
+.onglet.actif { background: var(--yellow); color: #000; border-color: var(--yellow); }
+.onglet.actif-version::after {
+    content: '●'; color: var(--vert); font-size: 9px; position: absolute; top: 2px; right: 4px;
+}
+
+.barre-controles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.champ-recherche {
+    flex: 1; min-width: 220px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 14px; color: var(--paper); font-size: 14px; font-family: 'Barlow', sans-serif;
+}
+.champ-recherche:focus { outline: none; border-color: var(--yellow); }
+.select-tri {
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px;
+    color: var(--paper); font-size: 13px; font-family: 'Barlow Condensed', sans-serif; cursor: pointer;
+}
+
+.compteur-resultats { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 14px; }
+
+.tableau-wrap { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 30px; }
+table.tableau-winrate { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.tableau-winrate th {
+    font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--paper-dim); font-size: 11px; text-align: left; padding: 12px 14px; border-bottom: 2px solid var(--line);
+    background: rgba(255,255,255,0.02);
+}
+table.tableau-winrate td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+table.tableau-winrate tr:last-child td { border-bottom: none; }
+table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
+
+.tag-rarete { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
+.tag-rarete.commun { background: rgba(141,141,141,0.18); color: var(--commun); }
+.tag-rarete.normal { background: rgba(93,221,122,0.15); color: var(--normal); }
+.tag-rarete.rare { background: rgba(74,159,216,0.15); color: var(--rare); }
+.tag-rarete.legendaire { background: rgba(242,194,48,0.15); color: var(--legendaire); }
+
+.nom-objet { font-weight: 600; }
+.slot-objet { color: var(--paper-dim); font-size: 11.5px; }
+
+.barre-winrate-zone { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+.barre-winrate-fond { flex: 1; height: 7px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+.barre-winrate-remplie { height: 100%; border-radius: 4px; }
+.winrate-valeur { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; min-width: 42px; text-align: right; }
+
+.jauge-op-zone { min-width: 110px; }
+.jauge-op-fond { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-top: 3px; }
+.jauge-op-remplie { height: 100%; border-radius: 3px; }
+.badge-op { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 1px 4px; border-radius: 3px; display: inline-block; }
+.badge-op.normal { color: #5ddd7a; }
+.badge-op.fort { color: var(--yellow); }
+.badge-op.critique { color: #ff5e3a; background: rgba(255,94,58,0.15); }
 
 .titre-section {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
-    text-transform: uppercase; color: var(--paper-dim); margin: 28px 0 12px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--yellow); margin: 32px 0 12px;
 }
-.titre-section:first-of-type { margin-top: 0; }
 
-.stats-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 6px; }
-.stat-carte {
-    background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--yellow);
-    border-radius: 6px; padding: 10px 12px;
-}
-.stat-valeur { font-size: 22px; font-weight: 800; color: var(--paper); line-height: 1.2; margin-top: 4px; }
-.stat-valeur-texte { font-size: 15px; font-weight: 700; color: var(--paper); line-height: 1.3; margin-top: 4px; }
-.stat-sous { font-size: 12px; font-weight: 500; color: var(--paper-dim); }
-.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--paper-dim); }
+.aucune-donnee { color: var(--paper-dim); font-style: italic; font-size: 12.5px; }
+.vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
 
-.meta-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-.carte-item-meta {
-    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px;
-    display: flex; flex-direction: column; gap: 8px; position: relative;
-}
-.meta-entete { display: flex; align-items: center; gap: 10px; }
-.meta-icone { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
-.meta-nom { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; color: var(--paper); }
-.meta-slot { font-size: 11px; text-transform: uppercase; color: var(--paper-dim); letter-spacing: 1px; }
-
-.op-badge {
-    position: absolute; top: 10px; right: 10px; font-size: 10px; font-weight: 800; padding: 2px 6px;
-    border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;
-}
-.op-critique { background: rgba(168,39,31,0.2); border: 1px solid var(--red); color: #ff5e3a; }
-.op-fort { background: rgba(242,194,48,0.2); border: 1px solid var(--yellow); color: var(--yellow); }
-.op-equilibre { background: rgba(93,221,122,0.15); border: 1px solid #5ddd7a; color: #5ddd7a; }
-.op-faible { background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--paper-dim); }
-
-.jauge-container { margin-top: 4px; }
-.jauge-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--paper-dim); margin-bottom: 3px; }
-.jauge-barre { height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
-.jauge-remplissage { height: 100%; transition: width 0.4s ease; }
-
-.info-bulle { position: relative; display: inline-block; margin-left: 4px; }
-.info-icone {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--paper-dim);
-    color: var(--paper-dim); font-size: 11px; font-style: italic; font-weight: 700;
-    cursor: help; vertical-align: middle;
-}
-.info-texte {
-    display: none; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%);
-    background: #1a1a1c; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
-    font-size: 12px; font-weight: 500; color: var(--paper); line-height: 1.4;
-    width: 210px; max-width: 70vw; text-align: left; z-index: 10; box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-}
-.info-texte.visible { display: block; }
-.vide-message { color: var(--paper-dim); font-style: italic; padding: 20px 0; }
-
-.emplacements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 10px; }
-.emplacement { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; text-align: center; position: relative; }
-.emplacement-niveau {
-    position: absolute; top: 8px; right: 8px; z-index: 2;
-    font-size: 11px; font-weight: 900; color: var(--yellow);
-    border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 5px;
-    background: rgba(242,194,48,0.12);
-}
-.emplacement .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1.5px; color: var(--paper-dim); text-transform: uppercase; margin-bottom: 8px; }
-.emplacement .icone { font-size: 28px; margin-bottom: 6px; }
-.icone-img { width: 44px; height: 44px; object-fit: contain; }
-.emplacement .nom { font-size: 12.5px; font-weight: 600; }
-.emplacement.vide .nom { color: var(--paper-dim); font-style: italic; }
-
-@media (max-width: 640px) {
-    body { padding: 20px 12px; }
-    .meta-grille { grid-template-columns: 1fr; }
-    .emplacements { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 700px) {
+    body { padding: 20px 12px 50px; }
+    .entete h1 { font-size: 20px; }
+    table.tableau-winrate { font-size: 12px; }
+    table.tableau-winrate th, table.tableau-winrate td { padding: 8px 6px; }
+    .slot-objet { display: none; }
+    .barre-winrate-zone { min-width: 70px; }
 }
 </style>
 </head>
 <body>
 <div class="page">
     <div class="entete">
-        <img class="avatar" id="avatarViewer" src="" alt="" style="display:none;">
-        <div class="entete-texte">
-            <h1 id="titreInventaire">STATISTIQUES</h1>
-            <p>Données du joueur, classement et analyse de la méta globale du serveur.</p>
-        </div>
+        <h1>WINRATE DES <span>OBJETS</span> & MÉTA</h1>
+        <p>Taux de victoire pur (sans duels miroirs), Pickrate et tendance d'équilibrage par version — un ● vert marque la version active.</p>
     </div>
 
-    <!-- ZONE JOUEUR -->
-    <div id="zoneStatistiques"></div>
+    <div class="onglets" id="onglets"></div>
 
-    <div class="titre-section">Loadout actuel</div>
-    <div id="emplacements" class="emplacements"></div>
+    <div class="barre-controles">
+        <input type="text" class="champ-recherche" id="champRecherche" placeholder="Rechercher un objet par son nom...">
+        <select class="select-tri" id="selectTri">
+            <option value="op_desc">Trending Overpower (OP)</option>
+            <option value="winrate_desc">Winrate pur décroissant</option>
+            <option value="pickrate_desc">Pickrate (Les plus joués)</option>
+            <option value="duels_desc">Le plus de duels</option>
+            <option value="nom">Nom (A-Z)</option>
+        </select>
+    </div>
+    <div class="compteur-resultats" id="compteurResultats"></div>
 
-    <!-- NOUVELLES ZONES D'ANALYSE GLOBALE -->
-    <div class="titre-section">Tendance & Équilibrage des Objets (Winrate Pur & Pickrate)</div>
-    <div id="zoneMetaObjets" class="meta-grille"></div>
+    <div class="tableau-wrap">
+        <table class="tableau-winrate">
+            <thead>
+                <tr>
+                    <th>Objet</th>
+                    <th>Rareté</th>
+                    <th>V / D / É</th>
+                    <th>Duels (Pur)</th>
+                    <th>Pickrate</th>
+                    <th>Winrate Pur</th>
+                    <th>Trending OP</th>
+                </tr>
+            </thead>
+            <tbody id="corpsTableau"></tbody>
+        </table>
+    </div>
 
-    <div class="titre-section">Poids & Efficacité des Statistiques pures</div>
-    <div id="zoneMetaStats" class="meta-grille"></div>
+    <div class="titre-section">ANALYSE DU POIDS DES STATISTIQUES PURES</div>
+    <div class="tableau-wrap">
+        <table class="tableau-winrate">
+            <thead>
+                <tr>
+                    <th>Statistique</th>
+                    <th>Winrate Global</th>
+                    <th>Stacks Mins (Victoire)</th>
+                    <th>Efficacité / Stack</th>
+                    <th>Tendance Dominance</th>
+                </tr>
+            </thead>
+            <tbody id="corpsTableauStats"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const pseudo = params.get('user');
-    const LABELS_SLOT = { arme: "Arme", offhand: "Off-hand", armure: "Armure", strategeme: "Stratagème" };
+    const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", legendaire: "Légendaire" };
 
-    const iconeOuImage = (ref, classeImg) => ref.image
-        ? `<img src="${ref.image}" alt="" class="${classeImg}">`
-        : `<span class="${classeImg}-emoji">${ref.icone}</span>`;
+    let STATS = {};
+    let ITEM_STATS = { versionActuelle: "", versions: [], items: {} };
+    let STATS_RESULTATS = {};
+    let USAGES_GLOBAUX = {};
+    let versionActive = null;
+    let texteRecherche = '';
+    let triActuel = 'op_desc';
 
-    function couleurPercentile(percentile) {
-        if (percentile >= 100) return '#e5cc80';
-        if (percentile >= 99) return '#e268a8';
-        if (percentile >= 95) return '#ff8000';
-        if (percentile >= 75) return '#a335ee';
-        if (percentile >= 50) return '#0070ff';
-        if (percentile >= 25) return '#1eff00';
-        return '#9d9d9d';
+    function couleurWinrate(pct) {
+        if (pct >= 60) return '#5ddd7a';
+        if (pct >= 45) return '#f2c230';
+        if (pct >= 30) return '#ff8a3d';
+        return '#ff6b6b';
     }
 
-    function percentileDepuisRang(rang, total) {
-        if (total <= 1) return 100;
-        return ((total - rang) / (total - 1)) * 100;
-    }
-
-    function typeCombattant(auDessus, dansTranche, enDessous) {
-        const total = auDessus + dansTranche + enDessous;
-        if (total < 3) return { texte: 'Pas assez de duels', classe: 'neutre' };
-        if (enDessous > dansTranche && enDessous > auDessus) return { texte: 'Bully', classe: 'bully' };
-        if (auDessus > dansTranche && auDessus > enDessous) return { texte: 'Valeureux', classe: 'valeureux' };
-        return { texte: 'Fairplay', classe: 'fairplay' };
-    }
-
-    function nomObjetPrefere(numero) {
-        if (!numero) return '—';
-        const s = STATS[numero];
-        return s ? s.nom : '—';
-    }
-
-    function afficherStatistiques(joueur) {
-        const sp = joueur.stats, cl = joueur.classement, co = joueur.combat, cat = co.categories;
-        const totalDuels = co.victoires + co.defaites + co.egalites;
-        const pct = (v) => totalDuels > 0 ? ((v / totalDuels) * 100).toFixed(1) : '0.0';
-        const type = typeCombattant(co.attaquesAuDessus, co.attaquesDansTranche, co.attaquesEnDessous);
-        const ratioDegats = co.degatsSubis > 0 ? (co.degatsInfliges / co.degatsSubis).toFixed(2) : co.degatsInfliges > 0 ? '∞' : '0.00';
-        const couleurPower = couleurPercentile(percentileDepuisRang(cl.rangPower, cl.totalPower));
-        const couleurPoints = couleurPercentile(percentileDepuisRang(cl.rangPoints, cl.totalPoints));
-        const pvAffiche = Math.round(sp.pvBase / 10);
-
-        document.getElementById('zoneStatistiques').innerHTML = `
-            <div class="titre-section">Statistiques Fiche Joueur</div>
-            <div class="stats-grille">
-                <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">${Math.round(sp.powerLevel)} <span class="stat-sous">(#${cl.rangPower}/${cl.totalPower})</span></div></div>
-                <div class="stat-carte stat-atk"><div class="stat-label">ATK</div><div class="stat-valeur">${Math.round(sp.atk)}</div></div>
-                <div class="stat-carte stat-pv"><div class="stat-label">PV</div><div class="stat-valeur">${pvAffiche} <span class="stat-sous">(${Math.round(sp.pvPool)} PDV)</span></div></div>
-                <div class="stat-carte stat-def"><div class="stat-label">DEF</div><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div></div>
-                <div class="stat-carte stat-protection"><div class="stat-label">Protections actives</div><div class="stat-valeur">${co.protectionsActives} <span class="info-bulle" tabindex="0"><span class="info-icone">i</span><span class="info-texte">Réduit les dégâts de 20% pour un combat et consomme une protection</span></span></div></div>
-                <div class="stat-carte stat-luck"><div class="stat-label">LUCK</div><div class="stat-valeur">${Math.round(sp.luck) + 10} <span class="stat-sous">(${sp.crit}% crit)</span></div></div>
-                <div class="stat-carte stat-spd"><div class="stat-label">Speed</div><div class="stat-valeur">${Math.round(sp.spd)}</div></div>
-            </div>
-            <div class="titre-section" style="font-size:11px; margin-top:16px;">Historique duels</div>
-            <div class="stats-grille">
-                <div class="stat-carte stat-victoire"><div class="stat-label">Victoires</div><div class="stat-valeur">${co.victoires} <span class="stat-sous">(${pct(co.victoires)}%)</span></div></div>
-                <div class="stat-carte stat-defaite"><div class="stat-label">Défaites</div><div class="stat-valeur">${co.defaites} <span class="stat-sous">(${pct(co.defaites)}%)</span></div></div>
-                <div class="stat-carte"><div class="stat-label">Dégâts infligés</div><div class="stat-valeur">${co.degatsInfliges}</div></div>
-                <div class="stat-carte"><div class="stat-label">Dégâts subis</div><div class="stat-valeur">${co.degatsSubis}</div></div>
-                <div class="stat-carte stat-texte stat-type-${type.classe}"><div class="stat-label">Style</div><div class="stat-valeur-texte">${type.texte}</div></div>
-            </div>
-        `;
-    }
-
-    function afficherLoadout(joueur) {
-        const emplacementsEl = document.getElementById('emplacements');
-        emplacementsEl.innerHTML = '';
-        Object.keys(LABELS_SLOT).forEach(slot => {
-            const numero = joueur.loadout[slot];
-            const ref = numero > 0 ? STATS[numero] : null;
-            const possede = ref ? (joueur.inventaire || []).find(p => p.numero === numero) : null;
-            const niveau = possede ? possede.niveau : 0;
-            const div = document.createElement('div');
-            div.className = 'emplacement' + (ref ? '' : ' vide');
-            div.innerHTML = `${niveau > 0 ? `<span class="emplacement-niveau">+${niveau}</span>` : ''}
-                              <div class="label">${LABELS_SLOT[slot]}</div>
-                              <div class="icone">${ref ? iconeOuImage(ref, 'icone-img') : '—'}</div>
-                              <div class="nom">${ref ? ref.nom : 'Aucun'}</div>`;
-            emplacementsEl.appendChild(div);
-        });
-    }
-
-    // --- ANCIENS SCRIPTS INFOBULLE RETENUS ---
-    function repositionnerInfobulle(icone) {
-        const bulle = icone.parentElement.querySelector('.info-texte');
-        if (!bulle) return;
-        bulle.style.transform = 'translateX(-50%)';
-        const rect = bulle.getBoundingClientRect();
-        if (rect.left < 8) bulle.style.transform = `translateX(calc(-50% + ${8 - rect.left}px))`;
-        else if (rect.right > window.innerWidth - 8) bulle.style.transform = `translateX(calc(-50% - ${rect.right - (window.innerWidth - 8)}px))`;
-    }
-    function ouvrirInfobulle(icone) {
-        document.querySelectorAll('.info-texte.visible').forEach(b => {
-            if (b !== icone.parentElement.querySelector('.info-texte')) b.classList.remove('visible');
-        });
-        const bulle = icone.parentElement.querySelector('.info-texte');
-        if (bulle) { bulle.classList.add('visible'); repositionnerInfobulle(icone); }
-    }
-    document.addEventListener('mouseover', (e) => { const icone = e.target.closest('.info-icone'); if (icone) ouvrirInfobulle(icone); });
-    document.addEventListener('mouseout', (e) => { const icone = e.target.closest('.info-icone'); if (icone) icone.parentElement.querySelector('.info-texte').classList.remove('visible'); });
-
-    // --- NOUVEAUX CALCULS ET AFFICHAGE DE LA MÉTA (OBJETS & STATS) ---
-    function analyserMetaObjets(itemResultats, catalogueGear, usagesGlobaux) {
-        const zone = document.getElementById('zoneMetaObjets');
-        zone.innerHTML = '';
-
-        // Calcul du total d'utilisations globales pour le Pickrate
-        let totalPickrateCount = 0;
-        Object.values(usagesGlobaux).forEach(uDict => {
-            Object.values(uDict).forEach(u => totalPickrateCount += u);
-        });
-
-        const itemsAnalyse = [];
-
-        Object.keys(catalogueGear).forEach(itemId => {
-            const gear = catalogueGear[itemId];
-            const patchKey = Object.keys(itemResultats).find(k => k.endsWith('__' + itemId));
-            const statsRes = patchKey ? itemResultats[patchKey] : { victoires: 0, defaites: 0, egalites: 0 };
-
-            const victoires = statsRes.victoires || 0;
-            const defaites = statsRes.defaites || 0;
-            const totalDuelsNonMiroir = victoires + defaites;
-
-            // Winrate Pur (Sans Matchs Miroirs)
-            const winratePur = totalDuelsNonMiroir > 0 ? (victoires / totalDuelsNonMiroir) * 100 : 50;
-
-            // Pickrate Global
-            let usagesItem = 0;
-            Object.values(usagesGlobaux).forEach(uDict => {
-                if (uDict[itemId]) usagesItem += uDict[itemId];
-            });
-            const pickrate = totalPickrateCount > 0 ? (usagesItem / totalPickrateCount) * 100 : 0;
-
-            // Trending Overpower Score (Jauge OP)
-            // Formule : Combinaison pondérée du Winrate Pur (>50%) et du Pickrate
-            const ecartWinrate = Math.max(0, winratePur - 50); // Seul le sur-winrate compte
-            const opScore = Math.min(100, (ecartWinrate * 1.6) + (pickrate * 1.2));
-
-            itemsAnalyse.push({
-                id: itemId,
-                nom: gear.Nom || itemId,
-                slot: gear.Slot || 'Objet',
-                image: gear.ImageUrl || '',
-                winratePur,
-                pickrate,
-                opScore,
-                totalDuelsNonMiroir
+    function calculerPickrate(itemId) {
+        let totalPick = 0;
+        let itemPick = 0;
+        Object.values(USAGES_GLOBAUX).forEach(uDict => {
+            Object.entries(uDict).forEach(([id, count]) => {
+                totalPick += count;
+                if (id === itemId) itemPick += count;
             });
         });
-
-        // Tri du plus Overpowered au moins puissant
-        itemsAnalyse.sort((a, b) => b.opScore - a.opScore);
-
-        itemsAnalyse.forEach(item => {
-            let badgeClass = 'op-faible', badgeText = 'Équilibré';
-            let couleurJauge = '#5ddd7a';
-
-            if (item.opScore >= 65) {
-                badgeClass = 'op-critique'; badgeText = 'OP Critique'; couleurJauge = '#ff5e3a';
-            } else if (item.opScore >= 40) {
-                badgeClass = 'op-fort'; badgeText = 'Très Fort'; couleurJauge = '#f2c230';
-            } else if (item.opScore >= 20) {
-                badgeClass = 'op-equilibre'; badgeText = 'Viable'; couleurJauge = '#3b82f6';
-            }
-
-            const carte = document.createElement('div');
-            carte.className = 'carte-item-meta';
-            carte.innerHTML = `
-                <div class="op-badge ${badgeClass}">${badgeText}</div>
-                <div class="meta-entete">
-                    ${item.image ? `<img src="${item.image}" class="meta-icone" alt="">` : ''}
-                    <div>
-                        <div class="meta-nom">${item.nom}</div>
-                        <div class="meta-slot">${item.slot}</div>
-                    </div>
-                </div>
-                <div style="font-size:12px; margin-top:4px;">
-                    <strong>Winrate Pur:</strong> ${item.winratePur.toFixed(1)}% <span class="stat-sous">(${item.totalDuelsNonMiroir} duels)</span><br>
-                    <strong>Pickrate:</strong> ${item.pickrate.toFixed(1)}%
-                </div>
-                <div class="jauge-container">
-                    <div class="jauge-labels"><span>Tendance Overpower</span><span>${Math.round(item.opScore)}/100</span></div>
-                    <div class="jauge-barre">
-                        <div class="jauge-remplissage" style="width:${item.opScore}%; background:${couleurJauge};"></div>
-                    </div>
-                </div>
-            `;
-            zone.appendChild(carte);
-        });
+        return totalPick > 0 ? (itemPick / totalPick) * 100 : 0;
     }
 
-    function analyserMetaStats(statsResultats) {
-        const zone = document.getElementById('zoneMetaStats');
-        zone.innerHTML = '';
+    function calculerOpScore(winratePur, pickrate, totalDuels) {
+        if (totalDuels < 3) return 0; // Pas assez de données
+        const surWinrate = Math.max(0, winratePur - 50);
+        return Math.min(100, (surWinrate * 1.8) + (pickrate * 1.2));
+    }
+
+    function construireLigne(numero, donnees) {
+        const infoCatalogue = STATS[numero] || {};
+        const rarete = donnees.rarete || infoCatalogue.rarete || 'commun';
+        const nom = donnees.nom || infoCatalogue.nom || `Objet #${numero}`;
+        const totalDuels = donnees.totalDuels || 0;
+
+        if (totalDuels === 0) {
+            return `
+                <tr data-nom="${nom.toLowerCase()}">
+                    <td><div class="nom-objet">${nom}</div><div class="slot-objet">N°${numero}</div></td>
+                    <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
+                    <td colspan="4"><span class="aucune-donnee">Aucun duel hors-miroir enregistré</span></td>
+                    <td>—</td>
+                </tr>`;
+        }
+
+        const pctWin = donnees.winratePourcent || 0;
+        const couleurWin = couleurWinrate(pctWin);
+        const pickrate = calculerPickrate(donnees.id || numero);
+        const opScore = calculerOpScore(pctWin, pickrate, totalDuels);
+
+        let badgeClass = 'normal', badgeLabel = 'Équilibré', couleurOp = '#5ddd7a';
+        if (opScore >= 60) { badgeClass = 'critique'; badgeLabel = 'OP Critique'; couleurOp = '#ff5e3a'; }
+        else if (opScore >= 35) { badgeClass = 'fort'; badgeLabel = 'Fort'; couleurOp = '#f2c230'; }
+
+        return `
+            <tr data-nom="${nom.toLowerCase()}">
+                <td><div class="nom-objet">${nom}</div><div class="slot-objet">N°${numero}</div></td>
+                <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
+                <td>${donnees.victoires || 0} / ${donnees.defaites || 0} / ${donnees.egalites || 0}</td>
+                <td>${totalDuels}</td>
+                <td><strong>${pickrate.toFixed(1)}%</strong></td>
+                <td>
+                    <div class="barre-winrate-zone">
+                        <div class="barre-winrate-fond"><div class="barre-winrate-remplie" style="width:${pctWin}%; background:${couleurWin};"></div></div>
+                        <span class="winrate-valeur" style="color:${couleurWin}">${pctWin}%</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="jauge-op-zone">
+                        <span class="badge-op ${badgeClass}">${badgeLabel} (${Math.round(opScore)})</span>
+                        <div class="jauge-op-fond"><div class="jauge-op-remplie" style="width:${opScore}%; background:${couleurOp};"></div></div>
+                    </div>
+                </td>
+            </tr>`;
+    }
+
+    function afficherVersion() {
+        const itemsVersion = ITEM_STATS.items[versionActive] || {};
+
+        const lignes = [];
+        for (const numero in STATS) {
+            const donnees = itemsVersion[numero] || { totalDuels: 0, victoires: 0, defaites: 0, egalites: 0, winratePourcent: 0, nom: STATS[numero].nom, rarete: STATS[numero].rarete, id: numero };
+            const pickrate = calculerPickrate(numero);
+            const opScore = calculerOpScore(donnees.winratePourcent || 0, pickrate, donnees.totalDuels || 0);
+
+            lignes.push({ numero, donnees, pickrate, opScore });
+        }
+
+        lignes.sort((a, b) => {
+            if (triActuel === 'op_desc') return b.opScore - a.opScore;
+            if (triActuel === 'winrate_desc') return (b.donnees.winratePourcent || 0) - (a.donnees.winratePourcent || 0);
+            if (triActuel === 'pickrate_desc') return b.pickrate - a.pickrate;
+            if (triActuel === 'duels_desc') return (b.donnees.totalDuels || 0) - (a.donnees.totalDuels || 0);
+            return (a.donnees.nom || '').localeCompare(b.donnees.nom || '');
+        });
+
+        const corps = document.getElementById('corpsTableau');
+        corps.innerHTML = lignes.map(l => construireLigne(l.numero, l.donnees)).join('');
+        appliquerFiltreRecherche();
+        afficherStatsPures();
+    }
+
+    function afficherStatsPures() {
+        const corps = document.getElementById('corpsTableauStats');
+        corps.innerHTML = '';
 
         const statsNoms = ["atk", "def", "pv", "spd", "luck"];
 
         statsNoms.forEach(st => {
-            const patchKey = Object.keys(statsResultats).find(k => k.endsWith('__' + st));
-            const data = patchKey ? statsResultats[patchKey] : {};
+            const cle = versionActive + '__' + st;
+            const data = STATS_RESULTATS[cle] || {};
 
             const victoires = data.victoires || 0;
             const defaites = data.defaites || 0;
             const total = victoires + defaites;
 
-            const winrate = total > 0 ? (victoires / total) * 100 : 50;
+            const winrate = total > 0 ? (victoires / total) * 100 : 0;
+            const stacksWin = data.stacks_victoires || 0;
+            const moyStacksWin = victoires > 0 ? (stacksWin / victoires).toFixed(1) : '0';
 
-            const stacksVictoires = data.stacks_victoires || 0;
-            const stacksDefaites = data.stacks_defaites || 0;
+            const efficacite = total > 0 ? (winrate / Math.max(1, parseFloat(moyStacksWin))).toFixed(2) : '0.00';
 
-            const moyStacksWin = victoires > 0 ? (stacksVictoires / victoires).toFixed(1) : '0';
-            const moyStacksLoss = defaites > 0 ? (stacksDefaites / defaites).toFixed(1) : '0';
+            let couleurBarre = '#3b82f6';
+            if (winrate >= 60) couleurBarre = '#ff5e3a';
+            else if (winrate >= 50) couleurBarre = '#f2c230';
 
-            // Efficacité par Stack : mesure si la stat rapporte gros pour peu d'investissement
-            const efficaciteRatio = total > 0 ? (winrate / Math.Max(1, parseFloat(moyStacksWin))).toFixed(2) : '1.00';
-
-            let couleurJauge = '#3b82f6';
-            if (winrate >= 60) couleurJauge = '#ff5e3a';
-            else if (winrate >= 52) couleurJauge = '#f2c230';
-
-            const carte = document.createElement('div');
-            carte.className = 'carte-item-meta';
-            carte.innerHTML = `
-                <div class="meta-entete">
-                    <div>
-                        <div class="meta-nom" style="text-transform:uppercase;">${st}</div>
-                        <div class="meta-slot">Statistique brute</div>
-                    </div>
-                </div>
-                <div style="font-size:12px; margin-top:4px;">
-                    <strong>Winrate Global:</strong> ${winrate.toFixed(1)}%<br>
-                    <strong>Investissement Moyen (Win):</strong> ${moyStacksWin} stacks<br>
-                    <strong>Efficacité / Stack:</strong> ${efficaciteRatio} pts
-                </div>
-                <div class="jauge-container">
-                    <div class="jauge-labels"><span>Dominance en Méta</span><span>${Math.round(winrate)}%</span></div>
-                    <div class="jauge-barre">
-                        <div class="jauge-remplissage" style="width:${winrate}%; background:${couleurJauge};"></div>
-                    </div>
-                </div>
-            `;
-            zone.appendChild(carte);
+            corps.innerHTML += `
+                <tr>
+                    <td><strong style="text-transform:uppercase;">${st}</strong></td>
+                    <td><strong style="color:${couleurBarre}">${winrate.toFixed(1)}%</strong> <span class="slot-objet">(${total} combats)</span></td>
+                    <td>${moyStacksWin} stacks</td>
+                    <td><strong>${efficacite}</strong> pts/stack</td>
+                    <td>
+                        <div class="barre-winrate-zone">
+                            <div class="barre-winrate-fond"><div class="barre-winrate-remplie" style="width:${winrate}%; background:${couleurBarre};"></div></div>
+                        </div>
+                    </td>
+                </tr>`;
         });
     }
 
-    // --- CHARGEMENT CENTRALISÉ DES DONNÉES ---
-    let STATS = {};
+    function appliquerFiltreRecherche() {
+        const lignes = document.querySelectorAll('#corpsTableau tr');
+        let visibles = 0;
+        lignes.forEach(tr => {
+            const correspond = tr.dataset.nom ? tr.dataset.nom.includes(texteRecherche) : true;
+            tr.style.display = correspond ? '' : 'none';
+            if (correspond) visibles++;
+        });
+        document.getElementById('compteurResultats').textContent = `${visibles} / ${lignes.length} objet(s) affiché(s) — version ${versionActive}`;
+    }
+
+    function construireOnglets() {
+        const ongletsEl = document.getElementById('onglets');
+        ongletsEl.innerHTML = '';
+        ITEM_STATS.versions.forEach((v, idx) => {
+            const bouton = document.createElement('div');
+            bouton.className = 'onglet' + (idx === 0 ? ' actif' : '') + (v === ITEM_STATS.versionActuelle ? ' actif-version' : '');
+            bouton.textContent = v;
+            bouton.addEventListener('click', () => {
+                document.querySelectorAll('.onglet').forEach(o => o.classList.remove('actif'));
+                bouton.classList.add('actif');
+                versionActive = v;
+                afficherVersion();
+            });
+            ongletsEl.appendChild(bouton);
+        });
+        versionActive = ITEM_STATS.versions[0] || null;
+    }
+
+    document.getElementById('champRecherche').addEventListener('input', (e) => {
+        texteRecherche = e.target.value.trim().toLowerCase();
+        appliquerFiltreRecherche();
+    });
+    document.getElementById('selectTri').addEventListener('change', (e) => {
+        triActuel = e.target.value;
+        afficherVersion();
+    });
+
     Promise.all([
         fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
-        fetch('players.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
-        fetch('helldivers_item_resultats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
+        fetch('item_stats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('helldivers_stats_resultats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('helldivers_usages_globaux.json?v=' + Date.now()).then(r => r.json()).catch(() => ({}))
-    ]).then(([catalogue, joueurs, itemResultats, statsResultats, usagesGlobaux]) => {
+    ]).then(([catalogue, itemStats, statsRes, usages]) => {
         STATS = catalogue;
+        ITEM_STATS = itemStats;
+        STATS_RESULTATS = statsRes;
+        USAGES_GLOBAUX = usages;
 
-        // 1. Affichage Joueur
-        if (pseudo && joueurs[pseudo]) {
-            const joueur = joueurs[pseudo];
-            document.getElementById('titreInventaire').innerHTML = `<span>${joueur.nomAffichage}</span> — STATISTIQUES`;
-            if (joueur.avatar) {
-                const img = document.getElementById('avatarViewer');
-                img.src = joueur.avatar; img.style.display = 'block';
-            }
-            afficherStatistiques(joueur);
-            afficherLoadout(joueur);
-        } else {
-            document.getElementById('titreInventaire').innerHTML = pseudo ? `<span>${pseudo}</span> — STATISTIQUES` : 'MÉTA GLOBALE';
-            document.getElementById('zoneStatistiques').innerHTML = '<div class="vide-message">Mode consultation méta globale du serveur.</div>';
+        if (!ITEM_STATS.versions || ITEM_STATS.versions.length === 0) {
+            document.getElementById('onglets').innerHTML = '';
+            document.querySelector('.tableau-wrap').outerHTML = '<div class="vide-message">Aucune donnée de winrate disponible.</div>';
+            return;
         }
-
-        // 2. Analyse Méta Globale (Objets + Stats)
-        analyserMetaObjets(itemResultats, catalogue, usagesGlobaux);
-        analyserMetaStats(statsResultats);
-
-    }).catch(err => {
-        console.error('Erreur lors de l\'initialisation des données :', err);
+        construireOnglets();
+        afficherVersion();
+    }).catch((erreur) => {
+        console.error('Erreur de chargement :', erreur);
     });
 </script>
-<script src="nav.js" defer></script>
 </body>
 </html>
