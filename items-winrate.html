@@ -140,6 +140,25 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         </table>
     </div>
 
+    <!-- NOUVEAU TABLEAU : RENTABILITÉ PAR RARETÉ -->
+    <div class="titre-section">RENTABILITÉ THÉORIQUE PAR PALIER DE RARETÉ</div>
+    <div class="tableau-wrap">
+        <table class="tableau-winrate">
+            <thead>
+                <tr>
+                    <th>Palier</th>
+                    <th>Nb Objets</th>
+                    <th>Winrate Moyen</th>
+                    <th>Pickrate Moyen</th>
+                    <th>Top Performer (Star)</th>
+                    <th>Flop (Piège)</th>
+                    <th>Statut Méta</th>
+                </tr>
+            </thead>
+            <tbody id="corpsTableauRarete"></tbody>
+        </table>
+    </div>
+
     <div class="titre-section">ANALYSE DU POIDS DES STATISTIQUES PURES</div>
     <div class="tableau-wrap">
         <table class="tableau-winrate">
@@ -175,7 +194,6 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         return '#ff6b6b';
     }
 
-    // Calcul du Pickrate basé sur les inventaires enregistrés dans players.json
     function calculerPickrate(numeroKey) {
         const itemCatalogue = STATS[numeroKey] || {};
         const slotCible = itemCatalogue.slot || '';
@@ -188,7 +206,6 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         Object.values(PLAYERS).forEach(player => {
             const inventaire = player.inventaire || [];
             
-            // On vérifie si le joueur a au moins un objet dans le même slot
             const aDesObjetsDansCeSlot = inventaire.some(item => {
                 const info = STATS[item.numero.toString()];
                 return info && info.slot === slotCible;
@@ -296,7 +313,55 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         const corps = document.getElementById('corpsTableau');
         corps.innerHTML = lignes.map(l => construireLigne(l.numero, l.donnees)).join('');
         appliquerFiltreRecherche();
+        afficherRentabiliteRarete(lignes);
         afficherStatsPures();
+    }
+
+    // NOUVELLE FONCTION : Génération de l'analyse par Rareté
+    function afficherRentabiliteRarete(lignesObjets) {
+        const corps = document.getElementById('corpsTableauRarete');
+        corps.innerHTML = '';
+
+        const groupes = { commun: [], normal: [], rare: [], legendaire: [] };
+
+        lignesObjets.forEach(item => {
+            const rarete = item.donnees.rarete || STATS[item.numero]?.rarete || 'commun';
+            if (groupes[rarete]) groupes[rarete].push(item);
+        });
+
+        Object.keys(groupes).forEach(rKey => {
+            const liste = groupes[rKey];
+            if (liste.length === 0) return;
+
+            // Filtre les objets qui ont eu au moins un combat pour ne pas fausser la moyenne
+            const listeActifs = liste.filter(i => i.donnees.totalDuels > 0);
+            if (listeActifs.length === 0) return;
+
+            const winrateMoyen = (listeActifs.reduce((sum, i) => sum + i.donnees.winratePourcent, 0) / listeActifs.length).toFixed(1);
+            const pickrateMoyen = (listeActifs.reduce((sum, i) => sum + i.pickrate, 0) / listeActifs.length).toFixed(1);
+
+            // Trouver la Star et le Flop du tier
+            const trieParWinrate = [...listeActifs].sort((a, b) => b.donnees.winratePourcent - a.donnees.winratePourcent);
+            const topItem = trieParWinrate[0];
+            const flopItem = trieParWinrate[trieParWinrate.length - 1];
+
+            // Statut global du tier
+            let statut = 'Équilibré', couleurStatut = '#5ddd7a';
+            if (winrateMoyen >= 58) { statut = 'Above-par (Fort)'; couleurStatut = '#f2c230'; }
+            else if (winrateMoyen <= 48) { statut = 'Sub-par (Faible)'; couleurStatut = '#4c6ef5'; }
+
+            corps.innerHTML += `
+                <tr>
+                    <td><span class="tag-rarete ${rKey}">${LABELS_RARETE[rKey] || rKey}</span></td>
+                    <td>${liste.length} objets</td>
+                    <td><strong style="color:${couleurWinrate(winrateMoyen)}">${winrateMoyen}%</strong></td>
+                    <td><strong>${pickrateMoyen}%</strong></td>
+                    <td><span class="nom-objet">${topItem.donnees.nom}</span> <span class="slot-objet">(${topItem.donnees.winratePourcent}%)</span></td>
+                    <td><span class="nom-objet">${flopItem.donnees.nom}</span> <span class="slot-objet">(${flopItem.donnees.winratePourcent}%)</span></td>
+                    <td><strong style="color:${couleurStatut}">${statut}</strong></td>
+                </tr>
+            `;
+        });
     }
 
     function afficherStatsPures() {
