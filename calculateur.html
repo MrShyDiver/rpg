@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitch RPG — Calculateur</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+    --atk: #ff5e3a; --def: #3b82f6; --pv: #ca2972; --spd: #FFCC00; --luck: #00ffaa;
+}
+* { box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif;
+    margin: 0; padding: 28px 18px 60px; line-height: 1.5;
+}
+h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
+.page { max-width: 1040px; margin: 0 auto; }
+
+.entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
+.entete h1 { font-size: 28px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 14px; margin: 7px 0 0; max-width: 68ch; }
+
+.champ-profil { position: relative; max-width: 420px; margin-bottom: 26px; }
+.champ-profil label {
+    display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 1.4px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 6px;
+}
+#chercheProfil {
+    width: 100%; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 15px; color: var(--paper); font-size: 15px; font-family: 'Barlow', sans-serif;
+}
+#chercheProfil:focus { outline: none; border-color: var(--yellow); }
+.propositions {
+    position: absolute; top: calc(100% + 5px); left: 0; right: 0; z-index: 20;
+    background: var(--bg-panel); border: 1px solid var(--line); border-top: 3px solid var(--yellow);
+    border-radius: 0 0 6px 6px; max-height: 300px; overflow-y: auto; display: none;
+    box-shadow: 0 12px 28px rgba(0,0,0,.5);
+}
+.propositions.ouvert { display: block; }
+.proposition { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--line); }
+.proposition:last-child { border-bottom: none; }
+.proposition:hover { background: #1e1e21; }
+.proposition img, .proposition .ini {
+    width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: 0 0 auto;
+    background: #232326; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-size: 12px; color: var(--paper-dim);
+}
+.proposition span { font-size: 14px; }
+
+.message { color: var(--paper-dim); font-size: 14px; padding: 40px 2px; text-align: center; }
+
+.section { margin-bottom: 34px; }
+.section-tete { padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+.section-tete h2 { font-size: 19px; font-weight: 600; }
+.section-tete p { color: var(--paper-dim); font-size: 13.5px; margin: 6px 0 0; max-width: 68ch; }
+
+/* ===== Redistribution des stats ===== */
+.total-dispo {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: rgba(242,194,48,.08); border: 1px solid var(--yellow); border-radius: 6px;
+    padding: 12px 18px; margin-bottom: 16px;
+}
+.total-dispo .chiffre { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: var(--yellow); }
+.total-dispo .reste { margin-left: auto; font-size: 13px; color: var(--paper-dim); }
+.total-dispo .reste b { color: var(--paper); font-family: 'Oswald', sans-serif; font-size: 16px; }
+.total-dispo .reste.negatif b { color: var(--red); }
+
+.stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.stat-carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+.stat-atk { border-left-color: var(--atk); } .stat-def { border-left-color: var(--def); }
+.stat-pv  { border-left-color: var(--pv); }  .stat-spd { border-left-color: var(--spd); }
+.stat-luck{ border-left-color: var(--luck);}
+.stat-carte .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 8px; }
+.stat-ligne { display: flex; align-items: center; gap: 8px; }
+.stat-ligne button {
+    width: 28px; height: 28px; background: none; border: 1px solid var(--line); border-radius: 5px;
+    color: var(--paper); font-size: 15px; cursor: pointer; font-family: 'Oswald', sans-serif; flex: 0 0 auto;
+}
+.stat-ligne button:hover:not([disabled]) { border-color: var(--yellow); color: var(--yellow); }
+.stat-ligne button[disabled] { opacity: .3; cursor: default; }
+.stat-ligne input {
+    width: 100%; text-align: center; background: rgba(0,0,0,.3); border: 1px solid var(--line);
+    border-radius: 4px; color: var(--paper); font-family: 'Oswald', sans-serif; font-size: 16px;
+    font-weight: 700; padding: 5px 0;
+}
+.stat-carte .actuel { font-size: 11.5px; color: var(--paper-dim); margin-top: 6px; }
+
+.btn-reinit {
+    font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--paper-dim); background: none; border: 1px solid var(--line);
+    border-radius: 5px; padding: 7px 13px; cursor: pointer; margin-bottom: 20px;
+}
+.btn-reinit:hover { color: var(--yellow); border-color: var(--yellow); }
+
+/* ===== Equipement ===== */
+.equip-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.equip-case label { display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 6px; }
+.equip-case select {
+    width: 100%; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 12px; color: var(--paper); font-size: 14px; font-family: 'Barlow', sans-serif;
+}
+.equip-case select:focus { outline: none; border-color: var(--yellow); }
+
+/* ===== Resultats ===== */
+.resultats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.resultat-carte {
+    background: var(--bg-panel); border: 1px solid var(--line); border-top: 3px solid var(--yellow);
+    border-radius: 6px; padding: 16px 18px; text-align: center;
+}
+.resultat-carte .valeur { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 800; color: var(--yellow); }
+.resultat-carte .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-top: 4px; }
+.resultat-carte.secondaire .valeur { color: var(--paper); font-size: 22px; }
+
+/* ===== Commande ===== */
+.zone-commande { margin-top: 18px; background: #17171a; border: 1px solid var(--yellow); border-radius: 8px; padding: 16px 18px; }
+.zone-commande .consigne { font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 8px; }
+.zone-commande-ligne { display: flex; gap: 9px; align-items: stretch; }
+.zone-commande-ligne code {
+    flex: 1; background: #0b0b0d; border: 1px solid var(--line); border-radius: 5px; padding: 10px 13px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: var(--yellow);
+    overflow-x: auto; white-space: nowrap; display: flex; align-items: center;
+}
+.zone-commande-ligne button {
+    font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em;
+    text-transform: uppercase; color: #17170f; background: var(--yellow); border: none; border-radius: 5px;
+    padding: 0 20px; cursor: pointer; flex: 0 0 auto;
+}
+.zone-commande-ligne button:hover { background: #ffd75a; }
+.zone-commande .avertissement { font-size: 12px; color: var(--paper-dim); margin-top: 8px; }
+
+@media (max-width: 620px) {
+    .zone-commande-ligne { flex-direction: column; }
+    .total-dispo .reste { width: 100%; margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+    <div class="entete">
+        <h1>Calculateur de <span>build</span></h1>
+        <p>Choisis ta répartition de stats et ton équipement, et vois immédiatement l'effet sur tes dégâts et ta survie —
+           sans rien changer pour de vrai tant que tu n'as pas collé la commande.</p>
+    </div>
+
+    <div class="champ-profil">
+        <label for="chercheProfil">Qui es-tu&nbsp;?</label>
+        <input type="text" id="chercheProfil" autocomplete="off" spellcheck="false" placeholder="Ton pseudo Twitch..."
+               role="combobox" aria-expanded="false" aria-controls="propositions" aria-autocomplete="list">
+        <div class="propositions" id="propositions" role="listbox"></div>
+    </div>
+
+    <div id="contenu">
+        <div class="message">Cherche ton pseudo pour charger tes stats et ton inventaire.</div>
+    </div>
+
+</div>
+
+<script src="formule-combat.js"></script>
+<script>
+const LABEL_STAT = { atk: 'Attaque', def: 'Défense', pv: 'Points de vie', spd: 'Vitesse', luck: 'Chance' };
+const CMD_STAT = { atk: 'atk', def: 'def', pv: 'pv', spd: 'vit', luck: 'chance' };
+const LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
+
+let JOUEURS = {}, CATALOGUE = {}, listeJoueurs = [];
+let pseudoActif = null, joueurActif = null;
+let stacksOriginaux = null;   // stacks réellement investis (immuables, pour calculer "reste à placer")
+let stacksChoisis = null;     // répartition en cours d'édition sur la page
+let equipChoisi = { arme: null, offhand: null, torso: null, strat: null }; // numéros choisis
+
+function echapper(t) {
+    return String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* ===================== SÉLECTION DE PROFIL ===================== */
+const champ = document.getElementById('chercheProfil');
+const propos = document.getElementById('propositions');
+
+function rendrePropositions() {
+    const q = champ.value.trim().toLowerCase();
+    let liste = listeJoueurs;
+    if (q) liste = listeJoueurs.filter(p => p.nom.toLowerCase().includes(q) || p.cle.includes(q));
+    liste = liste.slice(0, 8);
+    if (!liste.length) { propos.innerHTML = '<div class="proposition"><span>Aucun personnage trouvé</span></div>'; propos.classList.add('ouvert'); return; }
+    propos.innerHTML = liste.map(p => {
+        const img = p.avatar ? `<img src="${echapper(p.avatar)}" alt="">` : `<div class="ini">${echapper(p.nom.charAt(0).toUpperCase())}</div>`;
+        return `<div class="proposition" data-cle="${echapper(p.cle)}">${img}<span>${echapper(p.nom)}</span></div>`;
+    }).join('');
+    propos.classList.add('ouvert');
+}
+champ.addEventListener('focus', rendrePropositions);
+champ.addEventListener('input', rendrePropositions);
+propos.addEventListener('mousedown', e => {
+    const o = e.target.closest('.proposition[data-cle]');
+    if (o) { e.preventDefault(); choisirProfil(o.getAttribute('data-cle')); }
+});
+document.addEventListener('click', e => { if (!e.target.closest('.champ-profil')) propos.classList.remove('ouvert'); });
+
+function choisirProfil(cle) {
+    pseudoActif = cle;
+    joueurActif = JOUEURS[cle];
+    champ.value = joueurActif.nomAffichage || cle;
+    propos.classList.remove('ouvert');
+    const url = new URL(location.href); url.searchParams.set('user', cle); history.replaceState(null, '', url);
+
+    const s = joueurActif.stats || {};
+    stacksOriginaux = { atk: s.atkStacks||0, def: s.defStacks||0, pv: s.pvStacks||0, spd: s.spdStacks||0, luck: s.luckStacks||0 };
+    stacksChoisis = { ...stacksOriginaux };
+
+    const inv = joueurActif.inventaire || [];
+    equipChoisi = {
+        arme: inv.find(l => objetCatalogue(l.numero)?.slot === 'weapon')?.numero ?? null,
+        offhand: inv.find(l => objetCatalogue(l.numero)?.slot === 'offhand')?.numero ?? null,
+        torso: inv.find(l => objetCatalogue(l.numero)?.slot === 'torso')?.numero ?? null,
+        strat: inv.find(l => objetCatalogue(l.numero)?.slot === 'strategeme')?.numero ?? null,
+    };
+    // Reprend ce qui est RÉELLEMENT équipé si l'info existe, plutôt que le 1er objet venu du slot.
+    afficherPage();
+}
+
+function objetCatalogue(numero) { return CATALOGUE[String(numero)] || null; }
+
+/* ===================== AFFICHAGE PRINCIPAL ===================== */
+function afficherPage() {
+    const totalOriginal = Object.values(stacksOriginaux).reduce((a,b) => a+b, 0);
+
+    document.getElementById('contenu').innerHTML = `
+        <section class="section">
+            <div class="section-tete">
+                <h2>Simuler un reset</h2>
+                <p>Tu as actuellement <b style="color:var(--yellow)">${totalOriginal}</b> point(s) investi(s). Redistribue-les ci-dessous comme tu veux —
+                   la commande en bas applique exactement ce choix, sans jamais toucher à rien tant que tu ne l'as pas collée dans le chat.</p>
+            </div>
+            <div class="total-dispo">
+                <span>Points investis actuellement :</span><span class="chiffre">${totalOriginal}</span>
+                <span class="reste" id="resteAPlacer"></span>
+            </div>
+            <div class="stats-grille" id="statsGrille"></div>
+            <button type="button" class="btn-reinit" id="btnReinit">Revenir à ma répartition actuelle</button>
+            <div class="zone-commande" id="zoneCommandeReset"></div>
+        </section>
+
+        <section class="section">
+            <div class="section-tete">
+                <h2>Dégâts et survie</h2>
+                <p>Calculés à partir de la répartition ci-dessus et de l'équipement choisi ici — change l'un ou l'autre, tout se recalcule en direct.</p>
+            </div>
+            <div class="equip-grille" id="equipGrille"></div>
+            <div class="resultats-grille" id="resultatsGrille"></div>
+        </section>
+    `;
+
+    rendreStatsGrille();
+    rendreEquipGrille();
+    document.getElementById('btnReinit').addEventListener('click', () => { stacksChoisis = { ...stacksOriginaux }; rendreStatsGrille(); recalculer(); });
+    recalculer();
+}
+
+function rendreStatsGrille() {
+    const totalOriginal = Object.values(stacksOriginaux).reduce((a,b) => a+b, 0);
+    const totalChoisi = Object.values(stacksChoisis).reduce((a,b) => a+b, 0);
+    const reste = totalOriginal - totalChoisi;
+
+    const resteEl = document.getElementById('resteAPlacer');
+    resteEl.classList.toggle('negatif', reste < 0);
+    resteEl.innerHTML = `Reste à placer : <b>${reste}</b>`;
+
+    document.getElementById('statsGrille').innerHTML = Object.keys(LABEL_STAT).map(st => `
+        <div class="stat-carte stat-${st}">
+            <div class="label">${LABEL_STAT[st]}</div>
+            <div class="stat-ligne">
+                <button type="button" data-stat="${st}" data-act="moins" ${stacksChoisis[st] <= 0 ? 'disabled' : ''}>&minus;</button>
+                <input type="number" min="0" data-stat="${st}" value="${stacksChoisis[st]}">
+                <button type="button" data-stat="${st}" data-act="plus" ${reste <= 0 ? 'disabled' : ''}>+</button>
+            </div>
+            <div class="actuel">actuellement : ${stacksOriginaux[st]}</div>
+        </div>
+    `).join('');
+
+    document.getElementById('statsGrille').querySelectorAll('button[data-act]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const st = btn.getAttribute('data-stat');
+            const delta = btn.getAttribute('data-act') === 'plus' ? 1 : -1;
+            const totalActuel = Object.values(stacksChoisis).reduce((a,b)=>a+b,0);
+            if (delta > 0 && totalActuel >= totalOriginal) return;
+            stacksChoisis[st] = Math.max(0, stacksChoisis[st] + delta);
+            rendreStatsGrille(); recalculer();
+        });
+    });
+    document.getElementById('statsGrille').querySelectorAll('input[data-stat]').forEach(inp => {
+        inp.addEventListener('change', () => {
+            const st = inp.getAttribute('data-stat');
+            let val = Math.max(0, parseInt(inp.value, 10) || 0);
+            const autres = Object.keys(stacksChoisis).filter(k => k !== st).reduce((s,k) => s + stacksChoisis[k], 0);
+            if (autres + val > totalOriginal) val = Math.max(0, totalOriginal - autres);
+            stacksChoisis[st] = val;
+            rendreStatsGrille(); recalculer();
+        });
+    });
+
+    rendreCommandeReset(totalOriginal, reste);
+}
+
+function rendreCommandeReset(totalOriginal, reste) {
+    const morceaux = Object.keys(stacksChoisis).filter(st => stacksChoisis[st] > 0).map(st => `!ameliorer ${CMD_STAT[st]} ${stacksChoisis[st]}`);
+    const zone = document.getElementById('zoneCommandeReset');
+    if (totalOriginal === 0) {
+        zone.innerHTML = `<div class="avertissement">Tu n'as encore aucun point investi — rien à réinitialiser pour l'instant.</div>`;
+        return;
+    }
+    zone.innerHTML = `
+        <div class="consigne">À coller dans le chat Twitch, dans l'ordre — nécessite un ticket de reset (achetable en Boutique)</div>
+        <div class="zone-commande-ligne" style="margin-bottom:8px;">
+            <code id="cmdReset">!reset</code>
+            <button type="button" onclick="copier('cmdReset', this)">Copier</button>
+        </div>
+        ${morceaux.map((m, i) => `
+        <div class="zone-commande-ligne" style="margin-bottom:${i < morceaux.length-1 ? '8px' : '0'}">
+            <code id="cmdAmeliorer${i}">${echapper(m)}</code>
+            <button type="button" onclick="copier('cmdAmeliorer${i}', this)">Copier</button>
+        </div>`).join('')}
+        ${reste !== 0 ? `<div class="avertissement">⚠️ ${reste > 0 ? `Il te reste ${reste} point(s) non placé(s).` : `Tu as placé ${-reste} point(s) de trop.`}</div>` : ''}
+    `;
+}
+
+function rendreEquipGrille() {
+    const inv = (joueurActif.inventaire || []).map(l => ({ ...l, info: objetCatalogue(l.numero) })).filter(l => l.info);
+    const slots = [ ['weapon','arme','Arme'], ['offhand','offhand','Main gauche'], ['torso','torso','Armure'], ['strategeme','strat','Stratagème'] ];
+
+    document.getElementById('equipGrille').innerHTML = slots.map(([slotKey, choixKey, label]) => {
+        const options = inv.filter(l => l.info.slot === slotKey);
+        const optionsHtml = ['<option value="">— aucun —</option>']
+            .concat(options.map(l => `<option value="${l.numero}" ${String(equipChoisi[choixKey]) === String(l.numero) ? 'selected' : ''}>${echapper(l.info.nom)} (${LABEL_RARETE[l.info.rarete]||l.info.rarete})</option>`))
+            .join('');
+        return `<div class="equip-case"><label>${label}</label><select data-slot="${choixKey}">${optionsHtml}</select></div>`;
+    }).join('');
+
+    document.getElementById('equipGrille').querySelectorAll('select[data-slot]').forEach(sel => {
+        sel.addEventListener('change', () => { equipChoisi[sel.getAttribute('data-slot')] = sel.value || null; recalculer(); });
+    });
+}
+
+// Construit l'objet "gear" attendu par la formule (catalogue_stats.json + niveau réellement possédé).
+function gearPourFormule(numero) {
+    if (!numero) return null;
+    const info = objetCatalogue(numero);
+    if (!info) return null;
+    const ligneInv = (joueurActif.inventaire || []).find(l => String(l.numero) === String(numero));
+    return { ...info, niveau: ligneInv ? (ligneInv.niveau || 0) : 0 };
+}
+
+function recalculer() {
+    const equipement = {
+        arme: gearPourFormule(equipChoisi.arme),
+        offhand: gearPourFormule(equipChoisi.offhand),
+        torso: gearPourFormule(equipChoisi.torso),
+        strat: gearPourFormule(equipChoisi.strat),
+    };
+    const r = simulerBuild(stacksChoisis, equipement);
+
+    document.getElementById('resultatsGrille').innerHTML = `
+        <div class="resultat-carte">
+            <div class="valeur">${r.dpaInflige.toFixed(1)}</div>
+            <div class="label">Dégâts / attaque</div>
+        </div>
+        <div class="resultat-carte">
+            <div class="valeur">${r.survieTours.toFixed(1)}</div>
+            <div class="label">Tours de survie</div>
+        </div>
+        <div class="resultat-carte secondaire">
+            <div class="valeur">${Math.round(r.totalDmg)}</div>
+            <div class="label">Dégâts sur tout le combat</div>
+        </div>
+        <div class="resultat-carte secondaire">
+            <div class="valeur">${r.powerLevel.toFixed(0)}</div>
+            <div class="label">PowerLevel estimé</div>
+        </div>
+    `;
+}
+
+function copier(idCode, bouton) {
+    const texte = document.getElementById(idCode).textContent;
+    const fini = () => { const avant = bouton.textContent; bouton.textContent = 'Copié !'; setTimeout(() => bouton.textContent = avant, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(texte).then(fini, fini);
+    else {
+        const z = document.createElement('textarea'); z.value = texte; document.body.appendChild(z); z.select();
+        try { document.execCommand('copy'); } catch(e) {}
+        document.body.removeChild(z); fini();
+    }
+}
+
+/* ===================== CHARGEMENT ===================== */
+Promise.all([
+    fetch('players.json?v=' + Date.now()).then(r => r.json()),
+    fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()),
+]).then(([players, catalogue]) => {
+    JOUEURS = players; CATALOGUE = catalogue;
+    listeJoueurs = Object.keys(JOUEURS).map(cle => ({ cle, nom: JOUEURS[cle].nomAffichage || cle, avatar: JOUEURS[cle].avatar || '' }));
+
+    const demande = new URLSearchParams(location.search).get('user');
+    if (demande && JOUEURS[demande]) choisirProfil(demande);
+}).catch(() => {
+    document.getElementById('contenu').innerHTML = '<div class="message">Les données n\'ont pas pu être chargées. Réessaie dans un instant.</div>';
+});
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>
