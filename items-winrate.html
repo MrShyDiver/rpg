@@ -291,6 +291,32 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
                 </tr>`;
         }
 
+        const niveauMoyen = donnees.niveauMoyen !== undefined ? donnees.niveauMoyen : 0;
+
+    return `
+        <tr data-nom="${nom.toLowerCase()}">
+            <td>
+                <div class="nom-objet">${nom}</div>
+                <div class="slot-objet">N°${numero} • Niv. moy: <strong>Lvl ${niveauMoyen}</strong></div>
+            </td>
+            <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
+            <td>${donnees.victoires || 0} / ${donnees.defaites || 0} / ${donnees.egalites || 0}</td>
+            <td>${totalDuels}</td>
+            <td><strong>${pickrate.toFixed(1)}%</strong></td>
+            <td>
+                <div class="barre-winrate-zone">
+                    <div class="barre-winrate-fond"><div class="barre-winrate-remplie" style="width:${pctWin}%; background:${couleurWin};"></div></div>
+                    <span class="winrate-valeur" style="color:${couleurWin}">${pctWin}%</span>
+                </div>
+            </td>
+            <td>
+                <div class="jauge-op-zone">
+                    <span class="badge-op ${badgeClass}">${badgeLabel} (${Math.round(opScore)})</span>
+                    <div class="jauge-op-fond"><div class="jauge-op-remplie" style="width:${opScore}%; background:${couleurOp};"></div></div>
+                </div>
+            </td>
+        </tr>`;
+
         const pctWin = donnees.winratePourcent || 0;
         const couleurWin = couleurWinrate(pctWin);
         const pickrate = calculerPickrate(numero);
