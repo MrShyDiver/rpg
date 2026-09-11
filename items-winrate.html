@@ -176,46 +176,30 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
     }
 
     function calculerPickrate(numero) {
-        // 1. Récupère l'identifiant String correspondant au numéro dans le catalogue 
-        // Si numero est déjà un ID string (ex: "machete_democratique"), on le conserve.
-        let itemIdString = numero;
+        const itemCatalogue = STATS[numero] || {};
         
-        if (STATS[numero] && STATS[numero].id) {
-            itemIdString = STATS[numero].id;
-        } else {
-            // Cherche dans le catalogue si la clé est la valeur 'id' de l'objet
-            for (const [key, obj] of Object.entries(STATS)) {
-                if (key === numero || obj.id === numero || obj.numero == numero) {
-                    itemIdString = key;
-                    break;
-                }
-            }
-        }
-
-        let totalPickDansLeSlot = 0;
-        let itemPick = 0;
-
-        // Détermine quel slot lire (weapon, offhand, torso, strategeme)
-        const itemInfo = STATS[numero] || STATS[itemIdString] || {};
-        const slotObjet = itemInfo.slot || 'weapon';
-
+        // Clé textuelle de l'objet (ex: "souffle_draconique" ou "gallant")
+        const idTextuel = itemCatalogue.id || itemCatalogue.key || numero;
+        const slotObjet = itemCatalogue.slot || 'weapon';
+        
         const slotDict = USAGES_GLOBAUX[slotObjet] || {};
+        let totalUsagesSlot = 0;
+        let usagesItem = 0;
 
-        // Parcourt les usages enregistrés par utilisateur pour ce slot
         Object.values(slotDict).forEach(userDict => {
             if (typeof userDict === 'object' && userDict !== null) {
-                Object.entries(userDict).forEach(([id, count]) => {
-                    totalPickDansLeSlot += count;
-                    // Compare avec l'ID string OU le numéro
-                    if (id === itemIdString || id === numero || id === itemInfo.nom) {
-                        itemPick += count;
+                Object.entries(userDict).forEach(([key, count]) => {
+                    totalUsagesSlot += count;
+                    
+                    // Match par ID textuel, numéro d'inventaire ou nom exact
+                    if (key === idTextuel || key === numero || key === itemCatalogue.nom) {
+                        usagesItem += count;
                     }
                 });
             }
         });
 
-        // Taux de choix par rapport aux autres objets du MÊME slot
-        return totalPickDansLeSlot > 0 ? (itemPick / totalPickDansLeSlot) * 100 : 0;
+        return totalUsagesSlot > 0 ? (usagesItem / totalUsagesSlot) * 100 : 0;
     }
 
     function calculerOpScore(winratePur, pickrate, totalDuels) {
@@ -245,7 +229,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
 
         const pctWin = donnees.winratePourcent || 0;
         const couleurWin = couleurWinrate(pctWin);
-        const pickrate = calculerPickrate(donnees.id || numero);
+        const pickrate = calculerPickrate(numero);
         const opScore = calculerOpScore(pctWin, pickrate, totalDuels);
 
         let badgeClass = 'equilibre', badgeLabel = 'Équilibré', couleurOp = '#5ddd7a';
