@@ -235,32 +235,41 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         return '#ff6b6b';
     }
 
+// Calcul du Pickrate RÉEL basé sur les loadouts équipés (et non la possession)
     function calculerPickrate(numeroKey) {
         const itemCatalogue = STATS[numeroKey] || {};
         const slotCible = itemCatalogue.slot || '';
 
-        let nombreJoueursTotaux = 0;
-        let nombrePossesseurs = 0;
+        // Correspondance des clés de slot dans le loadout d'un joueur
+        const correspondanceSlotLoadout = {
+            'weapon': 'arme',
+            'offhand': 'offhand',
+            'torso': 'armure',
+            'strategeme': 'strategeme'
+        };
+
+        const cleLoadout = correspondanceSlotLoadout[slotCible];
+        if (!cleLoadout) return 0;
+
+        let joueursAvecSlotEquipe = 0;
+        let joueursEquipantLItem = 0;
 
         const numRecherche = parseInt(numeroKey, 10);
 
         Object.values(PLAYERS).forEach(player => {
-            const inventaire = player.inventaire || [];
-            
-            const aDesObjetsDansCeSlot = inventaire.some(item => {
-                const info = STATS[item.numero.toString()];
-                return info && info.slot === slotCible;
-            });
+            const loadout = player.loadout || {};
+            const objetEquipe = loadout[cleLoadout];
 
-            if (aDesObjetsDansCeSlot) {
-                nombreJoueursTotaux++;
-                if (inventaire.some(item => item.numero === numRecherche)) {
-                    nombrePossesseurs++;
+            // On ne compte que les joueurs qui ont équipé quelque chose dans ce slot
+            if (objetEquipe !== undefined && objetEquipe !== null) {
+                joueursAvecSlotEquipe++;
+                if (objetEquipe === numRecherche) {
+                    joueursEquipantLItem++;
                 }
             }
         });
 
-        return nombreJoueursTotaux > 0 ? (nombrePossesseurs / nombreJoueursTotaux) * 100 : 0;
+        return joueursAvecSlotEquipe > 0 ? (joueursEquipantLItem / joueursAvecSlotEquipe) * 100 : 0;
     }
 
     function calculerOpScore(winratePur, pickrate, totalDuels) {
