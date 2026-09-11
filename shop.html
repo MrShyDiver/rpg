@@ -19,8 +19,7 @@ body {
     margin: 0; padding: 28px 18px; line-height: 1.5;
 }
 h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
-.page { max-width: 1080px; margin: 0 auto; }
-.page { padding-bottom: 28px; }
+.page { max-width: 1080px; margin: 0 auto; padding-bottom: 28px; }
 
 .entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
 .entete h1 { font-size: 30px; font-weight: 700; }
@@ -77,16 +76,12 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     display: flex; align-items: center; justify-content: center;
     font-family: 'Oswald', sans-serif; font-size: 22px; color: var(--paper-dim);
 }
-.profil-actif-infos {
-    display: flex; flex-direction: column; flex: 1 1 auto;
-}
+.profil-actif-infos { display: flex; flex-direction: column; flex: 1 1 auto; }
 .profil-actif-titre {
     font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; font-weight: 700;
     letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
 }
-.profil-actif-nom {
-    font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: var(--paper); line-height: 1;
-}
+.profil-actif-nom { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: var(--paper); line-height: 1; }
 .profil-actif-medailles {
     margin-left: auto; display: flex; align-items: center; gap: 8px;
     font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--yellow);
@@ -143,14 +138,12 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .card.choisi { box-shadow: 0 0 0 3px var(--accent); transform: translateY(-2px); }
 
-/* Cadenas (Fixes) */
 .card-verrou {
     position: absolute; top: 8px; left: 8px; font-size: 12px; line-height: 1;
     background: rgba(0,0,0,.7); border: 1px solid var(--line); border-radius: 4px; 
     padding: 3px 5px; z-index: 2;
 }
 
-/* Badge de quantité pour la revente */
 .card-niveau {
     position: absolute; top: 8px; right: 8px; z-index: 2;
     font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 900; color: var(--yellow);
@@ -161,7 +154,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     position: absolute; top: 8px; right: 8px;
     font-family: 'Barlow Condensed', sans-serif; font-size: 9.5px; font-weight: 700;
     letter-spacing: .8px; text-transform: uppercase; color: var(--accent);
-    background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 3px;
+    background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 3px; z-index: 2;
 }
 .card-puce-rarete.a-gauche { left: 8px; right: auto; }
 
@@ -182,7 +175,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .card-prix.mode-vente { color: var(--vente); }
 .card-prix-bloc { display: flex; flex-direction: column; align-items: center; }
 
-/* Zone quantité (Inputs et boutons) */
 .card-qte { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
 .card-qte button {
     width: 26px; height: 26px; background: none; border: 1px solid var(--line);
@@ -200,14 +192,11 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .valeur-input::-webkit-outer-spin-button, .valeur-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .valeur-input:focus { outline: none; border-color: var(--accent); }
 
-/* Bouton MAX exclusif à la vente/troc */
 .card-qte .btn-max {
     font-size: 10px; font-weight: 700; width: auto; padding: 0 6px; margin-left: 2px;
     background: rgba(93,221,122,0.1); color: var(--vente); border-color: var(--vente);
 }
-.card-qte .btn-max:hover:not([disabled]) {
-    background: var(--vente); color: #000;
-}
+.card-qte .btn-max:hover:not([disabled]) { background: var(--vente); color: #000; }
 
 .message { color: var(--paper-dim); font-size: 14px; padding: 18px 2px; }
 .message b { color: var(--paper); }
@@ -215,13 +204,8 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 /* ===== BARRE FIXE ===== */
 .barre-fixe {
-    position: fixed; 
-    bottom: 20px; 
-    z-index: 50;
-    /* Centrage parfait par rapport à l'écran, calé sur la grille */
-    left: 50%;
-    width: calc(100% - 36px);
-    max-width: 1044px; 
+    position: fixed; bottom: 20px; z-index: 50;
+    left: 50%; width: calc(100% - 36px); max-width: 1044px; 
     background: rgba(15, 15, 18, 0.95);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--yellow); border-radius: 12px;
@@ -274,7 +258,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .barre-fixe.mode-vente .zone-commande-ligne code { color: var(--vente); border-color: rgba(93,221,122,0.3); }
 
-/* Boutons de la barre */
 .btn-action {
     font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: .05em;
     text-transform: uppercase; color: #17170f; background: var(--yellow); border: none;
@@ -292,34 +275,47 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .barre-fixe.mode-troc .btn-action { background: var(--special); color: #1e1030; }
 .barre-fixe.mode-troc .btn-action:hover { box-shadow: 0 5px 15px rgba(201,167,232,0.3); }
 
-/* ===== Resume du troc ===== */
-.troc-sommaire { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px; }
-@media (max-width: 640px) { .troc-sommaire { grid-template-columns: 1fr; } }
-.troc-flux {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 16px;
+/* ===== Structure de Troc Repensée ===== */
+.troc-palier-bloc { margin-bottom: 30px; width: 100%; }
+.troc-flux-large {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 20px; width: 100%; margin-bottom: 16px; transition: border-color 0.2s, box-shadow 0.2s;
 }
-.troc-cote { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1 1 0; min-width: 0; }
-.troc-pastille {
-    width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-family: 'Oswald', sans-serif; font-weight: 800; font-size: 17px; border: 2px solid var(--accent-troc);
-    color: var(--accent-troc); background: rgba(255,255,255,0.06);
+.troc-flux-large.pret {
+    border-color: var(--vente);
+    box-shadow: 0 0 15px rgba(93, 221, 122, 0.15);
 }
-.troc-cote .nom-rarete {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+.troc-cote-large { display: flex; align-items: center; gap: 14px; }
+.troc-pastille-large {
+    width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-weight: 800; font-size: 18px; border: 2px solid var(--accent-troc);
+    color: var(--accent-troc); background: rgba(255,255,255,0.04); flex-shrink: 0;
+}
+.troc-infos-large { display: flex; flex-direction: column; }
+.troc-infos-large .nom-rarete {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.2px;
     text-transform: uppercase; color: var(--paper-dim);
 }
-.troc-cote .compte { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; color: var(--paper); }
-.troc-cote .compte b { color: var(--accent-troc); }
-.troc-fleche { font-size: 22px; color: var(--paper-dim); flex: 0 0 auto; }
-.troc-flux.pret .troc-fleche { color: var(--special); }
-.troc-mystere {
-    width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 22px; font-weight: 800; color: var(--paper-dim); border: 2px dashed var(--line); background: rgba(0,0,0,0.25);
+.troc-infos-large .compte { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; color: var(--paper); }
+.troc-infos-large .compte b { color: var(--accent-troc); }
+
+.troc-fleche-large { font-size: 22px; color: var(--paper-dim); }
+.troc-flux-large.pret .troc-fleche-large { color: var(--vente); }
+
+.troc-mystere-large {
+    width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800; color: var(--paper-dim); border: 2px dashed var(--line); background: rgba(0,0,0,0.25);
+    flex-shrink: 0; transition: all 0.2s;
 }
-.troc-flux.pret .troc-mystere { border-color: var(--special); color: var(--special); border-style: solid; }
-.troc-resultat { font-size: 11.5px; color: var(--paper-dim); text-align: center; }
-.troc-resultat b { color: var(--special); font-family: 'Oswald', sans-serif; }
+.troc-flux-large.pret .troc-mystere-large {
+    border-color: var(--vente); color: #000; background: var(--vente); border-style: solid;
+}
+.troc-status-badge {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--paper-dim); text-align: right;
+}
+.troc-flux-large.pret .troc-status-badge { color: var(--vente); }
 
 .btn-vider {
     font-family: 'Oswald', sans-serif; font-size: 16px; background: rgba(168, 39, 31, 0.15); 
@@ -336,6 +332,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     .zone-commande-ligne code { font-size: 13px; padding: 8px 10px; }
     .btn-action { padding: 0 14px; font-size: 12px; min-height: 38px; }
     .btn-vider { padding: 0 12px; font-size: 14px; min-height: 38px; }
+    .troc-flux-large { flex-wrap: wrap; gap: 10px; }
 }
 @media (max-width: 620px) {
     .grille-cards { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
@@ -347,8 +344,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
     <div class="entete">
         <h1>La <span>boutique</span></h1>
-        <p>Le marchand renouvelle son étal toutes les heures. Ticket de reset et lootbox sont
-           toujours en stock ; le reste tourne avec le temps.</p>
+        <p>Le marchand renouvelle son étal toutes les heures. Ticket de reset et lootbox sont toujours en stock ; le reste tourne avec le temps.</p>
     </div>
 
     <div class="choix-profil">
@@ -359,8 +355,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
                    role="combobox" aria-expanded="false" aria-controls="propositions" aria-autocomplete="list">
             <div class="propositions" id="propositions" role="listbox"></div>
         </div>
-        <p class="aide" id="aideProfil">Sans profil, tu peux quand même préparer ta commande d'achat —
-           assure-toi juste d'avoir assez de médailles avant de la coller dans le chat.</p>
+        <p class="aide" id="aideProfil">Sans profil, tu peux quand même préparer ta commande d'achat — assure-toi juste d'avoir assez de médailles avant de la coller dans le chat.</p>
     </div>
 
     <div id="zoneSolde"></div>
@@ -394,11 +389,9 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
     <div id="panneauTroc" role="tabpanel" aria-labelledby="ongletTroc" class="cache">
         <p style="color:var(--paper-dim);font-size:13.5px;margin-bottom:18px;max-width:60ch;">
-            Échange des doublons dont tu ne te sers pas contre un objet de la rareté au-dessus, tiré au
-            hasard. Aucune médaille n'entre en jeu — c'est un troc, pas un achat.
+            Échange des doublons dont tu ne te sers pas contre un objet de la rareté au-dessus, tiré au hasard. Aucune médaille n'entre en jeu — c'est un troc, pas un achat.
         </p>
-        <div id="trocSommaire" class="troc-sommaire"></div>
-        <div id="listeTroc" class="grille-cards"></div>
+        <div id="listeTroc"></div>
     </div>
 
 </div>
@@ -413,7 +406,7 @@ var PRIX_ACHAT  = { commun: 25, normal: 120, rare: 450, legendaire: 900 };
 var PRIX_VENTE  = { commun: 1,  normal: 6,   rare: 30,  legendaire: 90  };
 var PRIX_RESET  = 60;
 var PRIX_LOOTBOX = 12;
-var TROC = { commun: { cout: 10, versRarete: 'normal' }, normal: { cout: 10, versRarete: 'rare' } };
+var TROC = { normal: { cout: 10, versRarete: 'rare' }, commun: { cout: 10, versRarete: 'normal' } };
 var STOCK = { commun: 4, normal: 3, rare: 2 };
 
 var LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
@@ -467,10 +460,7 @@ function parNumero(n) {
     var it = CATALOGUE[String(n)];
     return it ? Object.assign({ numero: String(n) }, it) : null;
 }
-function visuelHtml(it) {
-    return it.image ? '<img src="' + echapper(it.image) + '" alt="">'
-                    : '<div class="emoji">' + echapper(it.icone || '?') + '</div>';
-}
+
 function soldeActuel() { return (joueurActif && joueurActif.medailles) || 0; }
 
 var champ = document.getElementById('chercheProfil');
@@ -587,8 +577,10 @@ function iconeMedaille(classeExtra = '') {
 /* ===================== CARD GÉNÉRIQUE ===================== */
 function carteProduit(cfg) {
     var accent = cfg.accent || 'var(--commun)';
+    
+    // Positionnement propre : Rareté à gauche, Quantité/Niveau à droite
     var puceRarete = cfg.rarete
-        ? '<div class="card-puce-rarete' + (cfg.mode === 'vente' ? ' a-gauche' : '') + '">' + LABEL_RARETE[cfg.rarete] + '</div>'
+        ? '<div class="card-puce-rarete a-gauche">' + LABEL_RARETE[cfg.rarete] + '</div>'
         : '';
     var badgeQuantite = cfg.badgeQuantite !== undefined ? '<div class="card-niveau">×' + cfg.badgeQuantite + '</div>' : '';
     var verrou = cfg.verrou ? '<div class="card-verrou">🔒</div>' : '';
@@ -603,7 +595,7 @@ function carteProduit(cfg) {
         ? '<button type="button" data-act="max" class="btn-max" title="Tout sélectionner" ' + (cfg.quantite >= cfg.quantiteMax ? 'disabled' : '') + '>MAX</button>' 
         : '';
 
-    // Si on est en Troc, on masque le prix tout en gardant l'espacement pour l'alignement
+    // Si on est en Troc, bloc masqué tout en gardant l'espacement d'alignement
     var blocPrix = cfg.mode === 'troc'
         ? '<div class="card-prix-bloc" style="min-height: 28px;"></div>'
         : '<div class="card-prix-bloc"><div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>';
@@ -681,7 +673,6 @@ document.getElementById('panneauAcheter').addEventListener('change', function (e
     }
 });
 
-
 /* ===================== VENDRE ===================== */
 function rendreVente() {
     var zone = document.getElementById('listeVendre');
@@ -717,76 +708,66 @@ function rendreVente() {
     majBarreFixe();
 }
 
-/* ===================== TROC ===================== */
-function rendreTrocSommaire() {
-    var html = '';
-    ['commun', 'normal'].forEach(function (rarete) {
-        var cible = TROC[rarete].versRarete;
-        var qteChoisie = Object.keys(aTroc[rarete]).reduce(function (s, n) { return s + aTroc[rarete][n]; }, 0);
-        var pret = Math.floor(qteChoisie / TROC[rarete].cout);
-        var reste = qteChoisie % TROC[rarete].cout;
-
-        html += '<div class="troc-flux' + (pret > 0 ? ' pret' : '') + '" style="--accent-troc:var(--' + rarete + ')">' +
-            '<div class="troc-cote">' +
-                '<div class="troc-pastille">' + qteChoisie + '</div>' +
-                '<div class="nom-rarete">' + LABEL_RARETE[rarete] + '</div>' +
-                '<div class="compte"><b>' + reste + '</b> / ' + TROC[rarete].cout + '</div>' +
-            '</div>' +
-            '<div class="troc-fleche">→</div>' +
-            '<div class="troc-cote">' +
-                '<div class="troc-mystere">?</div>' +
-                '<div class="nom-rarete">' + LABEL_RARETE[cible] + '</div>' +
-                '<div class="troc-resultat">' +
-                    (pret > 0 ? '<b>' + pret + '</b> prêt' + (pret > 1 ? 's' : '') : 'objet inconnu') +
-                '</div>' +
-            '</div>' +
-        '</div>';
-    });
-    document.getElementById('trocSommaire').innerHTML = html;
-}
-
+/* ===================== TROC RESTRUCTURÉ ===================== */
 function rendreTroc() {
+    var zone = document.getElementById('listeTroc');
     if (!joueurActif) {
-        document.getElementById('trocSommaire').innerHTML = '';
-        document.getElementById('listeTroc').innerHTML =
-            '<div class="message">Recherche ton pseudo tout en haut pour voir tes doublons échangeables.</div>';
+        zone.innerHTML = '<div class="message">Recherche ton pseudo tout en haut pour voir tes doublons échangeables.</div>';
         majBarreFixe();
         return;
     }
-    rendreTrocSommaire();
+
     var inv = (joueurActif.inventaire || []).slice();
     var html = '';
-    ['commun', 'normal'].forEach(function (rarete) {
+
+    // Ordre explicitement demandé : Normal vers Rare en premier, puis Commun vers Normal
+    ['normal', 'commun'].forEach(function (rarete) {
         var cible = TROC[rarete].versRarete;
         var items = inv.filter(function (l) {
             var it = parNumero(l.numero);
             return it && (it.rarete || 'commun') === rarete;
         });
+
         var qteChoisie = Object.keys(aTroc[rarete]).reduce(function (s, n) { return s + aTroc[rarete][n]; }, 0);
         var pret = Math.floor(qteChoisie / TROC[rarete].cout);
+        var reste = qteChoisie % TROC[rarete].cout;
 
-        html += '<div class="section-produits"><div class="sous-titre">' +
-            TROC[rarete].cout + ' ' + LABEL_RARETE[rarete] + 's → 1 ' + LABEL_RARETE[cible] + ' aléatoire' +
-            '<span style="margin-left:auto;color:' + (pret > 0 ? 'var(--vente)' : 'var(--paper-dim)') + ';font-size:12.5px">' +
-            qteChoisie + ' / ' + TROC[rarete].cout + (pret > 0 ? ' — ' + pret + ' échange(s) prêt(s)' : '') +
-            '</span></div>';
+        html += '<div class="troc-palier-bloc">' +
+            '<div class="troc-flux-large' + (pret > 0 ? ' pret' : '') + '">' +
+                '<div class="troc-cote-large">' +
+                    '<div class="troc-pastille-large" style="--accent-troc:var(--' + rarete + ')">' + qteChoisie + '</div>' +
+                    '<div class="troc-infos-large">' +
+                        '<div class="nom-rarete">' + LABEL_RARETE[rarete] + 's sélectionnés</div>' +
+                        '<div class="compte"><b style="--accent-troc:var(--' + rarete + ')">' + reste + '</b> / ' + TROC[rarete].cout + ' pour débloquer</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="troc-fleche-large">→</div>' +
+                '<div class="troc-cote-large">' +
+                    '<div class="troc-mystere-large">' + (pret > 0 ? '✓' : '?') + '</div>' +
+                    '<div class="troc-infos-large">' +
+                        '<div class="nom-rarete">Objet ' + LABEL_RARETE[cible] + ' aléatoire</div>' +
+                        '<div class="troc-status-badge">' + (pret > 0 ? pret + ' ' + LABEL_RARETE[cible] + (pret > 1 ? 's' : '') + ' prêt' + (pret > 1 ? 's' : '') : 'Sélection incomplète') + '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
 
         if (!items.length) {
             html += '<div class="message">Aucun ' + LABEL_RARETE[rarete].toLowerCase() + ' dans cet inventaire.</div></div>';
-            return;
+        } else {
+            html += '<div class="grille-cards">' + items.map(function (ligne) {
+                var it = parNumero(ligne.numero);
+                var possede = (ligne.niveau || 0) + 1;
+                var choisi = (aTroc[rarete][ligne.numero] || 0);
+                return carteProduit({
+                    id: rarete + ':' + ligne.numero, mode: 'troc', nom: it.nom, image: it.image, icone: it.icone,
+                    rarete: rarete, accent: 'var(--' + rarete + ')',
+                    quantite: choisi, quantiteMax: possede, badgeQuantite: possede,
+                });
+            }).join('') + '</div></div>';
         }
-        html += '<div class="grille-cards">' + items.map(function (ligne) {
-            var it = parNumero(ligne.numero);
-            var possede = (ligne.niveau || 0) + 1;
-            var choisi = (aTroc[rarete][ligne.numero] || 0);
-            return carteProduit({
-                id: rarete + ':' + ligne.numero, mode: 'troc', nom: it.nom, image: it.image, icone: it.icone,
-                rarete: rarete, accent: 'var(--' + rarete + ')',
-                quantite: choisi, quantiteMax: possede, badgeQuantite: possede,
-            });
-        }).join('') + '</div></div>';
     });
-    document.getElementById('listeTroc').innerHTML = html;
+
+    zone.innerHTML = html;
     majBarreFixe();
 }
 
@@ -808,7 +789,6 @@ document.getElementById('listeTroc').addEventListener('click', function (e) {
     if (actuel <= 0) delete aTroc[rarete][num]; else aTroc[rarete][num] = Math.min(actuel, max);
     rendreTroc();
 });
-
 
 document.getElementById('listeVendre').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-act]');
@@ -839,7 +819,6 @@ document.getElementById('listeVendre').addEventListener('change', function (e) {
         rendreVente();
     }
 });
-
 
 /* ===================== BARRE FIXE ===================== */
 function majBarreFixe() {
@@ -937,10 +916,9 @@ function majBarreFixe() {
             }
         });
 
-        // Texte pour les objets obtenus. Si 0 échange prêt = message d'avertissement
         var affichageGain = gainsHtml.length > 0 
             ? gainsHtml.join('<span style="color: var(--paper-dim); font-size: 18px;"> + </span>') 
-            : '<span style="color: var(--paper-dim); font-size: 16px; font-weight: 500;">Sélection incomplète (' + TROC.commun.cout + ' requis)</span>';
+            : '<span style="color: var(--paper-dim); font-size: 16px; font-weight: 500;">Sélection incomplète (10 requis)</span>';
 
         var commandeT = '!echanger ' + morceauxTroc.join(' ');
         barre.className = 'barre-fixe mode-troc';
