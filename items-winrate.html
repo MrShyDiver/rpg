@@ -175,22 +175,47 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         return '#ff6b6b';
     }
 
-    function calculerPickrate(itemId) {
-        let totalPick = 0;
+    function calculerPickrate(numero) {
+        // 1. Récupère l'identifiant String correspondant au numéro dans le catalogue 
+        // Si numero est déjà un ID string (ex: "machete_democratique"), on le conserve.
+        let itemIdString = numero;
+        
+        if (STATS[numero] && STATS[numero].id) {
+            itemIdString = STATS[numero].id;
+        } else {
+            // Cherche dans le catalogue si la clé est la valeur 'id' de l'objet
+            for (const [key, obj] of Object.entries(STATS)) {
+                if (key === numero || obj.id === numero || obj.numero == numero) {
+                    itemIdString = key;
+                    break;
+                }
+            }
+        }
+
+        let totalPickDansLeSlot = 0;
         let itemPick = 0;
 
-        Object.values(USAGES_GLOBAUX).forEach(slotDict => {
-            Object.values(slotDict).forEach(userItems => {
-                if (typeof userItems === 'object' && userItems !== null) {
-                    Object.entries(userItems).forEach(([id, count]) => {
-                        totalPick += count;
-                        if (id === itemId) itemPick += count;
-                    });
-                }
-            });
+        // Détermine quel slot lire (weapon, offhand, torso, strategeme)
+        const itemInfo = STATS[numero] || STATS[itemIdString] || {};
+        const slotObjet = itemInfo.slot || 'weapon';
+
+        const slotDict = USAGES_GLOBAUX[slotObjet] || {};
+
+        // Parcourt les usages enregistrés par utilisateur pour ce slot
+        Object.values(slotDict).forEach(userDict => {
+            if (typeof userDict === 'object' && userDict !== null) {
+                Object.entries(userDict).forEach(([id, count]) => {
+                    totalPickDansLeSlot += count;
+                    // Compare avec l'ID string OU le numéro
+                    if (id === itemIdString || id === numero || id === itemInfo.nom) {
+                        itemPick += count;
+                    }
+                });
+            }
         });
 
-        return totalPick > 0 ? (itemPick / totalPick) * 100 : 0;
+        // Taux de choix par rapport aux autres objets du MÊME slot
+        return totalPickDansLeSlot > 0 ? (itemPick / totalPickDansLeSlot) * 100 : 0;
     }
 
     function calculerOpScore(winratePur, pickrate, totalDuels) {
