@@ -13,7 +13,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 28px 18px 60px; }
-h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .page { max-width: 1100px; margin: 0 auto; }
 
 .entete { padding-bottom: 18px; border-bottom: 3px solid var(--yellow); margin-bottom: 22px; }
@@ -36,12 +36,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
 .barre-controles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
 .champ-recherche {
-    flex: 1; min-width: 220px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    flex: 2; min-width: 200px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
     padding: 10px 14px; color: var(--paper); font-size: 14px; font-family: 'Barlow', sans-serif;
 }
 .champ-recherche:focus { outline: none; border-color: var(--yellow); }
-.select-tri {
-    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px;
+.select-tri, .select-filtre {
+    flex: 1; min-width: 150px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px;
     color: var(--paper); font-size: 13px; font-family: 'Barlow Condensed', sans-serif; cursor: pointer;
 }
 
@@ -56,7 +56,8 @@ table.tableau-winrate th {
 }
 table.tableau-winrate td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
 table.tableau-winrate tr:last-child td { border-bottom: none; }
-table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
+table.tableau-winrate tr.ligne-cliquable { cursor: pointer; transition: background 0.15s ease; }
+table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,0.05); }
 
 .tag-rarete { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
 .tag-rarete.commun { background: rgba(141,141,141,0.18); color: var(--commun); }
@@ -98,6 +99,29 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
 .aucune-donnee { color: var(--paper-dim); font-style: italic; font-size: 12.5px; }
 .vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
 
+/* FENÊTRE MODALE (FICHE OBJET DÉTAILLÉE) */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85);
+    display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+}
+.modal-contenu {
+    background: var(--bg-panel); border: 2px solid var(--yellow); border-radius: 12px;
+    max-width: 750px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+.modal-fermer {
+    position: absolute; top: 14px; right: 18px; font-size: 26px; cursor: pointer; color: var(--paper-dim); transition: color 0.15s;
+}
+.modal-fermer:hover { color: var(--yellow); }
+.grille-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 18px 0; }
+.carte-detail { background: rgba(255,255,255,0.03); border: 1px solid var(--line); padding: 12px; border-radius: 6px; }
+.carte-detail .valeur { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 700; color: var(--yellow); }
+
+.barre-niveau-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12.5px; }
+.barre-niveau-label { width: 60px; font-weight: 700; color: var(--paper-dim); }
+.barre-niveau-track { flex: 1; height: 10px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden; }
+.barre-niveau-fill { height: 100%; background: var(--yellow); border-radius: 5px; }
+
 @media (max-width: 700px) {
     body { padding: 20px 12px 50px; }
     .entete h1 { font-size: 20px; }
@@ -112,15 +136,25 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
 <div class="page">
     <div class="entete">
         <h1>WINRATE DES <span>OBJETS</span> & MÉTA</h1>
-        <p>Taux de victoire pur (sans duels miroirs), Pickrate et tendance d'équilibrage par version — un ● vert marque la version active.</p>
+        <p>Taux de victoire pur (sans duels miroirs), Pickrate, Indice d'Incrément (ISI) et tendance d'équilibrage — un ● vert marque la version active.</p>
     </div>
 
     <div class="onglets" id="onglets"></div>
 
     <div class="barre-controles">
         <input type="text" class="champ-recherche" id="champRecherche" placeholder="Rechercher un objet par son nom...">
+        
+        <select class="select-filtre" id="selectFiltreNiveau">
+            <option value="tous">Tous les Niveaux (Moyenne)</option>
+            <option value="0">Niveau 0 uniquement (Base)</option>
+            <option value="1">Niveau 1 uniquement</option>
+            <option value="2">Niveau 2 uniquement</option>
+            <option value="3">Niveau 3 et +</option>
+        </select>
+
         <select class="select-tri" id="selectTri">
             <option value="op_desc">Trending Overpower (OP)</option>
+            <option value="isi_desc">Scaling Toxique (ISI Max)</option>
             <option value="winrate_desc">Winrate pur décroissant</option>
             <option value="pickrate_desc">Pickrate (Les plus joués)</option>
             <option value="duels_desc">Le plus de duels</option>
@@ -139,6 +173,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
                     <th>Duels (Pur)</th>
                     <th>Pickrate</th>
                     <th>Winrate Pur</th>
+                    <th>Scaling ISI</th>
                     <th>Trending OP</th>
                 </tr>
             </thead>
@@ -146,7 +181,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         </table>
     </div>
 
-    <!-- NOUVELLE SECTION : MÉTROLOGIE DE RYTHME & POWER-TO-WIN -->
+    <!-- MÉTROLOGIE DE RYTHME & POWER-TO-WIN -->
     <div class="titre-section">MÉTRIQUES DE SYSTEM DESIGN (RYTHME & ÉQUITÉ)</div>
     <div class="grille-kpi">
         <div class="carte-kpi">
@@ -175,6 +210,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
                     <th>Nb Objets</th>
                     <th>Winrate Moyen</th>
                     <th>Pickrate Moyen</th>
+                    <th>Scaling ISI Moyen</th>
                     <th>Top Performer (Star)</th>
                     <th>Flop (Piège)</th>
                     <th>Statut Méta</th>
@@ -216,6 +252,37 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
     </div>
 </div>
 
+<!-- FENÊTRE MODALE (FICHE OBJET DÉTAILLÉE) -->
+<div class="modal-overlay" id="modalObjet">
+    <div class="modal-contenu">
+        <span class="modal-fermer" onclick="fermerModal()">&times;</span>
+        <h2 id="modalNomObjet" style="color:var(--yellow);">Nom de l'objet</h2>
+        <div id="modalSousTitre" style="color:var(--paper-dim); font-size:13px; margin-bottom:16px;"></div>
+
+        <div class="grille-details">
+            <div class="carte-detail">
+                <div class="slot-objet">Winrate Pur</div>
+                <div class="valeur" id="modalWinrateGlobal">—</div>
+            </div>
+            <div class="carte-detail">
+                <div class="slot-objet">Niveau Moyen</div>
+                <div class="valeur" id="modalNiveauMoyen">—</div>
+            </div>
+            <div class="carte-detail">
+                <div class="slot-objet">Scaling ISI</div>
+                <div class="valeur" id="modalISI">—</div>
+            </div>
+            <div class="carte-detail">
+                <div class="slot-objet">Diagnostic</div>
+                <div class="valeur" id="modalDiagnostic" style="font-size:13px; margin-top:4px;">—</div>
+            </div>
+        </div>
+
+        <h3 style="font-size:15px; margin: 22px 0 12px; color:var(--paper-dim); border-top: 1px solid var(--line); padding-top:14px;">ANALYSE DU WINRATE PAR NIVEAU D'AMÉLIORATION</h3>
+        <div id="modalProgressionNiveaux"></div>
+    </div>
+</div>
+
 <script>
     const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", legendaire: "Légendaire" };
 
@@ -227,6 +294,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
     let versionActive = null;
     let texteRecherche = '';
     let triActuel = 'op_desc';
+    let filtreNiveau = 'tous';
 
     function couleurWinrate(pct) {
         if (pct >= 60) return '#5ddd7a';
@@ -235,43 +303,44 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         return '#ff6b6b';
     }
 
-// Calcul du Pickrate RÉEL de terrain (Basé sur les usages réels en combat enregistrés par Streamer.bot)
     function calculerPickrate(numeroKey) {
         const itemCatalogue = STATS[numeroKey] || {};
         const slotCible = itemCatalogue.slot || '';
+        const itemsVersion = ITEM_STATS.items[versionActive] || {};
 
-        // Si la catégorie d'usage n'existe pas, retourne 0
-        if (!slotCible || !USAGES_GLOBAUX[slotCible]) return 0;
+        if (!slotCible) return 0;
 
-        const usagesSlot = USAGES_GLOBAUX[slotCible];
-        let totalEngagementsSlot = 0;
-        let engagementsItem = 0;
+        let totalDuelsSlot = 0;
+        let duelsItem = 0;
 
-        // Identifiants possibles de l'objet (Numéro "1", ID textuel "machete_democratique" ou Nom)
-        const idTextuel = itemCatalogue.id || itemCatalogue.key || numeroKey;
-        const nomObjet = itemCatalogue.nom || '';
-
-        // Parcourt les comptages réels d'engagements au combat pour ce slot
-        Object.values(usagesSlot).forEach(userDict => {
-            if (typeof userDict === 'object' && userDict !== null) {
-                Object.entries(userDict).forEach(([key, count]) => {
-                    totalEngagementsSlot += count;
-                    if (key === numeroKey || key === idTextuel || key === nomObjet) {
-                        engagementsItem += count;
-                    }
-                });
+        Object.keys(itemsVersion).forEach(num => {
+            const infoCatalogue = STATS[num];
+            if (infoCatalogue && infoCatalogue.slot === slotCible) {
+                const duels = itemsVersion[num].totalDuels || 0;
+                totalDuelsSlot += duels;
+                if (num === numeroKey) duelsItem = duels;
             }
         });
 
-        return totalEngagementsSlot > 0 ? (engagementsItem / totalEngagementsSlot) * 100 : 0;
+        return totalDuelsSlot > 0 ? (duelsItem / totalDuelsSlot) * 100 : 0;
+    }
+
+    function calculerISI(donnees) {
+        const v0 = donnees.v_lvl_0 || 0, d0 = donnees.d_lvl_0 || 0, t0 = v0 + d0;
+        const wr0 = t0 > 0 ? (v0 / t0) * 100 : (donnees.winratePourcent || 50);
+
+        const v3 = (donnees.v_lvl_3 || 0) + (donnees.v_lvl_4 || 0) + (donnees.v_lvl_5 || 0);
+        const d3 = (donnees.d_lvl_3 || 0) + (donnees.d_lvl_4 || 0) + (donnees.d_lvl_5 || 0);
+        const t3 = v3 + d3;
+        const wr3 = t3 > 0 ? (v3 / t3) * 100 : wr0;
+
+        return (wr3 - wr0) / 3.0; // Incrément moyen par niveau
     }
 
     function calculerOpScore(winratePur, pickrate, totalDuels) {
         if (totalDuels < 3) return 50; 
-
         const ecartWinrate = winratePur - 50;
         let score = 50 + (ecartWinrate * 1.3) + (pickrate * 0.5);
-
         return Math.max(0, Math.min(100, score));
     }
 
@@ -279,70 +348,57 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         const infoCatalogue = STATS[numero] || {};
         const rarete = donnees.rarete || infoCatalogue.rarete || 'commun';
         const nom = donnees.nom || infoCatalogue.nom || `Objet #${numero}`;
-        const totalDuels = donnees.totalDuels || 0;
+        
+        let victoires = donnees.victoires || 0;
+        let defaites = donnees.defaites || 0;
+        let egalites = donnees.egalites || 0;
+        
+        if (filtreNiveau !== 'tous') {
+            const suffixe = filtreNiveau === '3' ? ['3', '4', '5'] : [filtreNiveau];
+            victoires = suffixe.reduce((s, lvl) => s + (donnees[`v_lvl_${lvl}`] || 0), 0);
+            defaites = suffixe.reduce((s, lvl) => s + (donnees[`d_lvl_${lvl}`] || 0), 0);
+            egalites = suffixe.reduce((s, lvl) => s + (donnees[`e_lvl_${lvl}`] || 0), 0);
+        }
+
+        const totalDuels = victoires + defaites + egalites;
 
         if (totalDuels === 0) {
             return `
                 <tr data-nom="${nom.toLowerCase()}">
                     <td><div class="nom-objet">${nom}</div><div class="slot-objet">N°${numero}</div></td>
                     <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
-                    <td colspan="4"><span class="aucune-donnee">Aucun duel hors-miroir enregistré</span></td>
+                    <td colspan="5"><span class="aucune-donnee">Aucun duel enregistré pour ce filtre de niveau</span></td>
                     <td>—</td>
                 </tr>`;
         }
 
-        const niveauMoyen = donnees.niveauMoyen !== undefined ? donnees.niveauMoyen : 0;
-
-    return `
-        <tr data-nom="${nom.toLowerCase()}">
-            <td>
-                <div class="nom-objet">${nom}</div>
-                <div class="slot-objet">N°${numero} • Niv. moy: <strong>Lvl ${niveauMoyen}</strong></div>
-            </td>
-            <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
-            <td>${donnees.victoires || 0} / ${donnees.defaites || 0} / ${donnees.egalites || 0}</td>
-            <td>${totalDuels}</td>
-            <td><strong>${pickrate.toFixed(1)}%</strong></td>
-            <td>
-                <div class="barre-winrate-zone">
-                    <div class="barre-winrate-fond"><div class="barre-winrate-remplie" style="width:${pctWin}%; background:${couleurWin};"></div></div>
-                    <span class="winrate-valeur" style="color:${couleurWin}">${pctWin}%</span>
-                </div>
-            </td>
-            <td>
-                <div class="jauge-op-zone">
-                    <span class="badge-op ${badgeClass}">${badgeLabel} (${Math.round(opScore)})</span>
-                    <div class="jauge-op-fond"><div class="jauge-op-remplie" style="width:${opScore}%; background:${couleurOp};"></div></div>
-                </div>
-            </td>
-        </tr>`;
-
-        const pctWin = donnees.winratePourcent || 0;
+        const pctWin = totalDuels > 0 ? Math.round((victoires / totalDuels) * 100) : 0;
         const couleurWin = couleurWinrate(pctWin);
         const pickrate = calculerPickrate(numero);
         const opScore = calculerOpScore(pctWin, pickrate, totalDuels);
+        const isi = calculerISI(donnees);
+        const nivMoyen = donnees.niveauMoyen !== undefined ? donnees.niveauMoyen : 0;
 
         let badgeClass = 'equilibre', badgeLabel = 'Équilibré', couleurOp = '#5ddd7a';
+        if (opScore < 20) { badgeClass = 'up'; badgeLabel = 'UP'; couleurOp = '#7952b3'; }
+        else if (opScore < 40) { badgeClass = 'sub-par'; badgeLabel = 'Sub-par'; couleurOp = '#4c6ef5'; }
+        else if (opScore < 50) { badgeClass = 'viable'; badgeLabel = 'Viable'; couleurOp = '#15aabf'; }
+        else if (opScore < 60) { badgeClass = 'equilibre'; badgeLabel = 'Équilibré'; couleurOp = '#5ddd7a'; }
+        else if (opScore < 75) { badgeClass = 'above-par'; badgeLabel = 'Above-par'; couleurOp = '#f2c230'; }
+        else { badgeClass = 'op'; badgeLabel = 'OP'; couleurOp = '#ff5e3a'; }
 
-        if (opScore < 20) {
-            badgeClass = 'up'; badgeLabel = 'UP'; couleurOp = '#7952b3';
-        } else if (opScore < 40) {
-            badgeClass = 'sub-par'; badgeLabel = 'Sub-par'; couleurOp = '#4c6ef5';
-        } else if (opScore < 50) {
-            badgeClass = 'viable'; badgeLabel = 'Viable'; couleurOp = '#15aabf';
-        } else if (opScore < 60) {
-            badgeClass = 'equilibre'; badgeLabel = 'Équilibré'; couleurOp = '#5ddd7a';
-        } else if (opScore < 75) {
-            badgeClass = 'above-par'; badgeLabel = 'Above-par'; couleurOp = '#f2c230';
-        } else {
-            badgeClass = 'op'; badgeLabel = 'OP'; couleurOp = '#ff5e3a';
-        }
+        let isiCouleur = '#5ddd7a';
+        if (isi > 3.5) isiCouleur = '#ff5e3a';
+        else if (isi < -2.0) isiCouleur = '#4c6ef5';
 
         return `
-            <tr data-nom="${nom.toLowerCase()}">
-                <td><div class="nom-objet">${nom}</div><div class="slot-objet">N°${numero}</div></td>
+            <tr class="ligne-cliquable" onclick="ouvrirModal('${numero}')" data-nom="${nom.toLowerCase()}">
+                <td>
+                    <div class="nom-objet">${nom}</div>
+                    <div class="slot-objet">N°${numero} • Lvl Moyen: <strong>${nivMoyen}</strong></div>
+                </td>
                 <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
-                <td>${donnees.victoires || 0} / ${donnees.defaites || 0} / ${donnees.egalites || 0}</td>
+                <td>${victoires} / ${defaites} / ${egalites}</td>
                 <td>${totalDuels}</td>
                 <td><strong>${pickrate.toFixed(1)}%</strong></td>
                 <td>
@@ -351,6 +407,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
                         <span class="winrate-valeur" style="color:${couleurWin}">${pctWin}%</span>
                     </div>
                 </td>
+                <td><strong style="color:${isiCouleur}">${isi > 0 ? '+' : ''}${isi.toFixed(1)}% / lvl</strong></td>
                 <td>
                     <div class="jauge-op-zone">
                         <span class="badge-op ${badgeClass}">${badgeLabel} (${Math.round(opScore)})</span>
@@ -368,12 +425,14 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
             const donnees = itemsVersion[numero] || { totalDuels: 0, victoires: 0, defaites: 0, egalites: 0, winratePourcent: 0, nom: STATS[numero].nom, rarete: STATS[numero].rarete, id: numero };
             const pickrate = calculerPickrate(numero);
             const opScore = calculerOpScore(donnees.winratePourcent || 0, pickrate, donnees.totalDuels || 0);
+            const isi = calculerISI(donnees);
 
-            lignes.push({ numero, donnees, pickrate, opScore });
+            lignes.push({ numero, donnees, pickrate, opScore, isi });
         }
 
         lignes.sort((a, b) => {
             if (triActuel === 'op_desc') return b.opScore - a.opScore;
+            if (triActuel === 'isi_desc') return b.isi - a.isi;
             if (triActuel === 'winrate_desc') return (b.donnees.winratePourcent || 0) - (a.donnees.winratePourcent || 0);
             if (triActuel === 'pickrate_desc') return b.pickrate - a.pickrate;
             if (triActuel === 'duels_desc') return (b.donnees.totalDuels || 0) - (a.donnees.totalDuels || 0);
@@ -408,6 +467,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
 
             const winrateMoyen = (listeActifs.reduce((sum, i) => sum + i.donnees.winratePourcent, 0) / listeActifs.length).toFixed(1);
             const pickrateMoyen = (listeActifs.reduce((sum, i) => sum + i.pickrate, 0) / listeActifs.length).toFixed(1);
+            const isiMoyen = (listeActifs.reduce((sum, i) => sum + i.isi, 0) / listeActifs.length).toFixed(1);
 
             const trieParWinrate = [...listeActifs].sort((a, b) => b.donnees.winratePourcent - a.donnees.winratePourcent);
             const topItem = trieParWinrate[0];
@@ -423,6 +483,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
                     <td>${liste.length} objets</td>
                     <td><strong style="color:${couleurWinrate(winrateMoyen)}">${winrateMoyen}%</strong></td>
                     <td><strong>${pickrateMoyen}%</strong></td>
+                    <td><strong>${isiMoyen > 0 ? '+' : ''}${isiMoyen}% / lvl</strong></td>
                     <td><span class="nom-objet">${topItem.donnees.nom}</span> <span class="slot-objet">(${topItem.donnees.winratePourcent}%)</span></td>
                     <td><span class="nom-objet">${flopItem.donnees.nom}</span> <span class="slot-objet">(${flopItem.donnees.winratePourcent}%)</span></td>
                     <td><strong style="color:${couleurStatut}">${statut}</strong></td>
@@ -445,7 +506,6 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
             document.getElementById('kpiUnderdog').textContent = `${underdogRate}%`;
         }
 
-        // Affichage des Synergies
         const corpsSyn = document.getElementById('corpsTableauSynergies');
         corpsSyn.innerHTML = '';
 
@@ -525,6 +585,56 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         });
     }
 
+    function ouvrirModal(numero) {
+        const item = STATS[numero] || {};
+        const donneesVersion = (ITEM_STATS.items[versionActive] || {})[numero] || {};
+
+        document.getElementById('modalNomObjet').textContent = item.nom || `Objet #${numero}`;
+        document.getElementById('modalSousTitre').textContent = `N°${numero} | Slot: ${item.slot || 'Général'} | Rareté: ${LABELS_RARETE[item.rarete] || item.rarete || 'Commun'}`;
+        document.getElementById('modalWinrateGlobal').textContent = `${donneesVersion.winratePourcent || 0}%`;
+        document.getElementById('modalNiveauMoyen').textContent = `Lvl ${donneesVersion.niveauMoyen !== undefined ? donneesVersion.niveauMoyen : 0}`;
+
+        const isi = calculerISI(donneesVersion);
+        document.getElementById('modalISI').textContent = `${isi > 0 ? '+' : ''}${isi.toFixed(1)}% / lvl`;
+
+        let diag = "Progression Saine", couleurDiag = "#5ddd7a";
+        if (isi > 3.5) { diag = "Incrément Trop Fort (Toxique)"; couleurDiag = "#ff5e3a"; }
+        else if (isi < -2.0) { diag = "Incrément Inefficace"; couleurDiag = "#4c6ef5"; }
+        
+        const elDiag = document.getElementById('modalDiagnostic');
+        elDiag.textContent = diag;
+        elDiag.style.color = couleurDiag;
+
+        const zoneNiveaux = document.getElementById('modalProgressionNiveaux');
+        zoneNiveaux.innerHTML = '';
+
+        for (let lvl = 0; lvl <= 3; lvl++) {
+            const v = donneesVersion[`v_lvl_${lvl}`] || 0;
+            const d = donneesVersion[`d_lvl_${lvl}`] || 0;
+            const totalLvl = v + d;
+            const wrLvl = totalLvl > 0 ? Math.round((v / totalLvl) * 100) : (donneesVersion.winratePourcent || 0);
+
+            zoneNiveaux.innerHTML += `
+                <div class="barre-niveau-row">
+                    <div class="barre-niveau-label">Lvl ${lvl === 3 ? '3+' : lvl}</div>
+                    <div class="barre-niveau-track">
+                        <div class="barre-niveau-fill" style="width:${wrLvl}%; background:${couleurWinrate(wrLvl)};"></div>
+                    </div>
+                    <div style="width:110px; text-align:right;">
+                        <strong style="color:${couleurWinrate(wrLvl)}">${wrLvl}%</strong>
+                        <span style="font-size:11px; color:var(--paper-dim);">(${totalLvl} duels)</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('modalObjet').style.display = 'flex';
+    }
+
+    function fermerModal() {
+        document.getElementById('modalObjet').style.display = 'none';
+    }
+
     function appliquerFiltreRecherche() {
         const lignes = document.querySelectorAll('#corpsTableau tr');
         let visibles = 0;
@@ -560,6 +670,10 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
     });
     document.getElementById('selectTri').addEventListener('change', (e) => {
         triActuel = e.target.value;
+        afficherVersion();
+    });
+    document.getElementById('selectFiltreNiveau').addEventListener('change', (e) => {
+        filtreNiveau = e.target.value;
         afficherVersion();
     });
 
