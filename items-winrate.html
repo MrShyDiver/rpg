@@ -89,6 +89,12 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
     text-transform: uppercase; color: var(--yellow); margin: 32px 0 12px;
 }
 
+.grille-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 30px; }
+.carte-kpi { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+.kpi-label { font-size: 11px; text-transform: uppercase; color: var(--paper-dim); letter-spacing: 0.5px; }
+.kpi-valeur { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: var(--yellow); margin-top: 4px; }
+.kpi-sous { font-size: 11.5px; color: var(--paper-dim); margin-top: 2px; }
+
 .aucune-donnee { color: var(--paper-dim); font-style: italic; font-size: 12.5px; }
 .vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
 
@@ -140,7 +146,26 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         </table>
     </div>
 
-    <!-- NOUVEAU TABLEAU : RENTABILITÉ PAR RARETÉ -->
+    <!-- NOUVELLE SECTION : MÉTROLOGIE DE RYTHME & POWER-TO-WIN -->
+    <div class="titre-section">MÉTRIQUES DE SYSTEM DESIGN (RYTHME & ÉQUITÉ)</div>
+    <div class="grille-kpi">
+        <div class="carte-kpi">
+            <div class="kpi-label">Durée Moyenne Combat</div>
+            <div class="kpi-valeur" id="kpiDuree">—</div>
+            <div class="kpi-sous">rounds / duel</div>
+        </div>
+        <div class="carte-kpi">
+            <div class="kpi-label">Avantage Premier Joueur</div>
+            <div class="kpi-valeur" id="kpiFirstMover">—</div>
+            <div class="kpi-sous">Winrate de l'attaquant</div>
+        </div>
+        <div class="carte-kpi">
+            <div class="kpi-label">Taux d'Upset Underdog</div>
+            <div class="kpi-valeur" id="kpiUnderdog">—</div>
+            <div class="kpi-sous">Victoires avec < -20% PowerLevel</div>
+        </div>
+    </div>
+
     <div class="titre-section">RENTABILITÉ THÉORIQUE PAR PALIER DE RARETÉ</div>
     <div class="tableau-wrap">
         <table class="tableau-winrate">
@@ -174,6 +199,21 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
             <tbody id="corpsTableauStats"></tbody>
         </table>
     </div>
+
+    <div class="titre-section">TOP SYNERGIES D'ÉQUIPEMENT</div>
+    <div class="tableau-wrap">
+        <table class="tableau-winrate">
+            <thead>
+                <tr>
+                    <th>Combinaison d'Objets</th>
+                    <th>Winrate Combiné</th>
+                    <th>Nombre de Duels</th>
+                    <th>Statut Synergie</th>
+                </tr>
+            </thead>
+            <tbody id="corpsTableauSynergies"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -182,6 +222,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
     let STATS = {};
     let ITEM_STATS = { versionActuelle: "", versions: [], items: {} };
     let STATS_RESULTATS = {};
+    let BALANCE_DATA = {};
     let PLAYERS = {};
     let versionActive = null;
     let texteRecherche = '';
@@ -315,9 +356,9 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         appliquerFiltreRecherche();
         afficherRentabiliteRarete(lignes);
         afficherStatsPures();
+        afficherMetriquesAvancees();
     }
 
-    // NOUVELLE FONCTION : Génération de l'analyse par Rareté
     function afficherRentabiliteRarete(lignesObjets) {
         const corps = document.getElementById('corpsTableauRarete');
         corps.innerHTML = '';
@@ -333,19 +374,16 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
             const liste = groupes[rKey];
             if (liste.length === 0) return;
 
-            // Filtre les objets qui ont eu au moins un combat pour ne pas fausser la moyenne
             const listeActifs = liste.filter(i => i.donnees.totalDuels > 0);
             if (listeActifs.length === 0) return;
 
             const winrateMoyen = (listeActifs.reduce((sum, i) => sum + i.donnees.winratePourcent, 0) / listeActifs.length).toFixed(1);
             const pickrateMoyen = (listeActifs.reduce((sum, i) => sum + i.pickrate, 0) / listeActifs.length).toFixed(1);
 
-            // Trouver la Star et le Flop du tier
             const trieParWinrate = [...listeActifs].sort((a, b) => b.donnees.winratePourcent - a.donnees.winratePourcent);
             const topItem = trieParWinrate[0];
             const flopItem = trieParWinrate[trieParWinrate.length - 1];
 
-            // Statut global du tier
             let statut = 'Équilibré', couleurStatut = '#5ddd7a';
             if (winrateMoyen >= 58) { statut = 'Above-par (Fort)'; couleurStatut = '#f2c230'; }
             else if (winrateMoyen <= 48) { statut = 'Sub-par (Faible)'; couleurStatut = '#4c6ef5'; }
@@ -359,6 +397,61 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
                     <td><span class="nom-objet">${topItem.donnees.nom}</span> <span class="slot-objet">(${topItem.donnees.winratePourcent}%)</span></td>
                     <td><span class="nom-objet">${flopItem.donnees.nom}</span> <span class="slot-objet">(${flopItem.donnees.winratePourcent}%)</span></td>
                     <td><strong style="color:${couleurStatut}">${statut}</strong></td>
+                </tr>
+            `;
+        });
+    }
+
+    function afficherMetriquesAvancees() {
+        const patchData = BALANCE_DATA[versionActive] || {};
+        const totalDuels = patchData.total_duels || 0;
+
+        if (totalDuels > 0) {
+            const dureeMoyenne = (patchData.total_rounds / totalDuels).toFixed(1);
+            const firstMoverWinrate = ((patchData.victoires_premier_joueur || 0) / totalDuels * 100).toFixed(1);
+            const underdogRate = ((patchData.upsets_underdog || 0) / totalDuels * 100).toFixed(1);
+
+            document.getElementById('kpiDuree').textContent = `${dureeMoyenne} rds`;
+            document.getElementById('kpiFirstMover').textContent = `${firstMoverWinrate}%`;
+            document.getElementById('kpiUnderdog').textContent = `${underdogRate}%`;
+        }
+
+        // Affichage des Synergies
+        const corpsSyn = document.getElementById('corpsTableauSynergies');
+        corpsSyn.innerHTML = '';
+
+        const synergies = [];
+        Object.entries(patchData).forEach(([key, val]) => {
+            if (key.startsWith('synergie__') && key.endsWith('__t')) {
+                const prefixe = key.substring(0, key.length - 3);
+                const parties = prefixe.split('__');
+                const item1 = parties[1];
+                const item2 = parties[2];
+
+                const totalCombo = val;
+                const victoiresCombo = patchData[prefixe + '__v'] || 0;
+                const winrateCombo = ((victoiresCombo / totalCombo) * 100).toFixed(1);
+
+                synergies.push({ item1, item2, totalCombo, winrateCombo });
+            }
+        });
+
+        synergies.sort((a, b) => b.winrateCombo - a.winrateCombo);
+
+        synergies.slice(0, 5).forEach(syn => {
+            const nom1 = STATS[syn.item1]?.nom || syn.item1;
+            const nom2 = STATS[syn.item2]?.nom || syn.item2;
+
+            let couleur = '#5ddd7a', label = 'Saine';
+            if (syn.winrateCombo >= 70) { couleur = '#ff5e3a'; label = 'Toxique (Overpowered)'; }
+            else if (syn.winrateCombo >= 60) { couleur = '#f2c230'; label = 'Très Forte'; }
+
+            corpsSyn.innerHTML += `
+                <tr>
+                    <td><span class="nom-objet">${nom1}</span> + <span class="nom-objet">${nom2}</span></td>
+                    <td><strong style="color:${couleur}">${syn.winrateCombo}%</strong></td>
+                    <td>${syn.totalCombo} duels</td>
+                    <td><strong style="color:${couleur}">${label}</strong></td>
                 </tr>
             `;
         });
@@ -445,11 +538,13 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('item_stats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('helldivers_stats_resultats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
+        fetch('helldivers_balance_data.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('players.json?v=' + Date.now()).then(r => r.json()).catch(() => ({}))
-    ]).then(([catalogue, itemStats, statsRes, players]) => {
+    ]).then(([catalogue, itemStats, statsRes, balanceData, players]) => {
         STATS = catalogue;
         ITEM_STATS = itemStats;
         STATS_RESULTATS = statsRes;
+        BALANCE_DATA = balanceData;
         PLAYERS = players;
 
         if (!ITEM_STATS.versions || ITEM_STATS.versions.length === 0) {
