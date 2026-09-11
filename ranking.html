@@ -140,6 +140,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             ],
         },
         {
+            // Les trois faces de l'économie : ce qu'on a en poche, ce qu'on a
+            // gagné en se battant, et ce qu'on a tiré de la revente au PNJ.
+            id: 'medailles', nom: 'Médailles',
+            classements: [
+                { id: 'medailles-solde', titre: 'Médailles en poche', sous: 'Solde disponible pour la boutique', valeur: j => j.medailles, format: v => v.toLocaleString('fr-FR') },
+                { id: 'medailles-duel', titre: 'Médailles gagnées en duel', sous: 'Cumul de tous les combats', valeur: j => j.medaillesDuel, format: v => v.toLocaleString('fr-FR') },
+                { id: 'medailles-revente', titre: 'Médailles gagnées à la revente', sous: 'Cumul des objets écoulés au PNJ', valeur: j => j.medaillesRevente, format: v => v.toLocaleString('fr-FR') },
+            ],
+        },
+        {
             id: 'combat', nom: 'Combat',
             classements: [
                 { id: 'victoires', titre: 'Victoires', sous: 'Total, toutes tranches confondues', valeur: j => j.combat?.victoires, format: v => v },
