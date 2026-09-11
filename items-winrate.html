@@ -163,7 +163,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
     let STATS = {};
     let ITEM_STATS = { versionActuelle: "", versions: [], items: {} };
     let STATS_RESULTATS = {};
-    let USAGES_GLOBAUX = {};
+    let PLAYERS = {};
     let versionActive = null;
     let texteRecherche = '';
     let triActuel = 'op_desc';
@@ -175,31 +175,34 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         return '#ff6b6b';
     }
 
-    function calculerPickrate(numero) {
-        const itemCatalogue = STATS[numero] || {};
-        
-        // Clé textuelle de l'objet (ex: "souffle_draconique" ou "gallant")
-        const idTextuel = itemCatalogue.id || itemCatalogue.key || numero;
-        const slotObjet = itemCatalogue.slot || 'weapon';
-        
-        const slotDict = USAGES_GLOBAUX[slotObjet] || {};
-        let totalUsagesSlot = 0;
-        let usagesItem = 0;
+    // Calcul du Pickrate basé sur les inventaires enregistrés dans players.json
+    function calculerPickrate(numeroKey) {
+        const itemCatalogue = STATS[numeroKey] || {};
+        const slotCible = itemCatalogue.slot || '';
 
-        Object.values(slotDict).forEach(userDict => {
-            if (typeof userDict === 'object' && userDict !== null) {
-                Object.entries(userDict).forEach(([key, count]) => {
-                    totalUsagesSlot += count;
-                    
-                    // Match par ID textuel, numéro d'inventaire ou nom exact
-                    if (key === idTextuel || key === numero || key === itemCatalogue.nom) {
-                        usagesItem += count;
-                    }
-                });
+        let nombreJoueursTotaux = 0;
+        let nombrePossesseurs = 0;
+
+        const numRecherche = parseInt(numeroKey, 10);
+
+        Object.values(PLAYERS).forEach(player => {
+            const inventaire = player.inventaire || [];
+            
+            // On vérifie si le joueur a au moins un objet dans le même slot
+            const aDesObjetsDansCeSlot = inventaire.some(item => {
+                const info = STATS[item.numero.toString()];
+                return info && info.slot === slotCible;
+            });
+
+            if (aDesObjetsDansCeSlot) {
+                nombreJoueursTotaux++;
+                if (inventaire.some(item => item.numero === numRecherche)) {
+                    nombrePossesseurs++;
+                }
             }
         });
 
-        return totalUsagesSlot > 0 ? (usagesItem / totalUsagesSlot) * 100 : 0;
+        return nombreJoueursTotaux > 0 ? (nombrePossesseurs / nombreJoueursTotaux) * 100 : 0;
     }
 
     function calculerOpScore(winratePur, pickrate, totalDuels) {
@@ -377,21 +380,12 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('item_stats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('helldivers_stats_resultats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
-        fetch('helldivers_usage_weapon.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
-        fetch('helldivers_usage_offhand.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
-        fetch('helldivers_usage_torso.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
-        fetch('helldivers_usage_strategeme.json?v=' + Date.now()).then(r => r.json()).catch(() => ({}))
-    ]).then(([catalogue, itemStats, statsRes, uWeapon, uOffhand, uTorso, uStrat]) => {
+        fetch('players.json?v=' + Date.now()).then(r => r.json()).catch(() => ({}))
+    ]).then(([catalogue, itemStats, statsRes, players]) => {
         STATS = catalogue;
         ITEM_STATS = itemStats;
         STATS_RESULTATS = statsRes;
-
-        USAGES_GLOBAUX = {
-            weapon: uWeapon,
-            offhand: uOffhand,
-            torso: uTorso,
-            strategeme: uStrat
-        };
+        PLAYERS = players;
 
         if (!ITEM_STATS.versions || ITEM_STATS.versions.length === 0) {
             document.getElementById('onglets').innerHTML = '';
