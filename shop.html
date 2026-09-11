@@ -578,7 +578,6 @@ function iconeMedaille(classeExtra = '') {
 function carteProduit(cfg) {
     var accent = cfg.accent || 'var(--commun)';
     
-    // Positionnement propre : Rareté à gauche, Quantité/Niveau à droite
     var puceRarete = cfg.rarete
         ? '<div class="card-puce-rarete a-gauche">' + LABEL_RARETE[cfg.rarete] + '</div>'
         : '';
@@ -595,7 +594,6 @@ function carteProduit(cfg) {
         ? '<button type="button" data-act="max" class="btn-max" title="Tout sélectionner" ' + (cfg.quantite >= cfg.quantiteMax ? 'disabled' : '') + '>MAX</button>' 
         : '';
 
-    // Si on est en Troc, bloc masqué tout en gardant l'espacement d'alignement
     var blocPrix = cfg.mode === 'troc'
         ? '<div class="card-prix-bloc" style="min-height: 28px;"></div>'
         : '<div class="card-prix-bloc"><div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>';
@@ -720,7 +718,6 @@ function rendreTroc() {
     var inv = (joueurActif.inventaire || []).slice();
     var html = '';
 
-    // Ordre explicitement demandé : Normal vers Rare en premier, puis Commun vers Normal
     ['normal', 'commun'].forEach(function (rarete) {
         var cible = TROC[rarete].versRarete;
         var items = inv.filter(function (l) {
@@ -732,12 +729,17 @@ function rendreTroc() {
         var pret = Math.floor(qteChoisie / TROC[rarete].cout);
         var reste = qteChoisie % TROC[rarete].cout;
 
+        // Détermination dynamique du pluriel exact (ex: Normaux sélectionnés)
+        var nomRaretePluriel = (rarete === 'normal' && qteChoisie > 1) 
+            ? 'Normaux' 
+            : LABEL_RARETE[rarete] + (qteChoisie > 1 ? 's' : '');
+
         html += '<div class="troc-palier-bloc">' +
             '<div class="troc-flux-large' + (pret > 0 ? ' pret' : '') + '">' +
                 '<div class="troc-cote-large">' +
                     '<div class="troc-pastille-large" style="--accent-troc:var(--' + rarete + ')">' + qteChoisie + '</div>' +
                     '<div class="troc-infos-large">' +
-                        '<div class="nom-rarete">' + LABEL_RARETE[rarete] + 's sélectionnés</div>' +
+                        '<div class="nom-rarete">' + nomRaretePluriel + ' sélectionné' + (qteChoisie > 1 ? 's' : '') + '</div>' +
                         '<div class="compte"><b style="--accent-troc:var(--' + rarete + ')">' + reste + '</b> / ' + TROC[rarete].cout + ' pour débloquer</div>' +
                     '</div>' +
                 '</div>' +
