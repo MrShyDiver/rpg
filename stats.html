@@ -51,6 +51,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stat-valeur { font-size: 22px; font-weight: 800; color: var(--paper); line-height: 1.2; margin-top: 4px; }
 .stat-valeur-texte { font-size: 15px; font-weight: 700; color: var(--paper); line-height: 1.3; margin-top: 4px; }
 .stat-sous { font-size: 12px; font-weight: 500; color: var(--paper-dim); }
+.stat-detail { font-size: 11px; font-weight: 500; color: var(--paper-dim); margin-top: 3px; }
+.stat-detail b { color: var(--paper); font-weight: 700; }
 .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--paper-dim); }
 .stat-victoire { border-left-color: #5ddd7a; }
 .stat-defaite { border-left-color: #ff6b6b; }
@@ -157,6 +159,28 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return s ? s.nom : '—';
     }
 
+    // ⚠️ Doit rester synchronisé avec les constantes de duel.cs (BASE_ATK/DEF/PV/SPD, SPD_MAX_BONUS,
+    // K_SPD) — sert uniquement à décomposer le total déjà connu en "points investis" vs "objets",
+    // jamais à recalculer le total lui-même (qui vient déjà tout fait de players.json).
+    const BASE_ATK = 10, BASE_DEF = 10, BASE_PV = 100, BASE_SPD = 10, SPD_MAX_BONUS = 40, K_SPD = 40;
+
+    // Décompose un total déjà connu en (contribution des points investis, contribution de
+    // l'équipement) — le loadout est déduit par différence, jamais recalculé depuis le catalogue :
+    // reste juste si le total ou les stacks bougent, sans connaître le détail de chaque objet équipé.
+    function decomposerStat(totalAffiche, base, stacks, coefStack) {
+        const investi = Math.round(stacks * coefStack);
+        const objets = Math.round(totalAffiche - base - investi);
+        return { investi, objets };
+    }
+    function decomposerSpd(totalAffiche, stacks) {
+        const investi = Math.round(SPD_MAX_BONUS * Math.tanh(stacks / K_SPD));
+        const objets = Math.round(totalAffiche - BASE_SPD - investi);
+        return { investi, objets };
+    }
+    function ligneDetail(d) {
+        return `<div class="stat-detail"><b>${d.investi}</b> investis + <b>${d.objets}</b> objets</div>`;
+    }
+
     function afficherStatistiques(joueur) {
         const sp = joueur.stats, cl = joueur.classement, co = joueur.combat, cat = co.categories;
         const totalDuels = co.victoires + co.defaites + co.egalites;
@@ -171,12 +195,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             <div class="titre-section">Statistiques</div>
             <div class="stats-grille">
                 <div class="stat-carte" style="border-left-color:${couleurPower}"><div class="stat-label">PowerLevel</div><div class="stat-valeur" style="color:${couleurPower}">${Math.round(sp.powerLevel)} <span class="stat-sous">(#${cl.rangPower}/${cl.totalPower})</span></div></div>
-                <div class="stat-carte stat-atk"><div class="stat-label">ATK</div><div class="stat-valeur">${Math.round(sp.atk)}</div></div>
-                <div class="stat-carte stat-pv"><div class="stat-label">PV</div><div class="stat-valeur">${pvAffiche} <span class="stat-sous">(${Math.round(sp.pvPool)} PDV)</span></div></div>
-                <div class="stat-carte stat-def"><div class="stat-label">DEF</div><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div></div>
+                <div class="stat-carte stat-atk"><div class="stat-label">ATK</div><div class="stat-valeur">${Math.round(sp.atk)}</div>${ligneDetail(decomposerStat(sp.atk, BASE_ATK, sp.atkStacks || 0, 1))}</div>
+                <div class="stat-carte stat-pv"><div class="stat-label">PV</div><div class="stat-valeur">${pvAffiche} <span class="stat-sous">(${Math.round(sp.pvPool)} PDV)</span></div>${ligneDetail(decomposerStat(sp.pvPool, BASE_PV, sp.pvStacks || 0, 10))}</div>
+                <div class="stat-carte stat-def"><div class="stat-label">DEF</div><div class="stat-valeur">${Math.round(sp.def)} <span class="stat-sous">(${sp.mitigation}% mitig.)</span></div>${ligneDetail(decomposerStat(sp.def, BASE_DEF, sp.defStacks || 0, 1))}</div>
                 <div class="stat-carte stat-protection"><div class="stat-label">Protections actives</div><div class="stat-valeur">${co.protectionsActives} <span class="info-bulle" tabindex="0"><span class="info-icone">i</span><span class="info-texte">Réduit les dégâts de 20% pour un combat et consomme une protection</span></span></div></div>
-                <div class="stat-carte stat-luck"><div class="stat-label">LUCK</div><div class="stat-valeur">${Math.round(sp.luck) + 10} <span class="stat-sous">(${sp.crit}% crit)</span></div></div>
-                <div class="stat-carte stat-spd"><div class="stat-label">Speed</div><div class="stat-valeur">${Math.round(sp.spd)}</div></div>
+                <div class="stat-carte stat-luck"><div class="stat-label">LUCK</div><div class="stat-valeur">${Math.round(sp.luck) + 10} <span class="stat-sous">(${sp.crit}% crit)</span></div>${ligneDetail(decomposerStat(sp.luck, 0, sp.luckStacks || 0, 1))}</div>
+                <div class="stat-carte stat-spd"><div class="stat-label">Speed</div><div class="stat-valeur">${Math.round(sp.spd)}</div>${ligneDetail(decomposerSpd(sp.spd, sp.spdStacks || 0))}</div>
             </div>
             <div class="titre-section titre-section-petit">Classement</div>
             <div class="stats-grille">
