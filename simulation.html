@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulation & Aperçu du Prochain Patch</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f; --vert: #5ddd7a;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e; --purple: #7952b3;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 28px 18px 60px; }
+h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.page { max-width: 1100px; margin: 0 auto; }
+
+.entete { padding-bottom: 18px; border-bottom: 3px solid var(--purple); margin-bottom: 22px; }
+.entete h1 { font-size: 26px; font-weight: 700; }
+.entete h1 span { color: var(--purple); }
+.entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
+
+.badge-version {
+    display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 11px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px;
+    background: rgba(121, 82, 179, 0.25); color: #d0bfff; border: 1px solid var(--purple);
+    margin-bottom: 8px;
+}
+
+.grille-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.carte-kpi { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+.kpi-label { font-size: 11px; text-transform: uppercase; color: var(--paper-dim); letter-spacing: 0.5px; }
+.kpi-valeur { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: var(--yellow); margin-top: 4px; }
+.kpi-sous { font-size: 11.5px; color: var(--paper-dim); margin-top: 2px; }
+
+.titre-section {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--yellow); margin: 28px 0 14px;
+}
+
+.tableau-wrap { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 30px; }
+table.tableau-winrate { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.tableau-winrate th {
+    font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--paper-dim); font-size: 11px; text-align: left; padding: 12px 14px; border-bottom: 2px solid var(--line);
+    background: rgba(255,255,255,0.02);
+}
+table.tableau-winrate td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+table.tableau-winrate tr:last-child td { border-bottom: none; }
+
+.tag-action {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.05em;
+    text-transform: uppercase; border-radius: 4px; padding: 3px 8px; white-space: nowrap;
+}
+.tag-action.nerf { background: rgba(255, 94, 58, 0.2); color: #ff5e3a; border: 1px solid #ff5e3a; }
+.tag-action.buff { background: rgba(93, 221, 122, 0.2); color: #5ddd7a; border: 1px solid #5ddd7a; }
+
+.changement-detail { font-family: monospace; font-size: 12.5px; color: var(--paper); }
+.nom-objet { font-weight: 600; font-size: 14px; }
+
+.aucune-donnee { text-align: center; padding: 40px; color: var(--paper-dim); font-style: italic; }
+
+.grille-cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-bottom: 30px; }
+.carte-objet-patch {
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+    position: relative; transition: border-color 0.15s ease;
+}
+.carte-objet-patch:hover { border-color: var(--purple); }
+.carte-entete { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.carte-isi { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 700; color: #ff5e3a; }
+.carte-changement-liste { background: rgba(0,0,0,0.25); border-radius: 6px; padding: 10px; font-size: 12px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="entete">
+        <span class="badge-version">Environnement de Test • Dry Run</span>
+        <h1>SIMULATION & APERÇU DU <span>PROCHAIN PATCH</span></h1>
+        <p>Ajustements d'incréments théoriques générés par le moteur d'analyse ISI sans modifier le catalogue actif du jeu.</p>
+    </div>
+
+    <!-- METRIQUES GLOBALES DE SIMULATION -->
+    <div class="grille-kpi">
+        <div class="carte-kpi">
+            <div class="kpi-label">Objets Ciblés</div>
+            <div class="kpi-valeur" id="kpiNbObjets">—</div>
+            <div class="kpi-sous">nécessitant un rééquilibrage</div>
+        </div>
+        <div class="carte-kpi">
+            <div class="kpi-label">Ajustement Moyen Proposed</div>
+            <div class="kpi-valeur" id="kpiCoef">-20%</div>
+            <div class="kpi-sous">sur l'incrément par niveau</div>
+        </div>
+        <div class="carte-kpi">
+            <div class="kpi-label">ISI Seuil Toxique</div>
+            <div class="kpi-valeur" style="color:#ff5e3a;">+3.5%</div>
+            <div class="kpi-sous">winrate gagné / niveau</div>
+        </div>
+    </div>
+
+    <!-- VUE CARTES COMPARATIVES -->
+    <div class="titre-section">CARTES DE MODIFICATIONS PROPOSÉES</div>
+    <div class="grille-cartes" id="grilleCartes"></div>
+
+    <!-- TABLEAU RÉCAPITULATIF TECHNIQUE -->
+    <div class="titre-section">TABLEAU RÉCAPITULATIF TECHNIQUE</div>
+    <div class="tableau-wrap">
+        <table class="tableau-winrate">
+            <thead>
+                <tr>
+                    <th>Objet Cible</th>
+                    <th>Action Proposée</th>
+                    <th>ISI Mesuré</th>
+                    <th>Formule d'Ajustement (Avant ➔ Après)</th>
+                </tr>
+            </thead>
+            <tbody id="corpsTableau"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function afficherSimulation(propositions) {
+        const kpiNb = document.getElementById('kpiNbObjets');
+        const corpsTableau = document.getElementById('corpsTableau');
+        const grilleCartes = document.getElementById('grilleCartes');
+
+        if (!propositions || propositions.length === 0) {
+            kpiNb.textContent = "0";
+            const messageVide = '<tr><td colspan="4" class="aucune-donnee">🧪 Aucune anomalie détectée lors de la simulation. La métagame est parfaitement équilibrée !</td></tr>';
+            corpsTableau.innerHTML = messageVide;
+            grilleCartes.innerHTML = '<div class="aucune-donnee" style="grid-column: 1 / -1;">Aucun ajustement requis.</div>';
+            return;
+        }
+
+        kpiNb.textContent = propositions.length;
+
+        // 1. Remplissage du Tableau Technique
+        corpsTableau.innerHTML = propositions.map(p => `
+            <tr>
+                <td><strong class="nom-objet">${p.NomObjet}</strong></td>
+                <td><span class="tag-action nerf">${p.TypeAjustement || 'Nerf ISI'}</span></td>
+                <td><strong style="color:#ff5e3a">+${p.ISIActuel}% / lvl</strong></td>
+                <td><span class="changement-detail">${p.ModificationsProposees}</span></td>
+            </tr>
+        `).join('');
+
+        // 2. Remplissage de la Grille de Cartes
+        grilleCartes.innerHTML = propositions.map(p => `
+            <div class="carte-objet-patch">
+                <div class="carte-entete">
+                    <span class="nom-objet">${p.NomObjet}</span>
+                    <span class="tag-action nerf">${p.TypeAjustement || 'Nerf Proposed'}</span>
+                </div>
+                <div style="font-size:12px; color:var(--paper-dim); margin-bottom:8px;">
+                    Incrément Scaling Index : <span class="carte-isi">+${p.ISIActuel}%</span> / lvl
+                </div>
+                <div class="carte-changement-liste">
+                    ${p.ModificationsProposees.split(' | ').map(m => `<div>• ${m}</div>`).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Chargement du fichier de simulation envoyé par la sous-action isolée
+    fetch('preview_patch.json?v=' + Date.now())
+        .then(r => r.json())
+        .then(data => afficherSimulation(data))
+        .catch(err => {
+            console.error('Erreur lors du chargement de preview_patch.json :', err);
+            afficherSimulation([]);
+        });
+</script>
+</body>
+</html>
