@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Winrate & Méta des objets et statistiques</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<!-- Inclusion de Chart.js pour les graphiques analytiques -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root {
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f; --vert: #5ddd7a;
@@ -99,28 +101,32 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
 .aucune-donnee { color: var(--paper-dim); font-style: italic; font-size: 12.5px; }
 .vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
 
-/* FENÊTRE MODALE (FICHE OBJET DÉTAILLÉE) */
+/* FENÊTRE MODALE DÉTAILLÉE AVEC GRAPHIQUES */
 .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85);
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88);
     display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+    backdrop-filter: blur(4px);
 }
 .modal-contenu {
     background: var(--bg-panel); border: 2px solid var(--yellow); border-radius: 12px;
-    max-width: 750px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; position: relative;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    max-width: 900px; width: 100%; max-height: 92vh; overflow-y: auto; padding: 26px; position: relative;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.9);
 }
 .modal-fermer {
     position: absolute; top: 14px; right: 18px; font-size: 26px; cursor: pointer; color: var(--paper-dim); transition: color 0.15s;
 }
 .modal-fermer:hover { color: var(--yellow); }
-.grille-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 18px 0; }
-.carte-detail { background: rgba(255,255,255,0.03); border: 1px solid var(--line); padding: 12px; border-radius: 6px; }
-.carte-detail .valeur { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 700; color: var(--yellow); }
 
-.barre-niveau-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12.5px; }
-.barre-niveau-label { width: 60px; font-weight: 700; color: var(--paper-dim); }
-.barre-niveau-track { flex: 1; height: 10px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden; }
-.barre-niveau-fill { height: 100%; background: var(--yellow); border-radius: 5px; }
+.grille-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 18px 0; }
+.carte-detail { background: rgba(255,255,255,0.03); border: 1px solid var(--line); padding: 12px; border-radius: 6px; }
+.carte-detail .valeur { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--yellow); }
+
+.zone-graphiques { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; margin-top: 20px; }
+.boite-graphique { background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 8px; padding: 16px; position: relative; height: 280px; }
+
+.table-exhaustivité { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+.table-exhaustivité th, .table-exhaustivité td { padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.table-exhaustivité th { color: var(--paper-dim); font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
 
 @media (max-width: 700px) {
     body { padding: 20px 12px 50px; }
@@ -129,6 +135,7 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
     table.tableau-winrate th, table.tableau-winrate td { padding: 8px 6px; }
     .slot-objet { display: none; }
     .barre-winrate-zone { min-width: 70px; }
+    .zone-graphiques { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -145,7 +152,7 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         <input type="text" class="champ-recherche" id="champRecherche" placeholder="Rechercher un objet par son nom...">
         
         <select class="select-filtre" id="selectFiltreNiveau">
-            <option value="tous">Tous les Niveaux (Moyenne)</option>
+            <option value="tous">Tous les Niveaux (Cumulé)</option>
             <option value="0">Niveau 0 uniquement (Base)</option>
             <option value="1">Niveau 1 uniquement</option>
             <option value="2">Niveau 2 uniquement</option>
@@ -252,7 +259,7 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
     </div>
 </div>
 
-<!-- FENÊTRE MODALE (FICHE OBJET DÉTAILLÉE) -->
+<!-- FENÊTRE MODALE AVEC GRAPHIQUES EXHAUSTIFS -->
 <div class="modal-overlay" id="modalObjet">
     <div class="modal-contenu">
         <span class="modal-fermer" onclick="fermerModal()">&times;</span>
@@ -278,8 +285,29 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
             </div>
         </div>
 
-        <h3 style="font-size:15px; margin: 22px 0 12px; color:var(--paper-dim); border-top: 1px solid var(--line); padding-top:14px;">ANALYSE DU WINRATE PAR NIVEAU D'AMÉLIORATION</h3>
-        <div id="modalProgressionNiveaux"></div>
+        <div class="zone-graphiques">
+            <div class="boite-graphique">
+                <canvas id="chartWinrateNiveau"></canvas>
+            </div>
+            <div class="boite-graphique">
+                <canvas id="chartComparatifSlot"></canvas>
+            </div>
+        </div>
+
+        <h3 style="font-size:15px; margin: 24px 0 10px; color:var(--paper-dim); border-top: 1px solid var(--line); padding-top:16px;">EXHAUSTIVITÉ DES DONNÉES PAR NIVEAU D'AMÉLIORATION</h3>
+        <table class="table-exhaustivité">
+            <thead>
+                <tr>
+                    <th>Niveau</th>
+                    <th>Victoires</th>
+                    <th>Défaites</th>
+                    <th>Égalités</th>
+                    <th>Total Duels</th>
+                    <th>Winrate Pur</th>
+                </tr>
+            </thead>
+            <tbody id="corpsTableauExhaustif"></tbody>
+        </table>
     </div>
 </div>
 
@@ -295,6 +323,9 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
     let texteRecherche = '';
     let triActuel = 'op_desc';
     let filtreNiveau = 'tous';
+
+    let chartNiveauInstance = null;
+    let chartSlotInstance = null;
 
     function couleurWinrate(pct) {
         if (pct >= 60) return '#5ddd7a';
@@ -329,12 +360,25 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         const v0 = donnees.v_lvl_0 || 0, d0 = donnees.d_lvl_0 || 0, t0 = v0 + d0;
         const wr0 = t0 > 0 ? (v0 / t0) * 100 : (donnees.winratePourcent || 50);
 
-        const v3 = (donnees.v_lvl_3 || 0) + (donnees.v_lvl_4 || 0) + (donnees.v_lvl_5 || 0);
-        const d3 = (donnees.d_lvl_3 || 0) + (donnees.d_lvl_4 || 0) + (donnees.d_lvl_5 || 0);
-        const t3 = v3 + d3;
-        const wr3 = t3 > 0 ? (v3 / t3) * 100 : wr0;
+        // Trouve le niveau maximum réellement disponible dans le JSON (sans limite arbitraire)
+        let maxLvlTrouve = 0;
+        Object.keys(donnees).forEach(k => {
+            if (k.startsWith('v_lvl_')) {
+                const lvl = parseInt(k.replace('v_lvl_', ''), 10);
+                if (lvl > maxLvlTrouve && ((donnees[`v_lvl_${lvl}`] || 0) + (donnees[`d_lvl_${lvl}`] || 0)) > 0) {
+                    maxLvlTrouve = lvl;
+                }
+            }
+        });
 
-        return (wr3 - wr0) / 3.0; // Incrément moyen par niveau
+        if (maxLvlTrouve === 0) return 0;
+
+        const vMax = donnees[`v_lvl_${maxLvlTrouve}`] || 0;
+        const dMax = donnees[`d_lvl_${maxLvlTrouve}`] || 0;
+        const tMax = vMax + dMax;
+        const wrMax = tMax > 0 ? (vMax / tMax) * 100 : wr0;
+
+        return (wrMax - wr0) / maxLvlTrouve;
     }
 
     function calculerOpScore(winratePur, pickrate, totalDuels) {
@@ -354,10 +398,24 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         let egalites = donnees.egalites || 0;
         
         if (filtreNiveau !== 'tous') {
-            const suffixe = filtreNiveau === '3' ? ['3', '4', '5'] : [filtreNiveau];
-            victoires = suffixe.reduce((s, lvl) => s + (donnees[`v_lvl_${lvl}`] || 0), 0);
-            defaites = suffixe.reduce((s, lvl) => s + (donnees[`d_lvl_${lvl}`] || 0), 0);
-            egalites = suffixe.reduce((s, lvl) => s + (donnees[`e_lvl_${lvl}`] || 0), 0);
+            if (filtreNiveau === '3') {
+                // Récupère dynamiquement tous les niveaux >= 3 présents dans les données
+                victoires = 0; defaites = 0; egalites = 0;
+                Object.keys(donnees).forEach(k => {
+                    if (k.startsWith('v_lvl_')) {
+                        const lvl = parseInt(k.replace('v_lvl_', ''), 10);
+                        if (lvl >= 3) {
+                            victoires += (donnees[`v_lvl_${lvl}`] || 0);
+                            defaites += (donnees[`d_lvl_${lvl}`] || 0);
+                            egalites += (donnees[`e_lvl_${lvl}`] || 0);
+                        }
+                    }
+                });
+            } else {
+                victoires = donnees[`v_lvl_${filtreNiveau}`] || 0;
+                defaites = donnees[`d_lvl_${filtreNiveau}`] || 0;
+                egalites = donnees[`e_lvl_${filtreNiveau}`] || 0;
+            }
         }
 
         const totalDuels = victoires + defaites + egalites;
@@ -372,7 +430,7 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
                 </tr>`;
         }
 
-        const pctWin = totalDuels > 0 ? Math.round((victoires / totalDuels) * 100) : 0;
+        const pctWin = totalDuels > 0 ? Math.round((victoires / (victoires + defaites || 1)) * 100) : 0;
         const couleurWin = couleurWinrate(pctWin);
         const pickrate = calculerPickrate(numero);
         const opScore = calculerOpScore(pctWin, pickrate, totalDuels);
@@ -395,7 +453,7 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
             <tr class="ligne-cliquable" onclick="ouvrirModal('${numero}')" data-nom="${nom.toLowerCase()}">
                 <td>
                     <div class="nom-objet">${nom}</div>
-                    <div class="slot-objet">N°${numero} • Lvl Moyen: <strong>${nivMoyen}</strong></div>
+                    <div class="slot-objet">N°${numero} • Lvl Moyen: <strong>Lvl ${nivMoyen}</strong></div>
                 </td>
                 <td><span class="tag-rarete ${rarete}">${LABELS_RARETE[rarete] || rarete}</span></td>
                 <td>${victoires} / ${defaites} / ${egalites}</td>
@@ -605,30 +663,122 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         elDiag.textContent = diag;
         elDiag.style.color = couleurDiag;
 
-        const zoneNiveaux = document.getElementById('modalProgressionNiveaux');
-        zoneNiveaux.innerHTML = '';
+        // Exhaustivité dynamique sans borne supérieure fixe
+        const zoneExhaustive = document.getElementById('corpsTableauExhaustif');
+        zoneExhaustive.innerHTML = '';
 
-        for (let lvl = 0; lvl <= 3; lvl++) {
+        let maxLvlIndex = 0;
+        Object.keys(donneesVersion).forEach(k => {
+            if (k.startsWith('v_lvl_')) {
+                const lvl = parseInt(k.replace('v_lvl_', ''), 10);
+                if (lvl > maxLvlIndex) maxLvlIndex = lvl;
+            }
+        });
+
+        const labelsChart = [];
+        const dataChartWinrate = [];
+
+        for (let lvl = 0; lvl <= Math.max(3, maxLvlIndex); lvl++) {
             const v = donneesVersion[`v_lvl_${lvl}`] || 0;
             const d = donneesVersion[`d_lvl_${lvl}`] || 0;
-            const totalLvl = v + d;
-            const wrLvl = totalLvl > 0 ? Math.round((v / totalLvl) * 100) : (donneesVersion.winratePourcent || 0);
+            const e = donneesVersion[`e_lvl_${lvl}`] || 0;
+            const totalLvl = v + d + e;
+            const wrLvl = (v + d) > 0 ? Math.round((v / (v + d)) * 100) : 0;
 
-            zoneNiveaux.innerHTML += `
-                <div class="barre-niveau-row">
-                    <div class="barre-niveau-label">Lvl ${lvl === 3 ? '3+' : lvl}</div>
-                    <div class="barre-niveau-track">
-                        <div class="barre-niveau-fill" style="width:${wrLvl}%; background:${couleurWinrate(wrLvl)};"></div>
-                    </div>
-                    <div style="width:110px; text-align:right;">
-                        <strong style="color:${couleurWinrate(wrLvl)}">${wrLvl}%</strong>
-                        <span style="font-size:11px; color:var(--paper-dim);">(${totalLvl} duels)</span>
-                    </div>
-                </div>
+            labelsChart.push(`Lvl ${lvl}`);
+            dataChartWinrate.push(wrLvl);
+
+            zoneExhaustive.innerHTML += `
+                <tr>
+                    <td><strong>Lvl ${lvl}</strong></td>
+                    <td style="color:#5ddd7a">${v}</td>
+                    <td style="color:#ff6b6b">${d}</td>
+                    <td style="color:#f2c230">${e}</td>
+                    <td>${totalLvl}</td>
+                    <td><strong style="color:${couleurWinrate(wrLvl)}">${totalLvl > 0 ? wrLvl + '%' : '—'}</strong></td>
+                </tr>
             `;
         }
 
+        renderChartNiveau(labelsChart, dataChartWinrate);
+        renderChartSlot(item.slot, donneesVersion.winratePourcent || 0);
+
         document.getElementById('modalObjet').style.display = 'flex';
+    }
+
+    function renderChartNiveau(labels, data) {
+        const ctx = document.getElementById('chartWinrateNiveau').getContext('2d');
+        if (chartNiveauInstance) chartNiveauInstance.destroy();
+
+        chartNiveauInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Winrate Pur (%)',
+                    data: data,
+                    borderColor: '#f2c230',
+                    backgroundColor: 'rgba(242, 194, 48, 0.15)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#f2c230'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: 'Courbe de Winrate Pur par Niveau', color: '#e9e3d2', font: { family: 'Oswald', size: 14 } },
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { min: 0, max: 100, grid: { color: '#2c2c2e' }, ticks: { color: '#b8b2a0' } },
+                    x: { grid: { color: '#2c2c2e' }, ticks: { color: '#b8b2a0' } }
+                }
+            }
+        });
+    }
+
+    function renderChartSlot(slot, itemWinrate) {
+        const ctx = document.getElementById('chartComparatifSlot').getContext('2d');
+        if (chartSlotInstance) chartSlotInstance.destroy();
+
+        const itemsVersion = ITEM_STATS.items[versionActive] || {};
+        let totalWinrateSlot = 0, nbItemsSlot = 0;
+
+        Object.keys(itemsVersion).forEach(num => {
+            if (STATS[num] && STATS[num].slot === slot && itemsVersion[num].totalDuels > 0) {
+                totalWinrateSlot += itemsVersion[num].winratePourcent || 0;
+                nbItemsSlot++;
+            }
+        });
+
+        const winrateMoyenSlot = nbItemsSlot > 0 ? (totalWinrateSlot / nbItemsSlot).toFixed(1) : 50;
+
+        chartSlotInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Objet Actuel', `Moyenne Slot (${slot})`],
+                datasets: [{
+                    data: [itemWinrate, winrateMoyenSlot],
+                    backgroundColor: ['#f2c230', '#4a9fd8'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: 'Performance vs Moyenne du Slot', color: '#e9e3d2', font: { family: 'Oswald', size: 14 } },
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { min: 0, max: 100, grid: { color: '#2c2c2e' }, ticks: { color: '#b8b2a0' } },
+                    x: { grid: { display: false }, ticks: { color: '#b8b2a0' } }
+                }
+            }
+        });
     }
 
     function fermerModal() {
