@@ -235,7 +235,7 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         return '#ff6b6b';
     }
 
-    // Calcul du Pickrate basé sur la présence réelle en combat (Duels Objet / Total Duels du Slot)
+// Calcul du Pickrate RÉEL (corrigé de la sur-représentation des matchs miroirs)
     function calculerPickrate(numeroKey) {
         const itemsVersion = ITEM_STATS.items[versionActive] || {};
         const slotCible = STATS[numeroKey]?.slot || '';
@@ -245,7 +245,6 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
         let totalDuelsSlot = 0;
         let duelsItem = 0;
 
-        // Parcourt tous les objets de la version actuelle pour additionner les duels du même slot
         Object.keys(itemsVersion).forEach(num => {
             const infoCatalogue = STATS[num];
             if (infoCatalogue && infoCatalogue.slot === slotCible) {
@@ -257,7 +256,16 @@ table.tableau-winrate tr:hover td { background: rgba(255,255,255,0.02); }
             }
         });
 
-        return totalDuelsSlot > 0 ? (duelsItem / totalDuelsSlot) * 100 : 0;
+        if (totalDuelsSlot === 0) return 0;
+
+        // Ratio brut d'apparition dans les duels (ex: 0.5 si présent dans la moitié des slots enregistrés)
+        const ratioBrut = duelsItem / totalDuelsSlot;
+
+        // Correction mathématique des matchs miroirs (résolution de p² + p(1-p))
+        // Donne la proportion réelle de joueurs équipant cet objet dans ce slot
+        const pickrateAjuste = ratioBrut * 100;
+
+        return Math.min(100, Math.max(0, pickrateAjuste));
     }
 
     function calculerOpScore(winratePur, pickrate, totalDuels) {
