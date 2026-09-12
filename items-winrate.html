@@ -815,9 +815,15 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
     function construireOnglets() {
         const ongletsEl = document.getElementById('onglets');
         ongletsEl.innerHTML = '';
-        ITEM_STATS.versions.forEach((v, idx) => {
+        // ⚠️ CORRECTIF : voir le commentaire détaillé plus bas sur versionActive -- calculé ICI
+        // en premier pour que l'onglet visuellement en surbrillance corresponde à la version dont
+        // les données sont réellement affichées, plutôt que de dépendre de l'ordre alphabétique.
+        const versionParDefaut = ITEM_STATS.versions.includes(ITEM_STATS.versionActuelle)
+            ? ITEM_STATS.versionActuelle
+            : (ITEM_STATS.versions[0] || null);
+        ITEM_STATS.versions.forEach((v) => {
             const bouton = document.createElement('div');
-            bouton.className = 'onglet' + (idx === 0 ? ' actif' : '') + (v === ITEM_STATS.versionActuelle ? ' actif-version' : '');
+            bouton.className = 'onglet' + (v === versionParDefaut ? ' actif' : '') + (v === ITEM_STATS.versionActuelle ? ' actif-version' : '');
             bouton.textContent = v;
             bouton.addEventListener('click', () => {
                 document.querySelectorAll('.onglet').forEach(o => o.classList.remove('actif'));
@@ -827,7 +833,7 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
             });
             ongletsEl.appendChild(bouton);
         });
-        versionActive = ITEM_STATS.versions[0] || null;
+        versionActive = versionParDefaut;
     }
 
     document.getElementById('champRecherche').addEventListener('input', (e) => {
