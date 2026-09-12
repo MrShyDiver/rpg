@@ -257,6 +257,17 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
             <tbody id="corpsTableauSynergies"></tbody>
         </table>
     </div>
+
+    <div class="titre-section">CALIBRATION DU POWERLEVEL (ÉCART RÉEL VS RÉSULTAT RÉEL)</div>
+    <p style="color:var(--paper-dim); font-size:13px; margin-bottom:16px; max-width:75ch;">
+        Pour chaque tranche d'écart de PowerLevel entre attaquant et défenseur, le taux de victoire de l'attaquant —
+        <b style="color:#f2c230">Réel</b> vient de tes vrais duels, <b style="color:#4a9fd8">Simulation</b> du simulateur
+        Monte Carlo (uniquement des paires ±30%, voir <code>!simuler</code>). Si le seuil ±30% (zone grisée) correspond
+        vraiment à un combat équitable, la courbe Réel devrait y rester proche de 50%.
+    </p>
+    <div class="boite-graphique" style="height:320px; margin-bottom:30px;">
+        <canvas id="chartCalibration"></canvas>
+    </div>
 </div>
 
 <!-- FENÊTRE MODALE AVEC GRAPHIQUES EXHAUSTIFS -->
@@ -827,18 +838,95 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         afficherVersion();
     });
 
+    let chartCalibrationInstance = null;
+
+    // Construit la courbe "écart de PowerLevel -> taux de victoire de l'attaquant", une série par
+    // source (REEL / SIMULATION). Les seaux vides (aucun duel dans cette tranche d'écart) sont
+    // simplement absents de la courbe plutôt que tracés à 0%, pour ne pas laisser croire à un
+    // vrai 0% de winrate là où on n'a tout simplement aucune donnée.
+    function courbeCalibration(donneesSource) {
+        if (!donneesSource) return [];
+        const seaux = Object.keys(donneesSource).map(k => parseInt(k, 10)).sort((a, b) => a - b);
+        return seaux.map(seau => {
+            const d = donneesSource[String(seau)] || {};
+            const v = d.victoires || 0, def = d.defaites || 0;
+            const total = v + def;
+            return { seau, winrate: total > 0 ? (v / total) * 100 : null, total };
+        }).filter(pt => pt.winrate !== null);
+    }
+
+    function afficherCalibration(calibration) {
+        const canvas = document.getElementById('chartCalibration');
+        if (!canvas) return;
+
+        const pointsReel = courbeCalibration(calibration.REEL);
+        const pointsSimu = courbeCalibration(calibration.SIMULATION);
+
+        if (pointsReel.length === 0 && pointsSimu.length === 0) {
+            canvas.parentElement.innerHTML = '<div class="vide-message">Aucune donnée de calibration pour l\'instant — lance quelques vrais duels ou <code>!simuler</code> pour commencer à peupler cette courbe.</div>';
+            return;
+        }
+
+        // Axe X commun aux deux séries : tous les seaux vus par l'une OU l'autre, triés.
+        const tousSeaux = Array.from(new Set([...pointsReel.map(p => p.seau), ...pointsSimu.map(p => p.seau)])).sort((a, b) => a - b);
+        const labels = tousSeaux.map(s => (s > 0 ? '+' : '') + s + '%');
+
+        function alignerSurAxe(points) {
+            const parSeau = Object.fromEntries(points.map(p => [p.seau, p.winrate]));
+            return tousSeaux.map(s => parSeau[s] !== undefined ? Math.round(parSeau[s] * 10) / 10 : null);
+        }
+
+        if (chartCalibrationInstance) chartCalibrationInstance.destroy();
+        const ctx = canvas.getContext('2d');
+        chartCalibrationInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Réel', data: alignerSurAxe(pointsReel), borderColor: '#f2c230',
+                        backgroundColor: 'rgba(242,194,48,0.1)', spanGaps: true, tension: 0.25, pointRadius: 4,
+                    },
+                    {
+                        label: 'Simulation', data: alignerSurAxe(pointsSimu), borderColor: '#4a9fd8',
+                        backgroundColor: 'rgba(74,159,216,0.08)', spanGaps: true, tension: 0.25, pointRadius: 4, borderDash: [5, 4],
+                    },
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#e9e3d2' } },
+                    title: {
+                        display: true, text: "Taux de victoire de l'attaquant, par écart de PowerLevel",
+                        color: '#e9e3d2', font: { family: 'Oswald', size: 14 }
+                    },
+                },
+                scales: {
+                    y: { min: 0, max: 100, title: { display: true, text: 'Victoires attaquant (%)', color: '#b8b2a0' }, grid: { color: '#2c2c2e' }, ticks: { color: '#b8b2a0' } },
+                    x: { title: { display: true, text: 'Écart de PowerLevel (défenseur vs attaquant)', color: '#b8b2a0' }, grid: { color: '#2c2c2e' }, ticks: { color: '#b8b2a0' } },
+                }
+            }
+        });
+    }
+
     Promise.all([
         fetch('catalogue_stats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('item_stats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('helldivers_stats_resultats.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
         fetch('helldivers_balance_data.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
-        fetch('players.json?v=' + Date.now()).then(r => r.json()).catch(() => ({}))
-    ]).then(([catalogue, itemStats, statsRes, balanceData, players]) => {
+        fetch('players.json?v=' + Date.now()).then(r => r.json()).catch(() => ({})),
+        fetch('helldivers_calibration_powerlevel.json?v=' + Date.now()).then(r => r.json()).catch(() => ({}))
+    ]).then(([catalogue, itemStats, statsRes, balanceData, players, calibration]) => {
         STATS = catalogue;
         ITEM_STATS = itemStats;
         STATS_RESULTATS = statsRes;
         BALANCE_DATA = balanceData;
         PLAYERS = players;
+
+        // Indépendant du reste : la calibration a sa propre source de vérité (REEL/SIMULATION),
+        // pas liée aux onglets par version de patch du tableau principal.
+        afficherCalibration(calibration);
 
         if (!ITEM_STATS.versions || ITEM_STATS.versions.length === 0) {
             document.getElementById('onglets').innerHTML = '';
