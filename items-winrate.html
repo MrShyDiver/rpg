@@ -331,6 +331,7 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
     let BALANCE_DATA = {};
     let PLAYERS = {};
     let versionActive = null;
+    let CALIBRATION = { versionActuelle: "", versions: [], data: {} };
     let texteRecherche = '';
     let triActuel = 'op_desc';
     let filtreNiveau = 'tous';
@@ -514,6 +515,10 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         afficherRentabiliteRarete(lignes);
         afficherStatsPures();
         afficherMetriquesAvancees();
+        // La calibration a sa propre liste de versions (peut différer de celle du tableau
+        // principal — ex: pas encore de duel calibré sous une version très récente) ; on réutilise
+        // simplement le même onglet actif, absence de données gérée proprement par la fonction.
+        afficherCalibration((CALIBRATION.data && CALIBRATION.data[versionActive]) || {});
     }
 
     function afficherRentabiliteRarete(lignesObjets) {
@@ -923,14 +928,17 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         STATS_RESULTATS = statsRes;
         BALANCE_DATA = balanceData;
         PLAYERS = players;
-
-        // Indépendant du reste : la calibration a sa propre source de vérité (REEL/SIMULATION),
-        // pas liée aux onglets par version de patch du tableau principal.
-        afficherCalibration(calibration);
+        // Désormais versionnée comme le reste : voir l'appel à afficherCalibration() DANS
+        // afficherVersion(), piloté par l'onglet actif plutôt qu'affiché une fois pour toutes ici.
+        CALIBRATION = calibration && calibration.data ? calibration : { versionActuelle: "", versions: [], data: {} };
 
         if (!ITEM_STATS.versions || ITEM_STATS.versions.length === 0) {
             document.getElementById('onglets').innerHTML = '';
             document.querySelector('.tableau-wrap').outerHTML = '<div class="vide-message">Aucune donnée de winrate disponible.</div>';
+            // Les deux jeux de données sont indépendants (la calibration a pu démarrer avant/après
+            // le suivi par objet) -- on tente quand même de l'afficher plutôt que de la cacher.
+            const versionCalibrationRepli = CALIBRATION.versionActuelle || (CALIBRATION.versions || [])[0];
+            afficherCalibration((CALIBRATION.data && CALIBRATION.data[versionCalibrationRepli]) || {});
             return;
         }
         construireOnglets();
