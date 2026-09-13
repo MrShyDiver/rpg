@@ -519,7 +519,26 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         // La calibration a sa propre liste de versions (peut différer de celle du tableau
         // principal — ex: pas encore de duel calibré sous une version très récente) ; on réutilise
         // simplement le même onglet actif, absence de données gérée proprement par la fonction.
-        afficherCalibration((CALIBRATION.data && CALIBRATION.data[versionActive]) || {});
+        // ⚠️ CORRECTIF : la calibration n'a pas de clé "SIMULATION" au premier niveau -- elle
+        // imbrique SIMULATION/REEL À L'INTÉRIEUR de chaque version de patch (data.V1.SIMULATION),
+        // alors qu'ITEM_STATS traite "SIMULATION" comme une version à part entière, avec son propre
+        // onglet. On cherche donc la donnée SIMULATION la plus RÉCENTE disponible, en partant de la
+        // version active et en remontant les versions précédentes si elle n'en a pas encore (ex:
+        // patch tout juste changé, aucun !simuler relancé depuis) -- plutôt que de dépendre d'une
+        // seule version et risquer un vide alors que des données existent ailleurs.
+        let donneesCalibrationActive;
+        if (versionActive === 'SIMULATION') {
+            const versionsParRecence = [CALIBRATION.versionActuelle, ...(CALIBRATION.versions || [])].filter(Boolean);
+            let simulationTrouvee = null;
+            for (const v of versionsParRecence) {
+                const bloc = (CALIBRATION.data && CALIBRATION.data[v]) || {};
+                if (bloc.SIMULATION && Object.keys(bloc.SIMULATION).length > 0) { simulationTrouvee = bloc.SIMULATION; break; }
+            }
+            donneesCalibrationActive = { SIMULATION: simulationTrouvee };
+        } else {
+            donneesCalibrationActive = (CALIBRATION.data && CALIBRATION.data[versionActive]) || {};
+        }
+        afficherCalibration(donneesCalibrationActive);
     }
 
     function afficherRentabiliteRarete(lignesObjets) {
