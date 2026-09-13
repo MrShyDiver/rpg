@@ -265,8 +265,9 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         Monte Carlo (uniquement des paires ±30%, voir <code>!simuler</code>). Si le seuil ±30% (zone grisée) correspond
         vraiment à un combat équitable, la courbe Réel devrait y rester proche de 50%.
     </p>
-    <div class="boite-graphique" style="height:320px; margin-bottom:30px;">
+    <div class="boite-graphique" style="height:320px; margin-bottom:30px; position:relative;">
         <canvas id="chartCalibration"></canvas>
+        <div id="calibrationVideMessage" class="vide-message" style="display:none;">Aucune donnée de calibration pour l'instant — lance quelques vrais duels ou <code>!simuler</code> pour commencer à peupler cette courbe.</div>
     </div>
 </div>
 
@@ -868,15 +869,25 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
 
     function afficherCalibration(calibration) {
         const canvas = document.getElementById('chartCalibration');
+        const messageVide = document.getElementById('calibrationVideMessage');
         if (!canvas) return;
 
         const pointsReel = courbeCalibration(calibration.REEL);
         const pointsSimu = courbeCalibration(calibration.SIMULATION);
 
+        // ⚠️ CORRECTIF : remplacer canvas.parentElement.innerHTML détruisait le canvas lui-même --
+        // tous les changements d'onglet SUIVANTS échouaient alors silencieusement (getElementById
+        // renvoyait null), même sur une version ayant de vraies données. On bascule désormais
+        // juste la visibilité entre le canvas et un message dédié, sans jamais retirer le canvas
+        // du DOM.
         if (pointsReel.length === 0 && pointsSimu.length === 0) {
-            canvas.parentElement.innerHTML = '<div class="vide-message">Aucune donnée de calibration pour l\'instant — lance quelques vrais duels ou <code>!simuler</code> pour commencer à peupler cette courbe.</div>';
+            canvas.style.display = 'none';
+            if (messageVide) messageVide.style.display = '';
+            if (chartCalibrationInstance) { chartCalibrationInstance.destroy(); chartCalibrationInstance = null; }
             return;
         }
+        canvas.style.display = '';
+        if (messageVide) messageVide.style.display = 'none';
 
         // Axe X commun aux deux séries : tous les seaux vus par l'une OU l'autre, triés.
         const tousSeaux = Array.from(new Set([...pointsReel.map(p => p.seau), ...pointsSimu.map(p => p.seau)])).sort((a, b) => a - b);
