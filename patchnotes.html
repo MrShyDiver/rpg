@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitch RPG — Patchnotes</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+    --buff: #5ddd7a; --nerf: #ff5e3a; --neutre: #4a9fd8;
+}
+* { box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif;
+    margin: 0; padding: 28px 18px 60px; line-height: 1.55;
+}
+h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
+.page { max-width: 880px; margin: 0 auto; }
+
+.entete { padding-bottom: 16px; border-bottom: 3px solid var(--yellow); margin-bottom: 30px; }
+.entete h1 { font-size: 28px; font-weight: 700; }
+.entete h1 span { color: var(--yellow); }
+.entete p { color: var(--paper-dim); font-size: 14px; margin: 7px 0 0; max-width: 62ch; }
+
+.message { color: var(--paper-dim); font-size: 14px; padding: 50px 2px; text-align: center; }
+
+/* ===== Une entree de patch ===== */
+.patch { margin-bottom: 40px; }
+.patch-tete {
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 18px;
+}
+.patch-version { font-size: 22px; font-weight: 700; }
+.patch-transition { color: var(--paper-dim); font-size: 14px; font-weight: 500; }
+.patch-date { margin-left: auto; font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); letter-spacing: .3px; }
+
+.section-titre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px;
+    color: var(--paper-dim); margin: 20px 0 10px;
+}
+
+.liste-objets { display: flex; flex-direction: column; gap: 10px; }
+.carte-objet {
+    display: flex; gap: 14px; background: var(--bg-panel); border: 1px solid var(--line);
+    border-left: 3px solid var(--line); border-radius: 6px; padding: 13px 16px;
+}
+.carte-objet.nouveau { border-left-color: var(--buff); }
+.carte-objet.supprime { border-left-color: var(--nerf); opacity: .75; }
+.carte-objet.modifie { border-left-color: var(--neutre); }
+
+.objet-icone {
+    width: 34px; height: 34px; flex: 0 0 auto; border-radius: 5px; background: rgba(0,0,0,.3);
+    display: flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden;
+}
+.objet-icone img { width: 100%; height: 100%; object-fit: contain; }
+
+.objet-corps { flex: 1; min-width: 0; }
+.objet-tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.objet-nom { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; }
+.tag-rarete { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; }
+.tag-rarete.commun { background: rgba(141,141,141,.18); color: var(--commun); }
+.tag-rarete.normal { background: rgba(93,221,122,.15); color: var(--normal); }
+.tag-rarete.rare { background: rgba(74,159,216,.15); color: var(--rare); }
+.tag-rarete.legendaire { background: rgba(242,194,48,.15); color: var(--legendaire); }
+.objet-slot { font-size: 11.5px; color: var(--paper-dim); }
+
+.liste-changements { margin: 6px 0 0; padding: 0; list-style: none; font-size: 13.5px; }
+.liste-changements li { padding: 3px 0; }
+.liste-changements .fleche { color: var(--paper-dim); margin: 0 6px; }
+.liste-changements .avant { color: var(--nerf); }
+.liste-changements .apres { color: var(--buff); }
+
+.aucun-changement { color: var(--paper-dim); font-size: 13px; font-style: italic; }
+
+@media (max-width: 560px) {
+    .patch-date { margin-left: 0; width: 100%; order: 3; }
+    .carte-objet { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+    <div class="entete">
+        <h1>Journal des <span>mises à jour</span></h1>
+        <p>Chaque ajustement d'objet, généré automatiquement à partir du catalogue — pour suivre l'évolution
+           de l'équilibrage entre deux versions.</p>
+    </div>
+
+    <div id="zoneContenu">
+        <div class="message">Chargement...</div>
+    </div>
+
+</div>
+
+<script>
+function echapper(t) {
+    return String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// Colore une ligne "Label : avant → après" en distinguant visuellement les deux valeurs, sans
+// jamais présumer si c'est un buff ou un nerf (une hausse de dégâts est un buff, une hausse de
+// temps de recharge est un nerf — impossible à deviner génériquement, donc on reste neutre).
+function ligneChangement(texte) {
+    const idx = texte.indexOf(' → ');
+    if (idx === -1) return `<li>${echapper(texte)}</li>`;
+    const gauche = texte.slice(0, idx);
+    const droite = texte.slice(idx + 3);
+    return `<li>${echapper(gauche)}<span class="fleche">→</span>${echapper(droite)}</li>`;
+}
+
+function carteObjet(o, classe) {
+    const icone = o.imageUrl
+        ? `<img src="${echapper(o.imageUrl)}" alt="">`
+        : (o.icon || '📦');
+    const changementsHtml = (o.changements && o.changements.length)
+        ? `<ul class="liste-changements">${o.changements.map(ligneChangement).join('')}</ul>`
+        : '';
+    return `
+        <div class="carte-objet ${classe}">
+            <div class="objet-icone">${icone}</div>
+            <div class="objet-corps">
+                <div class="objet-tete">
+                    <span class="objet-nom">${echapper(o.nom)}</span>
+                    <span class="tag-rarete ${o.rarete}">${echapper(o.rareteLabel || o.rarete)}</span>
+                    <span class="objet-slot">${echapper(o.slotLabel || o.slot)}</span>
+                </div>
+                ${changementsHtml}
+            </div>
+        </div>`;
+}
+
+function blocPatch(p) {
+    const sections = [];
+    if (p.nouveauxObjets && p.nouveauxObjets.length) {
+        sections.push(`
+            <div class="section-titre">🆕 Nouveaux objets</div>
+            <div class="liste-objets">${p.nouveauxObjets.map(o => carteObjet(o, 'nouveau')).join('')}</div>`);
+    }
+    if (p.objetsModifies && p.objetsModifies.length) {
+        sections.push(`
+            <div class="section-titre">⚖️ Objets ajustés</div>
+            <div class="liste-objets">${p.objetsModifies.map(o => carteObjet(o, 'modifie')).join('')}</div>`);
+    }
+    if (p.objetsSupprimes && p.objetsSupprimes.length) {
+        sections.push(`
+            <div class="section-titre">🗑️ Objets retirés</div>
+            <div class="liste-objets">${p.objetsSupprimes.map(o => carteObjet(o, 'supprime')).join('')}</div>`);
+    }
+    if (sections.length === 0) {
+        sections.push('<div class="aucun-changement">Aucun changement d\'objet dans cette version.</div>');
+    }
+
+    return `
+        <section class="patch">
+            <div class="patch-tete">
+                <span class="patch-version">${echapper(p.version)}</span>
+                <span class="patch-transition">depuis ${echapper(p.versionPrecedente)}</span>
+                <span class="patch-date">${echapper(p.date)}</span>
+            </div>
+            ${sections.join('')}
+        </section>`;
+}
+
+function afficher(patchnotes) {
+    const zone = document.getElementById('zoneContenu');
+    if (!patchnotes || patchnotes.length === 0) {
+        zone.innerHTML = '<div class="message">Aucun patchnote publié pour l\'instant.</div>';
+        return;
+    }
+    zone.innerHTML = patchnotes.map(blocPatch).join('');
+}
+
+fetch('patchnotes.json?v=' + Date.now())
+    .then(r => r.json())
+    .then(afficher)
+    .catch(() => {
+        document.getElementById('zoneContenu').innerHTML =
+            '<div class="message">Les patchnotes n\'ont pas pu être chargés. Réessaie dans un instant.</div>';
+    });
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>
