@@ -11,7 +11,7 @@
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --purple: #7952b3;
     --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
     --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
-    --nerf: #ff5e3a;
+    --nerf: #ff5e3a; --buff: #5ddd7a;
 }
 * { box-sizing: border-box; }
 body {
@@ -51,6 +51,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0
     background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--nerf);
     border-radius: 8px; padding: 16px 18px;
 }
+.carte-proposition.buff { border-left-color: var(--buff); }
 .prop-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .prop-nom { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 16px; }
 .tag-rarete { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; }
@@ -58,7 +59,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0
 .tag-rarete.normal { background: rgba(93,221,122,.15); color: var(--normal); }
 .tag-rarete.rare { background: rgba(74,159,216,.15); color: var(--rare); }
 .tag-rarete.legendaire { background: rgba(242,194,48,.15); color: var(--legendaire); }
-.prop-isi { margin-left: auto; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 15px; color: var(--nerf); }
+.prop-isi { margin-left: auto; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; }
+.prop-isi.nerf { color: var(--nerf); }
+.prop-isi.buff { color: var(--buff); }
 .prop-duels { font-size: 11.5px; color: var(--paper-dim); margin-bottom: 10px; }
 
 .liste-modifs { margin: 0; padding: 0; list-style: none; font-size: 13.5px; }
@@ -102,14 +105,26 @@ function ligneModif(texte) {
 function carteProposition(p) {
     const rarete = p.rarete || 'commun';
     const modifs = (p.modificationsProposees || '').split(' | ').filter(Boolean);
+    const estBuff = (p.typeAjustement || '').toLowerCase().includes('buff');
+    const classeCarte = estBuff ? 'buff' : 'nerf';
+
+    const detailsIsi = (p.isiActuel !== undefined)
+        ? `<span class="prop-isi ${classeCarte}">ISI +${p.isiActuel}% / niveau</span>` : '';
+    const detailsWinrate = (p.winrateGlobal !== undefined)
+        ? `<span class="prop-isi ${classeCarte}">Winrate global ${p.winrateGlobal}%</span>` : '';
+
+    const detailsDuels = [];
+    if (p.duelsNiveau0 !== undefined) detailsDuels.push(`Niveau 0 : ${p.duelsNiveau0} duels · Niveau ${p.niveauMaxObserve} : ${p.duelsNiveauMax} duels`);
+    if (p.duelsTotal !== undefined) detailsDuels.push(`${p.duelsTotal} duels au total`);
+
     return `
-        <div class="carte-proposition">
+        <div class="carte-proposition ${classeCarte}">
             <div class="prop-tete">
                 <span class="prop-nom">${echapper(p.nomObjet)}</span>
                 <span class="tag-rarete ${rarete}">${echapper(rarete)}</span>
-                <span class="prop-isi">+${p.isiActuel}% / niveau</span>
+                ${detailsIsi}${detailsWinrate}
             </div>
-            <div class="prop-duels">Niveau 0 : ${p.duelsNiveau0} duels · Niveau ${p.niveauMaxObserve} : ${p.duelsNiveauMax} duels</div>
+            <div class="prop-duels">${echapper(p.typeAjustement || '')} — ${detailsDuels.join(' · ')}</div>
             <ul class="liste-modifs">${modifs.map(ligneModif).join('')}</ul>
         </div>`;
 }
