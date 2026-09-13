@@ -62,6 +62,12 @@ function appliquerStatAuPersonnage(s, stat, bonus) {
     else if (stat === 'pv') s.pv += bonus;
     else if (stat === 'spd') s.spd += bonus;
     else if (stat === 'esquive') s.esquiveGear += bonus;
+    // ⚠️ CORRECTIF : "crit" comme stat d'objet (Armure de Rakshasa, Deadeye, Dague empoisonnée)
+    // était silencieusement ignoré. Traité comme un bonus de LUCK (pas un %crit à part) --
+    // cohérent avec le fait que luck pilote déjà le %crit ET le scaling d'arme "crit".
+    // "luck" comme stat d'objet (Armure de Rakshasa, Deadeye, Dague empoisonnée) ajoute
+    // directement à luckLineaire -- comme si le joueur avait investi ce montant lui-même.
+    else if (stat === 'luck') s.luckLineaire += bonus;
 }
 
 function valeurStat(s, nomStat) {
@@ -274,7 +280,7 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
 // avec un champ .niveau ajouté = nombre de doublons possédés, comme partout ailleurs sur le site).
 function simulerBuild(stacks, equipement) {
     const s = calculerStatsEffectives(stacks, equipement);
-    const critPct = CST.BASE_CRIT + CST.LUCK_CRIT_MAX * Math.tanh(Math.max(0, stacks.luck) / CST.K_LUCK);
+    const critPct = CST.BASE_CRIT + CST.LUCK_CRIT_MAX * Math.tanh(s.luckLineaire / CST.K_LUCK);
     const esquivePct = CST.BASE_ESQUIVE + s.esquiveGear;
     const atkEquivalent = estimerAtkEquivalentAvecStance(s, equipement.arme);
     const resultat = calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, equipement.arme, equipement.offhand, equipement.torso, equipement.strat);
