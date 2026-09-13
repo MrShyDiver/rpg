@@ -156,7 +156,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         if (item.slot === "weapon") return item.hand === "two_handed" ? "weapon_2h" : "weapon_1h";
         return item.slot;
     }
-    const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PDV", esquive: "Esquive", spd: "Vitesse" };
+    const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PDV", esquive: "Esquive", spd: "Vitesse", luck: "LUCK" };
     const SUFFIXE_STAT = { esquive: "%" };
     const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
     const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", legendaire: "Légendaire" };
