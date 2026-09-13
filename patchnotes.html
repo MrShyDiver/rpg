@@ -136,31 +136,39 @@ function carteObjet(o, classe) {
 
 function blocPatch(p) {
     const sections = [];
-    if (p.nouveauxObjets && p.nouveauxObjets.length) {
+    
+    // 1. Nouveaux objets (Clé : NouveauxObjets)
+    if (p.NouveauxObjets && p.NouveauxObjets.length) {
         sections.push(`
             <div class="section-titre">🆕 Nouveaux objets</div>
-            <div class="liste-objets">${p.nouveauxObjets.map(o => carteObjet(o, 'nouveau')).join('')}</div>`);
+            <div class="liste-objets">${p.NouveauxObjets.map(o => carteObjet(o, 'nouveau')).join('')}</div>`);
     }
-    if (p.objetsModifies && p.objetsModifies.length) {
+
+    // 2. Objets modifiés (Clé : ObjetsModifies)
+    if (p.ObjetsModifies && p.ObjetsModifies.length) {
         sections.push(`
             <div class="section-titre">⚖️ Objets ajustés</div>
-            <div class="liste-objets">${p.objetsModifies.map(o => carteObjet(o, 'modifie')).join('')}</div>`);
+            <div class="liste-objets">${p.ObjetsModifies.map(o => carteObjet(o, 'modifie')).join('')}</div>`);
     }
-    if (p.objetsSupprimes && p.objetsSupprimes.length) {
+
+    // 3. Objets supprimés (Clé : ObjetsSupprimes)
+    if (p.ObjetsSupprimes && p.ObjetsSupprimes.length) {
         sections.push(`
             <div class="section-titre">🗑️ Objets retirés</div>
-            <div class="liste-objets">${p.objetsSupprimes.map(o => carteObjet(o, 'supprime')).join('')}</div>`);
+            <div class="liste-objets">${p.ObjetsSupprimes.map(o => carteObjet(o, 'supprime')).join('')}</div>`);
     }
+
     if (sections.length === 0) {
         sections.push('<div class="aucun-changement">Aucun changement d\'objet dans cette version.</div>');
     }
 
+    // Propriétés d'en-tête (Version, VersionPrecedente, Date)
     return `
         <section class="patch">
             <div class="patch-tete">
-                <span class="patch-version">${echapper(p.version)}</span>
-                <span class="patch-transition">depuis ${echapper(p.versionPrecedente)}</span>
-                <span class="patch-date">${echapper(p.date)}</span>
+                <span class="patch-version">${echapper(p.Version || 'Version inconnue')}</span>
+                <span class="patch-transition">depuis ${echapper(p.VersionPrecedente || 'base')}</span>
+                <span class="patch-date">${echapper(p.Date || '')}</span>
             </div>
             ${sections.join('')}
         </section>`;
