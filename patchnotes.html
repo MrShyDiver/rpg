@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Twitch RPG — Patchnotes</title>
+<title>Twitch RPG — Patchnotes & Équilibrage</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -11,173 +11,279 @@
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230;
     --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
     --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
-    --buff: #5ddd7a; --nerf: #ff5e3a; --neutre: #4a9fd8;
+    --buff: #5ddd7a; --nerf: #ff5e3a; --neutre: #8d8d8d;
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif;
-    margin: 0; padding: 28px 18px 60px; line-height: 1.55;
+    padding: 28px 18px 60px; line-height: 1.55; min-height: 100vh;
 }
-h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
-.page { max-width: 880px; margin: 0 auto; }
+h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.page { max-width: 900px; margin: 0 auto; }
 
 .entete { padding-bottom: 16px; border-bottom: 3px solid var(--yellow); margin-bottom: 30px; }
 .entete h1 { font-size: 28px; font-weight: 700; }
 .entete h1 span { color: var(--yellow); }
-.entete p { color: var(--paper-dim); font-size: 14px; margin: 7px 0 0; max-width: 62ch; }
+.entete p { color: var(--paper-dim); font-size: 14px; margin-top: 6px; max-width: 65ch; }
 
 .message { color: var(--paper-dim); font-size: 14px; padding: 50px 2px; text-align: center; }
 
-/* ===== Une entree de patch ===== */
-.patch { margin-bottom: 40px; }
-.patch-tete {
-    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
-    padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 18px;
+/* ===== SECTION DE PATCH ===== */
+.patch-card { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 36px; overflow: hidden; }
+.patch-header {
+    background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--line);
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
 }
-.patch-version { font-size: 22px; font-weight: 700; }
-.patch-transition { color: var(--paper-dim); font-size: 14px; font-weight: 500; }
-.patch-date { margin-left: auto; font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); letter-spacing: .3px; }
+.patch-titre-group { display: flex; align-items: baseline; gap: 10px; }
+.patch-version { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: var(--yellow); }
+.patch-transition { color: var(--paper-dim); font-size: 13px; font-weight: 500; }
+.patch-date { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; color: var(--paper-dim); letter-spacing: 0.5px; }
 
+.patch-body { padding: 20px; }
 .section-titre {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px;
-    color: var(--paper-dim); margin: 20px 0 10px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--paper-dim); margin: 18px 0 12px; display: flex; align-items: center; gap: 8px;
 }
+.section-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
-.liste-objets { display: flex; flex-direction: column; gap: 10px; }
+.liste-objets { display: flex; flex-direction: column; gap: 12px; }
 .carte-objet {
-    display: flex; gap: 14px; background: var(--bg-panel); border: 1px solid var(--line);
-    border-left: 3px solid var(--line); border-radius: 6px; padding: 13px 16px;
+    background: rgba(0,0,0,0.25); border: 1px solid var(--line); border-left: 4px solid var(--line);
+    border-radius: 8px; padding: 14px 16px; transition: border-color 0.15s ease;
 }
 .carte-objet.nouveau { border-left-color: var(--buff); }
-.carte-objet.supprime { border-left-color: var(--nerf); opacity: .75; }
-.carte-objet.modifie { border-left-color: var(--neutre); }
+.carte-objet.supprime { border-left-color: var(--nerf); opacity: 0.75; }
+.carte-objet.modifie { border-left-color: var(--yellow); }
 
+.objet-entete { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.objet-info-gauche { display: flex; align-items: center; gap: 12px; }
 .objet-icone {
-    width: 34px; height: 34px; flex: 0 0 auto; border-radius: 5px; background: rgba(0,0,0,.3);
-    display: flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden;
+    width: 36px; height: 36px; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
 }
 .objet-icone img { width: 100%; height: 100%; object-fit: contain; }
 
-.objet-corps { flex: 1; min-width: 0; }
-.objet-tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-.objet-nom { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; }
-.tag-rarete { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; }
-.tag-rarete.commun { background: rgba(141,141,141,.18); color: var(--commun); }
-.tag-rarete.normal { background: rgba(93,221,122,.15); color: var(--normal); }
-.tag-rarete.rare { background: rgba(74,159,216,.15); color: var(--rare); }
-.tag-rarete.legendaire { background: rgba(242,194,48,.15); color: var(--legendaire); }
-.objet-slot { font-size: 11.5px; color: var(--paper-dim); }
+.objet-nom { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; color: var(--paper); }
+.objet-details { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
 
-.liste-changements { margin: 6px 0 0; padding: 0; list-style: none; font-size: 13.5px; }
-.liste-changements li { padding: 3px 0; }
-.liste-changements .fleche { color: var(--paper-dim); margin: 0 6px; }
-.liste-changements .avant { color: var(--nerf); }
-.liste-changements .apres { color: var(--buff); }
+.tag-rarete {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; border-radius: 4px; padding: 2px 7px;
+}
+.tag-rarete.commun { background: rgba(141,141,141,0.18); color: var(--commun); }
+.tag-rarete.normal { background: rgba(93,221,122,0.15); color: var(--normal); }
+.tag-rarete.rare { background: rgba(74,159,216,0.15); color: var(--rare); }
+.tag-rarete.legendaire { background: rgba(242,194,48,0.15); color: var(--legendaire); }
 
-.aucun-changement { color: var(--paper-dim); font-size: 13px; font-style: italic; }
+.tag-slot { font-size: 11.5px; color: var(--paper-dim); }
 
-@media (max-width: 560px) {
-    .patch-date { margin-left: 0; width: 100%; order: 3; }
-    .carte-objet { flex-direction: column; }
+.badge-impact {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.8px;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 4px;
+}
+.badge-impact.buff { background: rgba(93,221,122,0.2); color: var(--buff); border: 1px solid var(--buff); }
+.badge-impact.nerf { background: rgba(255,94,58,0.2); color: var(--nerf); border: 1px solid var(--nerf); }
+.badge-impact.neutre { background: rgba(141,141,141,0.2); color: var(--neutre); border: 1px solid var(--neutre); }
+
+/* ===== DECOMPOSITION DES CHANGEMENTS ===== */
+.liste-changements { list-style: none; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.changement-item {
+    font-size: 13px; padding: 4px 10px; background: rgba(255,255,255,0.02); border-radius: 4px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+}
+.changement-label { color: var(--paper-dim); font-weight: 500; }
+.changement-valeurs { font-family: monospace; font-size: 13px; font-weight: 600; }
+.val-avant { color: var(--paper-dim); text-decoration: line-through; margin-right: 6px; opacity: 0.8; }
+.val-fleche { color: var(--paper-dim); margin-right: 6px; font-weight: 400; }
+.val-apres.buff { color: var(--buff); }
+.val-apres.nerf { color: var(--nerf); }
+.val-apres.neutre { color: var(--paper); }
+
+@media (max-width: 600px) {
+    .patch-header { flex-direction: column; align-items: flex-start; }
+    .objet-entete { flex-direction: column; align-items: flex-start; }
+    .changement-item { flex-direction: column; align-items: flex-start; }
 }
 </style>
 </head>
 <body>
 <div class="page">
-
     <div class="entete">
-        <h1>Journal des <span>mises à jour</span></h1>
-        <p>Chaque ajustement d'objet, généré automatiquement à partir du catalogue — pour suivre l'évolution
-           de l'équilibrage entre deux versions.</p>
+        <h1>JOURNAL DES <span>MISES À JOUR</span></h1>
+        <p>Historique officiel des équilibrages, ajustements de statistiques et nouveaux équipements déployés.</p>
     </div>
 
     <div id="zoneContenu">
-        <div class="message">Chargement...</div>
+        <div class="message">Chargement des patchnotes...</div>
     </div>
-
 </div>
 
 <script>
 function echapper(t) {
-    return String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    return String(t || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
-// Colore une ligne "Label : avant → après" en distinguant visuellement les deux valeurs, sans
-// jamais présumer si c'est un buff ou un nerf (une hausse de dégâts est un buff, une hausse de
-// temps de recharge est un nerf — impossible à deviner génériquement, donc on reste neutre).
-function ligneChangement(texte) {
-    const idx = texte.indexOf(' → ');
-    if (idx === -1) return `<li>${echapper(texte)}</li>`;
-    const gauche = texte.slice(0, idx);
-    const droite = texte.slice(idx + 3);
-    return `<li>${echapper(gauche)}<span class="fleche">→</span>${echapper(droite)}</li>`;
+// Analyse si une évolution "avant -> après" constitue un BUFF, un NERF ou un changement NEUTRE
+function analyserChangement(texte) {
+    const idx = texte.indexOf(' : ');
+    let label = texte;
+    let valeursTexte = '';
+
+    if (idx !== -1) {
+        label = texte.slice(0, idx);
+        valeursTexte = texte.slice(idx + 3);
+    }
+
+    const flecheIdx = valeursTexte.indexOf(' → ');
+    if (flecheIdx === -1) {
+        return { label: texte, avant: null, apres: null, type: 'neutre' };
+    }
+
+    const avantRaw = valeursTexte.slice(0, flecheIdx).trim();
+    const apresRaw = valeursTexte.slice(flecheIdx + 3).trim();
+
+    // Extraction des nombres (support des virgules et nombres négatifs)
+    const numAvant = parseFloat(avantRaw.replace(',', '.').replace(/[^0-9.-]/g, ''));
+    const numApres = parseFloat(apresRaw.replace(',', '.').replace(/[^0-9.-]/g, ''));
+
+    let type = 'neutre';
+    if (!isNaN(numAvant) && !isNaN(numApres) && numAvant !== numApres) {
+        const estHausse = numApres > numAvant;
+        const labelLower = label.toLowerCase();
+
+        // Par défaut, une hausse de stat est bénéfique (Buff)
+        let hausseEstPositive = true;
+
+        // Exceptions où une hausse est un désavantage (Nerf)
+        if (labelLower.includes('recharge') || labelLower.includes('coût') || labelLower.includes('délai') || labelLower.includes('malus')) {
+            hausseEstPositive = false;
+        }
+
+        type = (estHausse === hausseEstPositive) ? 'buff' : 'nerf';
+    }
+
+    return { label, avant: avantRaw, apres: apresRaw, type };
 }
 
-function carteObjet(o, classe) {
+function renduLigneChangement(changement) {
+    const info = analyserChangement(changement);
+    if (!info.avant) {
+        return `<li class="changement-item"><span>${echapper(info.label)}</span></li>`;
+    }
+
+    return `
+        <li class="changement-item">
+            <span class="changement-label">${echapper(info.label)}</span>
+            <span class="changement-valeurs">
+                <span class="val-avant">${echapper(info.avant)}</span>
+                <span class="val-fleche">→</span>
+                <span class="val-apres ${info.type}">${echapper(info.apres)}</span>
+            </span>
+        </li>
+    `;
+}
+
+function carteObjet(o, mode) {
     const icone = o.imageUrl
         ? `<img src="${echapper(o.imageUrl)}" alt="">`
         : (o.icon || '📦');
-    const changementsHtml = (o.changements && o.changements.length)
-        ? `<ul class="liste-changements">${o.changements.map(ligneChangement).join('')}</ul>`
+
+    const changements = o.changements || [];
+    let bilanBuffs = 0, bilanNerfs = 0;
+
+    changements.forEach(c => {
+        const res = analyserChangement(c);
+        if (res.type === 'buff') bilanBuffs++;
+        if (res.type === 'nerf') bilanNerfs++;
+    });
+
+    let badgeGlobal = '<span class="badge-impact neutre">Ajustement</span>';
+    if (bilanBuffs > bilanNerfs) badgeGlobal = '<span class="badge-impact buff">Buff</span>';
+    else if (bilanNerfs > bilanBuffs) badgeGlobal = '<span class="badge-impact nerf">Nerf</span>';
+
+    if (mode === 'nouveau') badgeGlobal = '<span class="badge-impact buff">Nouveau</span>';
+    if (mode === 'supprime') badgeGlobal = '<span class="badge-impact nerf">Retiré</span>';
+
+    const changementsHtml = changements.length
+        ? `<ul class="liste-changements">${changements.map(renduLigneChangement).join('')}</ul>`
         : '';
+
     return `
-        <div class="carte-objet ${classe}">
-            <div class="objet-icone">${icone}</div>
-            <div class="objet-corps">
-                <div class="objet-tete">
-                    <span class="objet-nom">${echapper(o.nom)}</span>
-                    <span class="tag-rarete ${o.rarete}">${echapper(o.rareteLabel || o.rarete)}</span>
-                    <span class="objet-slot">${echapper(o.slotLabel || o.slot)}</span>
+        <div class="carte-objet ${mode}">
+            <div class="objet-entete">
+                <div class="objet-info-gauche">
+                    <div class="objet-icone">${icone}</div>
+                    <div>
+                        <div class="objet-nom">${echapper(o.nom)}</div>
+                        <div class="objet-details">
+                            <span class="tag-rarete ${o.rarete}">${echapper(o.rareteLabel || o.rarete)}</span>
+                            <span class="tag-slot">• ${echapper(o.slotLabel || o.slot)}</span>
+                        </div>
+                    </div>
                 </div>
-                ${changementsHtml}
+                ${badgeGlobal}
             </div>
-        </div>`;
+            ${changementsHtml}
+        </div>
+    `;
 }
 
 function blocPatch(p) {
+    // Normalisation de la casse (supporte Version et version)
+    const version = p.Version || p.version || 'V?';
+    const versionPrecedente = p.VersionPrecedente || p.versionPrecedente || 'V?';
+    const date = p.Date || p.date || '';
+    const nouveaux = p.NouveauxObjets || p.nouveauxObjets || [];
+    const modifies = p.ObjetsModifies || p.objetsModifies || [];
+    const supprimes = p.ObjetsSupprimes || p.objetsSupprimes || [];
+
     const sections = [];
-    
-    // 1. Nouveaux objets (Clé : NouveauxObjets)
-    if (p.NouveauxObjets && p.NouveauxObjets.length) {
+
+    if (nouveaux.length) {
         sections.push(`
-            <div class="section-titre">🆕 Nouveaux objets</div>
-            <div class="liste-objets">${p.NouveauxObjets.map(o => carteObjet(o, 'nouveau')).join('')}</div>`);
+            <div class="section-titre">🆕 Nouveaux équipements (${nouveaux.length})</div>
+            <div class="liste-objets">${nouveaux.map(o => carteObjet(o, 'nouveau')).join('')}</div>
+        `);
     }
 
-    // 2. Objets modifiés (Clé : ObjetsModifies)
-    if (p.ObjetsModifies && p.ObjetsModifies.length) {
+    if (modifies.length) {
         sections.push(`
-            <div class="section-titre">⚖️ Objets ajustés</div>
-            <div class="liste-objets">${p.ObjetsModifies.map(o => carteObjet(o, 'modifie')).join('')}</div>`);
+            <div class="section-titre">⚖️ Objets rééquilibrés (${modifies.length})</div>
+            <div class="liste-objets">${modifies.map(o => carteObjet(o, 'modifie')).join('')}</div>
+        `);
     }
 
-    // 3. Objets supprimés (Clé : ObjetsSupprimes)
-    if (p.ObjetsSupprimes && p.ObjetsSupprimes.length) {
+    if (supprimes.length) {
         sections.push(`
-            <div class="section-titre">🗑️ Objets retirés</div>
-            <div class="liste-objets">${p.ObjetsSupprimes.map(o => carteObjet(o, 'supprime')).join('')}</div>`);
+            <div class="section-titre">🗑️ Équipements retirés (${supprimes.length})</div>
+            <div class="liste-objets">${supprimes.map(o => carteObjet(o, 'supprime')).join('')}</div>
+        `);
     }
 
-    if (sections.length === 0) {
-        sections.push('<div class="aucun-changement">Aucun changement d\'objet dans cette version.</div>');
+    if (!sections.length) {
+        sections.push('<div class="message">Aucune modification d\'équipement enregistrée dans cette version.</div>');
     }
 
-    // Propriétés d'en-tête (Version, VersionPrecedente, Date)
     return `
-        <section class="patch">
-            <div class="patch-tete">
-                <span class="patch-version">${echapper(p.Version || 'Version inconnue')}</span>
-                <span class="patch-transition">depuis ${echapper(p.VersionPrecedente || 'base')}</span>
-                <span class="patch-date">${echapper(p.Date || '')}</span>
+        <article class="patch-card">
+            <header class="patch-header">
+                <div class="patch-titre-group">
+                    <span class="patch-version">${echapper(version)}</span>
+                    <span class="patch-transition">depuis ${echapper(versionPrecedente)}</span>
+                </div>
+                <span class="patch-date">Déployé le ${echapper(date)}</span>
+            </header>
+            <div class="patch-body">
+                ${sections.join('')}
             </div>
-            ${sections.join('')}
-        </section>`;
+        </article>
+    `;
 }
 
 function afficher(patchnotes) {
     const zone = document.getElementById('zoneContenu');
-    if (!patchnotes || patchnotes.length === 0) {
-        zone.innerHTML = '<div class="message">Aucun patchnote publié pour l\'instant.</div>';
+    if (!patchnotes || !patchnotes.length) {
+        zone.innerHTML = '<div class="message">Aucun patchnote publié pour le moment.</div>';
         return;
     }
     zone.innerHTML = patchnotes.map(blocPatch).join('');
@@ -188,7 +294,7 @@ fetch('patchnotes.json?v=' + Date.now())
     .then(afficher)
     .catch(() => {
         document.getElementById('zoneContenu').innerHTML =
-            '<div class="message">Les patchnotes n\'ont pas pu être chargés. Réessaie dans un instant.</div>';
+            '<div class="message">Impossible de charger les patchnotes. Vérifiez le fichier patchnotes.json.</div>';
     });
 </script>
 <script src="nav.js" defer></script>
