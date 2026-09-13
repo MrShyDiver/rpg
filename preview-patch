@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitch RPG — Prévisualisation de Patch</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --purple: #7952b3;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+    --nerf: #ff5e3a;
+}
+* { box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif;
+    margin: 0; padding: 28px 18px 60px; line-height: 1.55;
+}
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
+.page { max-width: 880px; margin: 0 auto; }
+
+.entete { padding-bottom: 16px; border-bottom: 3px solid var(--purple); margin-bottom: 22px; }
+.badge-preview {
+    display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: 4px;
+    background: rgba(121,82,179,.22); color: #d0bfff; border: 1px solid var(--purple); margin-bottom: 10px;
+}
+.entete h1 { font-size: 26px; font-weight: 700; }
+.entete h1 span { color: var(--purple); }
+.entete p { color: var(--paper-dim); font-size: 14px; margin: 8px 0 0; max-width: 66ch; }
+
+.barre-meta {
+    display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 18px; margin: 20px 0 28px; font-size: 13px; color: var(--paper-dim);
+}
+.barre-meta b { color: var(--paper); }
+.barre-meta .source-tag {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: .5px;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 4px;
+}
+.source-tag.SIMULATION { background: rgba(74,159,216,.18); color: var(--rare); border: 1px solid var(--rare); }
+.source-tag.REEL { background: rgba(242,194,48,.18); color: var(--yellow); border: 1px solid var(--yellow); }
+
+.message { color: var(--paper-dim); font-size: 14px; padding: 50px 2px; text-align: center; }
+
+.liste-propositions { display: flex; flex-direction: column; gap: 12px; }
+.carte-proposition {
+    background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--nerf);
+    border-radius: 8px; padding: 16px 18px;
+}
+.prop-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.prop-nom { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 16px; }
+.tag-rarete { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; }
+.tag-rarete.commun { background: rgba(141,141,141,.18); color: var(--commun); }
+.tag-rarete.normal { background: rgba(93,221,122,.15); color: var(--normal); }
+.tag-rarete.rare { background: rgba(74,159,216,.15); color: var(--rare); }
+.tag-rarete.legendaire { background: rgba(242,194,48,.15); color: var(--legendaire); }
+.prop-isi { margin-left: auto; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 15px; color: var(--nerf); }
+.prop-duels { font-size: 11.5px; color: var(--paper-dim); margin-bottom: 10px; }
+
+.liste-modifs { margin: 0; padding: 0; list-style: none; font-size: 13.5px; }
+.liste-modifs li { padding: 3px 0; font-family: 'Barlow Condensed', sans-serif; }
+.liste-modifs .fleche { color: var(--paper-dim); margin: 0 6px; }
+
+@media (max-width: 560px) {
+    .prop-isi { margin-left: 0; width: 100%; order: 3; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+    <div class="entete">
+        <span class="badge-preview">Prévisualisation • Rien n'est appliqué</span>
+        <h1>Suggestions de <span>rééquilibrage</span></h1>
+        <p>Générées automatiquement à partir du winrate par niveau — un objet apparaît ici si son scaling
+           (l'écart de winrate entre le niveau 0 et son plus haut niveau observé) dépasse le seuil considéré
+           comme toxique. Purement indicatif : décide toi-même si et comment appliquer ces ajustements.</p>
+    </div>
+
+    <div id="zoneMeta"></div>
+    <div id="zoneContenu">
+        <div class="message">Chargement...</div>
+    </div>
+
+</div>
+
+<script>
+function echapper(t) {
+    return String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function ligneModif(texte) {
+    const idx = texte.indexOf(' → ');
+    if (idx === -1) return `<li>${echapper(texte)}</li>`;
+    return `<li>${echapper(texte.slice(0, idx))}<span class="fleche">→</span>${echapper(texte.slice(idx + 3))}</li>`;
+}
+
+function carteProposition(p) {
+    const rarete = p.rarete || 'commun';
+    const modifs = (p.modificationsProposees || '').split(' | ').filter(Boolean);
+    return `
+        <div class="carte-proposition">
+            <div class="prop-tete">
+                <span class="prop-nom">${echapper(p.nomObjet)}</span>
+                <span class="tag-rarete ${rarete}">${echapper(rarete)}</span>
+                <span class="prop-isi">+${p.isiActuel}% / niveau</span>
+            </div>
+            <div class="prop-duels">Niveau 0 : ${p.duelsNiveau0} duels · Niveau ${p.niveauMaxObserve} : ${p.duelsNiveauMax} duels</div>
+            <ul class="liste-modifs">${modifs.map(ligneModif).join('')}</ul>
+        </div>`;
+}
+
+function afficher(data) {
+    const zoneMeta = document.getElementById('zoneMeta');
+    const zone = document.getElementById('zoneContenu');
+    const propositions = data.propositions || [];
+
+    if (data.source) {
+        zoneMeta.innerHTML = `
+            <div class="barre-meta">
+                <span>Source : <span class="source-tag ${echapper(data.source)}">${data.source === 'SIMULATION' ? 'Simulation' : 'Données réelles'}</span></span>
+                <span>Version analysée : <b>${echapper(data.versionAnalysee || '—')}</b></span>
+                <span>Généré le : <b>${echapper(data.genereLe || '—')}</b></span>
+            </div>`;
+    }
+
+    if (propositions.length === 0) {
+        zone.innerHTML = '<div class="message">Aucun objet ne dépasse le seuil toxique pour l\'instant — rien à proposer.</div>';
+        return;
+    }
+
+    zone.innerHTML = `<div class="liste-propositions">${propositions.map(carteProposition).join('')}</div>`;
+}
+
+fetch('preview_patch.json?v=' + Date.now())
+    .then(r => r.json())
+    .then(afficher)
+    .catch(() => {
+        document.getElementById('zoneContenu').innerHTML =
+            '<div class="message">La prévisualisation n\'a pas pu être chargée. Réessaie dans un instant.</div>';
+    });
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>
