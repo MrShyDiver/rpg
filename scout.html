@@ -99,6 +99,43 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .cible-action button:hover { color: var(--yellow); border-color: var(--yellow); }
 .cible-action button.copie { color: var(--yellow); border-color: var(--yellow); }
 
+/* ===== Panneau de comparaison (équipement + stats) ===== */
+.cible-compare-toggle {
+    font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--paper-dim); background: none;
+    border: 1px solid var(--line); border-radius: 5px; padding: 7px 12px; cursor: pointer; white-space: nowrap;
+}
+.cible-compare-toggle:hover { color: var(--paper); border-color: var(--paper-dim); }
+.cible-compare-toggle.ouvert { color: var(--yellow); border-color: var(--yellow); }
+
+.cible-compare-panel {
+    flex-basis: 100%; margin-top: 10px; padding-top: 14px; border-top: 1px solid var(--line);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+@media (max-width: 640px) { .cible-compare-panel { grid-template-columns: 1fr; } }
+
+.compare-equip-titre, .compare-stats-titre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .8px;
+    text-transform: uppercase; color: var(--paper-dim); margin-bottom: 8px;
+}
+.compare-equip-liste { display: flex; flex-direction: column; gap: 6px; }
+.compare-equip-item { display: flex; align-items: center; gap: 10px; }
+.compare-equip-icone {
+    width: 30px; height: 30px; border-radius: 5px; background: #1c1c1f; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center; font-size: 15px; overflow: hidden;
+}
+.compare-equip-icone img { width: 100%; height: 100%; object-fit: contain; }
+.compare-equip-nom { font-size: 13px; }
+.compare-equip-vide { color: var(--paper-dim); font-size: 12.5px; font-style: italic; }
+
+.compare-stats-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.compare-stats-table td { padding: 3px 0; }
+.compare-stats-table td:first-child { color: var(--paper-dim); }
+.compare-stats-table td:nth-child(2), .compare-stats-table td:nth-child(4) { text-align: right; font-family: 'Oswald', sans-serif; font-weight: 600; width: 30%; }
+.compare-stats-table td:nth-child(3) { text-align: center; color: var(--paper-dim); width: 20px; font-size: 11px; }
+.stat-toi-superieur { color: var(--equitable); }
+.stat-cible-superieur { color: var(--dessus); }
+
 @media (max-width: 640px) {
     .cible { padding: 11px 13px; }
     .issues { width: 100%; justify-content: space-between; order: 3; }
@@ -142,6 +179,11 @@ var SEUIL_TRANCHE = 0.30;   // ±30%, identique au seuil utilisé par le moteur 
 // apparaître comme cibles proposées.
 var EXCLUS = ['mrshydiver', 'mikumosana', 'totomaton'];
 
+// Conservés pour que le clic sur "Comparer" (différé, après affichage) retrouve les données
+// complètes sans devoir tout re-fetcher -- jamais utilisés pour le rendu initial lui-même.
+var DERNIERE_LISTE_JOUEURS = [];
+var DERNIER_VIEWER = null;
+
 function echapper(t) {
     return String(t).replace(/[&<>"']/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -152,10 +194,66 @@ function avatarHtml(url, nom) {
                : '<div class="cible-avatar">' + echapper((nom || '?').charAt(0).toUpperCase()) + '</div>';
 }
 
+function echapperAttr(t) {
+    return echapper(t).replace(/"/g, '&quot;');
+}
+
+function iconeObjet(o) {
+    if (!o) return '';
+    return o.image ? '<img src="' + echapperAttr(o.image) + '" alt="">' : echapper(o.icone || '📦');
+}
+
+function ligneEquipement(o) {
+    if (!o) return '<div class="compare-equip-vide">Aucun</div>';
+    return '<div class="compare-equip-item">' +
+        '<div class="compare-equip-icone">' + iconeObjet(o) + '</div>' +
+        '<div class="compare-equip-nom">' + echapper(o.nom || '?') + '</div>' +
+    '</div>';
+}
+
+// Une ligne du tableau de comparaison : le camp le plus haut est colorié, l'autre reste neutre —
+// jamais les deux en même temps, et aucune couleur en cas d'égalité stricte.
+function ligneStat(label, valeurToi, valeurCible, decimales) {
+    decimales = decimales || 0;
+    var classeToi = valeurToi > valeurCible ? 'stat-toi-superieur' : '';
+    var classeCible = valeurCible > valeurToi ? 'stat-cible-superieur' : '';
+    return '<tr>' +
+        '<td>' + label + '</td>' +
+        '<td class="' + classeToi + '">' + valeurToi.toFixed(decimales) + '</td>' +
+        '<td>vs</td>' +
+        '<td class="' + classeCible + '">' + valeurCible.toFixed(decimales) + '</td>' +
+    '</tr>';
+}
+
+function panneauComparaison(viewer, c) {
+    var eq = c.equipement || {};
+    var eqMoi = viewer.equipement || {};
+    return '<div class="cible-compare-panel">' +
+        '<div>' +
+            '<div class="compare-equip-titre">Équipement de ' + echapper(c.nom) + '</div>' +
+            '<div class="compare-equip-liste">' +
+                ligneEquipement(eq.arme) + ligneEquipement(eq.offhand) + ligneEquipement(eq.armure) + ligneEquipement(eq.strategeme) +
+            '</div>' +
+        '</div>' +
+        '<div>' +
+            '<div class="compare-stats-titre">Toi vs ' + echapper(c.nom) + '</div>' +
+            '<table class="compare-stats-table"><tbody>' +
+                ligneStat('PowerLevel', viewer.power, c.power, 0) +
+                ligneStat('ATK', viewer.stats.atk, c.stats.atk, 0) +
+                ligneStat('DEF', viewer.stats.def, c.stats.def, 0) +
+                ligneStat('PV', viewer.stats.pvBase, c.stats.pvBase, 0) +
+                ligneStat('Vitesse', viewer.stats.spd, c.stats.spd, 1) +
+                ligneStat('Luck', viewer.stats.luck, c.stats.luck, 0) +
+                ligneStat('Crit %', viewer.stats.crit, c.stats.crit, 1) +
+            '</tbody></table>' +
+        '</div>' +
+    '</div>';
+}
+
 function ligneCible(c) {
     var m = MEDAILLES[c.tranche];
     var signe = c.ecart >= 0 ? '+' : '';
-    return '<div class="cible">' +
+    return '<div class="cible" data-cle="' + echapperAttr(c.cle) + '">' +
         avatarHtml(c.avatar, c.nom) +
         '<div class="cible-ident">' +
             '<div class="cible-nom">' + echapper(c.nom) + '</div>' +
@@ -167,7 +265,10 @@ function ligneCible(c) {
             '<div class="issue egalite"><div class="label">Égalité</div><div class="val">🏅 +' + m.egalite + '</div></div>' +
             '<div class="issue defaite"><div class="label">Défaite</div><div class="val">🏅 +' + m.defaite + '</div></div>' +
         '</div>' +
-        '<div class="cible-action"><button type="button" data-pseudo="' + echapper(c.cle) + '">Copier la commande</button></div>' +
+        '<div class="cible-action">' +
+            '<button type="button" class="cible-compare-toggle" data-cle-compare="' + echapperAttr(c.cle) + '">Comparer</button>' +
+            '<button type="button" data-pseudo="' + echapperAttr(c.cle) + '">Copier la commande</button>' +
+        '</div>' +
     '</div>';
 }
 
@@ -184,6 +285,9 @@ function sectionTranche(cle, titre, description, cibles) {
 }
 
 function afficher(viewer, tousLesJoueurs) {
+    DERNIER_VIEWER = viewer;
+    DERNIERE_LISTE_JOUEURS = tousLesJoueurs;
+
     document.getElementById('zoneSolde').innerHTML =
         '<div class="solde-barre"><div class="qui">' + echapper(viewer.nom) + '</div>' +
         '<div class="pl">' + Math.round(viewer.power) + '<span>PowerLevel</span></div></div>';
@@ -225,6 +329,25 @@ function afficher(viewer, tousLesJoueurs) {
 }
 
 document.getElementById('zoneContenu').addEventListener('click', function (e) {
+    var toggle = e.target.closest('button[data-cle-compare]');
+    if (toggle) {
+        var carte = toggle.closest('.cible');
+        var panneauExistant = carte.querySelector('.cible-compare-panel');
+        if (panneauExistant) {
+            panneauExistant.remove();
+            toggle.classList.remove('ouvert');
+            toggle.textContent = 'Comparer';
+            return;
+        }
+        var cle = toggle.getAttribute('data-cle-compare');
+        var cible = DERNIERE_LISTE_JOUEURS.filter(function (j) { return j.cle === cle; })[0];
+        if (!cible || !DERNIER_VIEWER) return;
+        carte.insertAdjacentHTML('beforeend', panneauComparaison(DERNIER_VIEWER, cible));
+        toggle.classList.add('ouvert');
+        toggle.textContent = 'Masquer';
+        return;
+    }
+
     var btn = e.target.closest('button[data-pseudo]');
     if (!btn) return;
     var commande = '!ticketduel ' + btn.getAttribute('data-pseudo');
@@ -244,12 +367,33 @@ document.getElementById('zoneContenu').addEventListener('click', function (e) {
 });
 
 /* ===================== CHARGEMENT ===================== */
-fetch('players.json?v=' + Date.now())
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
+function resoudreEquipement(loadout, catalogue) {
+    if (!loadout) return {};
+    function resoudreSlot(numero) {
+        if (!numero) return null; // 0 = rien équipé dans ce slot
+        var item = catalogue[String(numero)];
+        return item ? { nom: item.nom, icone: item.icone, image: item.image } : null;
+    }
+    return {
+        arme: resoudreSlot(loadout.arme),
+        offhand: resoudreSlot(loadout.offhand),
+        armure: resoudreSlot(loadout.armure),
+        strategeme: resoudreSlot(loadout.strategeme),
+    };
+}
+
+Promise.all([
+    fetch('players.json?v=' + Date.now()).then(function (r) { return r.json(); }),
+    fetch('catalogue_stats.json?v=' + Date.now()).then(function (r) { return r.json(); }),
+])
+    .then(function (resultats) {
+        var data = resultats[0], catalogue = resultats[1];
         var tous = Object.keys(data).map(function (cle) {
             var j = data[cle], s = j.stats || {};
-            return { cle: cle, nom: j.nomAffichage || cle, avatar: j.avatar || '', power: s.powerLevel || 0 };
+            return {
+                cle: cle, nom: j.nomAffichage || cle, avatar: j.avatar || '', power: s.powerLevel || 0,
+                stats: s, equipement: resoudreEquipement(j.loadout, catalogue),
+            };
         });
 
         var demande = new URLSearchParams(location.search).get('user');
