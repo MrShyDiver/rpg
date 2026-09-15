@@ -407,9 +407,7 @@ function afficherPage() {
         <section class="section">
             <div class="section-tete">
                 <h2>Commande</h2>
-                <p>Une seule commande à copier-coller dans le chat Twitch pour tout appliquer d'un coup : vider ta
-                   répartition actuelle ET la remplacer par celle choisie ci-dessus. Nécessite un ticket de reset
-                   (achetable en Boutique).</p>
+                <p>Nécessite un ticket de reset en votre possession.</p>
             </div>
             <div class="zone-commande" id="zoneCommandeReset"></div>
         </section>
@@ -499,7 +497,6 @@ function rendreCommandeFinale() {
             <code id="cmdComplete">${echapper(commande)}</code>
             <button type="button" onclick="copier('cmdComplete', this)">Copier</button>
         </div>
-        <div class="avertissement">⚠️ Cette commande combinée (<code>!reset atk28 def3 ...</code>) est un nouveau format — si ton chat ne la reconnaît pas encore, utilise <code>!reset</code> puis un <code>!ameliorer &lt;stat&gt; &lt;n&gt;</code> par stat en attendant qu'elle soit activée côté Streamer.bot.</div>
     `;
 }
 
