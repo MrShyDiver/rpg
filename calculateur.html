@@ -21,7 +21,7 @@ body {
     margin: 0; padding: 28px 18px 60px; line-height: 1.5;
 }
 h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
-.page { max-width: 1080px; margin: 0 auto; }
+.page { max-width: 1080px; margin: 0 auto; overflow-x: hidden; }
 
 .entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
 .entete h1 { font-size: 28px; font-weight: 700; }
@@ -90,9 +90,9 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .section-tete h2 { font-size: 19px; font-weight: 600; }
 .section-tete p { color: var(--paper-dim); font-size: 13.5px; margin: 6px 0 0; max-width: 68ch; }
 
-/* ===== Redistribution des stats (Nouveau Design) ===== */
+/* ===== Redistribution des stats (Nouveau Design Fluide) ===== */
 .total-dispo {
-    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
     background: linear-gradient(90deg, rgba(242,194,48,0.15) 0%, rgba(242,194,48,0.02) 100%);
     border-left: 4px solid var(--yellow); border-radius: 4px;
     padding: 16px 20px; margin-bottom: 20px;
@@ -105,9 +105,13 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .total-dispo-reste b { font-family: 'Oswald', sans-serif; font-size: 32px; line-height: 1.1; color: var(--yellow); display: block; }
 .total-dispo-reste.negatif b { color: var(--red); }
 
-.stats-grille { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 12px; }
-@media (max-width: 1000px) { .stats-grille { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 640px) { .stats-grille { grid-template-columns: repeat(1, 1fr); } }
+/* GRILLE RESPONSIVE 100% FLUIDE */
+.stats-grille { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); 
+    gap: 12px; 
+    margin-bottom: 12px; 
+}
 
 .stat-carte {
     background: var(--bg-panel); border: 1px solid var(--line); border-top: 4px solid var(--line);
@@ -119,7 +123,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .stat-pv  { border-top-color: var(--pv); }  .stat-spd { border-top-color: var(--spd); }
 .stat-luck{ border-top-color: var(--luck);}
 
-.stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.stat-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 .stat-label { display: flex; align-items: center; gap: 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); }
 .stat-total-wrapper { text-align: right; }
 .stat-valeur { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 800; line-height: 1; }
@@ -133,20 +137,21 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .stat-breakdown .objets { color: var(--objets); }
 .stat-breakdown .signe { color: var(--line); margin: 0 3px; font-weight: 400; }
 
-.stat-controls { display: flex; gap: 4px; margin-top: auto; }
+.stat-controls { display: flex; gap: 4px; margin-top: auto; align-items: stretch; }
 .stat-controls button {
     background: #1e1e21; border: 1px solid var(--line); color: var(--paper);
     border-radius: 4px; font-family: 'Oswald', sans-serif; cursor: pointer;
     transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+    padding: 0; margin: 0;
 }
 .stat-controls button:hover:not(:disabled) { background: #2c2c2e; border-color: var(--yellow); color: var(--yellow); }
 .stat-controls button:disabled { opacity: 0.3; cursor: not-allowed; }
-.btn-minmax { width: 34px; font-size: 10px; font-weight: 700; color: var(--paper-dim) !important; letter-spacing: 0.5px; }
-.btn-step { width: 30px; font-size: 18px; font-weight: 500; }
+.btn-minmax { flex: 0 0 28px; font-size: 9px; font-weight: 700; color: var(--paper-dim) !important; letter-spacing: 0.5px; }
+.btn-step { flex: 0 0 26px; font-size: 18px; font-weight: 500; }
 .stat-controls input {
-    flex: 1; min-width: 0; text-align: center; background: #0b0b0d; border: 1px solid var(--line);
+    flex: 1; min-width: 30px; width: 100%; text-align: center; background: #0b0b0d; border: 1px solid var(--line);
     color: var(--paper); font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 700;
-    border-radius: 4px; height: 32px; padding: 0;
+    border-radius: 4px; height: 32px; padding: 0; margin: 0;
 }
 .stat-controls input:focus { outline: none; border-color: var(--yellow); }
 
@@ -670,7 +675,6 @@ function recalculer() {
     };
     const r = simulerBuild(stacksChoisis, equipementBrut);
     
-    // Injecte les détails de stats sans redessiner toute la grille (garde le focus input)
     afficherDetailStats(r.stats);
 
     document.getElementById('resultatsGrille').innerHTML = `
