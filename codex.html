@@ -89,8 +89,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-nom { font-size: 15.5px; font-weight: 600; text-align: center; margin-bottom: 10px; }
 .carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; text-align: center; margin-top: -6px; margin-bottom: 10px; }
 
-.stat-ligne { font-size: 13px; margin-bottom: 4px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 6px; }
-.stat-ligne .label { color: var(--paper-dim); font-weight: 600; margin-right: 5px; }
+.stat-ligne { font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.stat-ligne .gauche { display: flex; align-items: baseline; gap: 6px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+.stat-ligne .label { color: var(--paper-dim); font-weight: 600; }
 .stat-ligne .valeur-neutre { color: var(--paper); font-weight: 700; }
 /* Bonus de stat : coloré par la stat elle-même (reconnaissable d'un coup d'œil, cohérent avec le
    reste du site) — un négatif reste ÉVIDENT grâce au badge à bordure rouge, pas seulement à la
@@ -100,9 +101,23 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     border: 1px solid var(--negatif); border-radius: 4px; padding: 0px 6px;
     background: rgba(255,107,107,0.1);
 }
-.note-scaling { font-size: 11px; color: var(--paper-dim); font-weight: 500; }
-.bloc-passif { font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; }
-.bloc-passif b { color: var(--paper); font-weight: 600; }
+/* Progression par niveau : une PASTILLE à part, dans le même style que les badges "niveau" déjà
+   utilisés ailleurs sur le site (inventaire/boutique/calculateur) — pour que l'œil associe
+   immédiatement ce jaune-là à "évolue par doublon possédé", et jamais confondu avec la valeur
+   elle-même. Toujours casée à droite de sa ligne (flex space-between) plutôt que collée en texte
+   après la valeur, pour ne pas alourdir la lecture. */
+.pilule-scaling {
+    flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px;
+    font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 800; letter-spacing: .02em;
+    color: var(--yellow); border: 1.5px solid var(--yellow); border-radius: 5px;
+    padding: 1px 7px; background: rgba(242,194,48,0.12); white-space: nowrap; cursor: help;
+}
+.pilule-scaling .fleche { font-size: 9px; }
+.pilule-scaling .unite { font-weight: 500; opacity: .8; }
+.bloc-passif { display: flex; flex-direction: column; gap: 6px; }
+.passif-ligne { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; }
+.passif-ligne .texte { flex: 1 1 auto; min-width: 0; }
+.passif-ligne b { color: var(--paper); font-weight: 600; }
 
 .bloc-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a2a2a; }
 .bloc-section:first-of-type { border-top: none; margin-top: 6px; padding-top: 0; }
@@ -114,7 +129,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .scaling-item { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
 .scaling-item .scaling-label { font-size: 9px; color: var(--paper-dim); margin-bottom: 2px; }
 .scaling-item .scaling-lettre { font-size: 15px; font-weight: 800; }
-.scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; }
+.scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .scaling-degats b { color: var(--paper); font-weight: 700; }
 
 /* ============ CARTE À CHANGEMENT DE STANCE ============ */
@@ -162,7 +177,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         <span><span class="pastille" style="background:var(--luck)"></span>Chance</span>
         <span><span class="pastille" style="background:var(--esquive)"></span>Esquive</span>
         <span><span class="pastille-malus"></span>Valeur négative (malus)</span>
-        <span>Le "(+X/niveau)" à côté d'une valeur indique de combien elle progresse à chaque doublon possédé.</span>
+        <span><span class="pilule-scaling"><span class="fleche">▲</span>+2<span class="unite">/niv.</span></span> = gain à chaque exemplaire supplémentaire possédé</span>
     </div>
 
     <div class="barre-controles">
@@ -194,10 +209,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     function formatNombre(v) {
         return (Math.round(v * 100) / 100).toString();
     }
-    // Note "(+X/niveau)" à accoler à une valeur qui progresse par doublon — absente si le taux est nul.
-    function noteIncrement(valeurIncrement) {
+    // Pastille "progression par niveau" — même esprit que les badges "niveau" déjà utilisés
+    // ailleurs sur le site (jaune, contour, coin arrondi), pour que l'œil reconnaisse tout de
+    // suite "ça évolue par doublon" sans avoir à lire du texte entre parenthèses. Absente si le
+    // taux est nul. Le survol (title) rappelle explicitement ce que représente le nombre.
+    function pilluleIncrement(valeurIncrement) {
         if (!valeurIncrement) return "";
-        return ` <span class="note-scaling">(+${formatNombre(valeurIncrement)}/niveau)</span>`;
+        const signe = valeurIncrement >= 0 ? "+" : "";
+        return `<span class="pilule-scaling" title="Gagné à chaque exemplaire supplémentaire possédé de cet objet"><span class="fleche">▲</span>${signe}${formatNombre(valeurIncrement)}<span class="unite">/niv.</span></span>`;
     }
 
     const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
@@ -247,7 +266,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // Ces fonctions de construction de carte sont dérivées de inventaire.html — le Codex affiche
     // les valeurs à l'état de BASE (niveau 0, puisqu'il ne s'agit pas d'un inventaire personnel),
     // mais rend désormais PUBLIC le taux de progression par doublon de chaque valeur qui évolue
-    // (voir noteIncrement/formatNombre plus haut) : dégâts de base, stats de "Bonus", et passifs
+    // (voir pilluleIncrement/formatNombre plus haut) : dégâts de base, stats de "Bonus", et passifs
     // spéciaux pilotés par StatPrincipale. Ce taux est purement informatif ici, jamais appliqué à
     // un niveau réellement possédé — pour ça, voir calculateur.html/inventaire.html.
     function construirePassifs(s, exclureChamp, exclusionsSupplementaires) {
@@ -259,13 +278,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const valeur = s[champ];
             const estActif = typeof valeur === 'boolean' ? valeur : valeur > 0;
             if (!estActif) continue;
-            let texte = GABARITS_PASSIF[nomStat](valeur, s);
+            const texte = GABARITS_PASSIF[nomStat](valeur, s);
             // Ce passif est-il CELUI que fait progresser StatPrincipale sur cet objet ? Si oui,
-            // rend public son taux de progression par doublon (IncrementPassif / "incrementPassif").
-            if (s.statPrincipale === nomStat && s.incrementPassif > 0) {
-                texte += noteIncrement(s.incrementPassif);
-            }
-            passifs.push(texte);
+            // rend public son taux de progression par doublon (IncrementPassif / "incrementPassif"),
+            // dans sa propre pastille à droite plutôt que noyé dans la phrase.
+            const pilule = (s.statPrincipale === nomStat && s.incrementPassif > 0) ? pilluleIncrement(s.incrementPassif) : '';
+            passifs.push(`<div class="passif-ligne"><span class="texte">${texte}</span>${pilule}</div>`);
         }
         return passifs;
     }
@@ -282,8 +300,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
             return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
         }).join("");
-        const note = scaling1Stat ? noteIncrement(incrementDegats) : "";
-        const ligneDegats = `<div class="scaling-degats">Dégâts : <b>${Math.round(degatsMin)} - ${Math.round(degatsMax)}</b>${note}</div>`;
+        const pilule = scaling1Stat ? pilluleIncrement(incrementDegats) : "";
+        const ligneDegats = `<div class="scaling-degats"><span class="gauche">Dégâts : <b>${Math.round(degatsMin)} - ${Math.round(degatsMax)}</b></span>${pilule}</div>`;
         return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
     }
 
@@ -295,11 +313,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     function construireDetails(s, estStrategeme) {
         if (s.soinDirect > 0) {
             // SoinDirect ne progresse que via StatPrincipale (pas de champ increment dédié).
-            const noteSoin = s.statPrincipale === "SoinDirect" ? noteIncrement(s.incrementPassif) : "";
-            const lignesStat = [{ label: "Montant soigné", valeur: s.soinDirect + noteSoin, colorer: false }];
+            const piluleSoin = s.statPrincipale === "SoinDirect" ? pilluleIncrement(s.incrementPassif) : "";
+            const lignesStat = [{ label: "Montant soigné", valeur: s.soinDirect, pilule: piluleSoin, colorer: false }];
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
-            return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, "SoinDirect").join(" ") };
+            return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, "SoinDirect").join("") };
         }
 
         if (estStrategeme) {
@@ -310,51 +328,53 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 // cumulables (voir duel.cs) — IncrementDegatsDirects (dédié) ET/OU StatPrincipale =
                 // "DegatsDirects" (IncrementPassif). On additionne les deux s'ils coexistent.
                 const tauxDegatsDirects = (s.incrementDegatsDirects || 0) + (s.statPrincipale === "DegatsDirects" ? (s.incrementPassif || 0) : 0);
-                lignesStat.push({ label: "Dégâts", valeur: s.degatsDirects + coups + noteIncrement(tauxDegatsDirects), colorer: false });
+                lignesStat.push({ label: "Dégâts", valeur: s.degatsDirects + coups, pilule: pilluleIncrement(tauxDegatsDirects), colorer: false });
             }
             if (s.poisonDegats > 0) {
-                const notePoison = s.statPrincipale === "PoisonDegats" ? noteIncrement(s.incrementPassif) : "";
-                lignesStat.push({ label: "Poison", valeur: s.poisonDegats + " stacks" + notePoison, colorer: false });
+                const pilulePoison = s.statPrincipale === "PoisonDegats" ? pilluleIncrement(s.incrementPassif) : "";
+                lignesStat.push({ label: "Poison", valeur: s.poisonDegats + " stacks", pilule: pilulePoison, colorer: false });
             }
             if (s.brulureDegats > 0) {
-                const noteBrulure = s.statPrincipale === "BrulureDegats" ? noteIncrement(s.incrementPassif) : "";
-                lignesStat.push({ label: "Brûlure", valeur: s.brulureDegats + "/tour" + noteBrulure, colorer: false });
+                const piluleBrulure = s.statPrincipale === "BrulureDegats" ? pilluleIncrement(s.incrementPassif) : "";
+                lignesStat.push({ label: "Brûlure", valeur: s.brulureDegats + "/tour", pilule: piluleBrulure, colorer: false });
             }
             if (s.shieldMontant > 0) {
-                const noteBouclier = s.statPrincipale === "ShieldMontant" ? noteIncrement(s.incrementPassif) : "";
-                lignesStat.push({ label: "Bouclier", valeur: s.shieldMontant + noteBouclier, colorer: false });
+                const piluleBouclier = s.statPrincipale === "ShieldMontant" ? pilluleIncrement(s.incrementPassif) : "";
+                lignesStat.push({ label: "Bouclier", valeur: s.shieldMontant, pilule: piluleBouclier, colorer: false });
             }
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
 
             const passifs = construirePassifs(s, "DegatsDirects", ["ShieldMontant"]);
-            if (s.delaiTours > 0) passifs.push(`Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.`);
-            return { scalingHtml: null, lignesStat, passifTexte: passifs.join(" ") };
+            if (s.delaiTours > 0) passifs.push(`<div class="passif-ligne"><span class="texte">Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.</span></div>`);
+            return { scalingHtml: null, lignesStat, passifTexte: passifs.join("") };
         }
 
         const lignesStat = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3);
-        const passifTexte = construirePassifs(s, "Bonus").join(" ");
+        const passifTexte = construirePassifs(s, "Bonus").join("");
         return { scalingHtml: construireScaling(s), lignesStat, passifTexte };
     }
 
     // colorer=true -> ligne de "Bonus" de stat (ATK/DEF/PV/SPD/LUCK/Esquive) : teintée de la
     // couleur propre à cette stat, avec un badge à bordure rouge pour les valeurs négatives — le
-    // badge reste visible même en cas de daltonisme, la teinte seule ne suffirait pas.
-    function rendreLigneStat({ label, valeur, colorer, stat, negatif }) {
-        if (!colorer) return `<div class="stat-ligne"><span class="label">${label}</span><span class="valeur-neutre">${valeur}</span></div>`;
+    // badge reste visible même en cas de daltonisme, la teinte seule ne suffirait pas. La pastille
+    // de progression (si présente) est toujours casée à droite, jamais mélangée à la valeur.
+    function rendreLigneStat({ label, valeur, colorer, stat, negatif, pilule }) {
+        const piluleHtml = pilule || '';
+        if (!colorer) return `<div class="stat-ligne"><span class="gauche"><span class="label">${label}</span><span class="valeur-neutre">${valeur}</span></span>${piluleHtml}</div>`;
         const couleur = COULEUR_STAT[stat] || 'var(--paper)';
         const classeBadge = negatif ? 'stat-valeur-badge malus' : 'stat-valeur-badge';
-        return `<div class="stat-ligne"><span class="label">${label}</span><span class="${classeBadge}" style="color:${couleur}">${valeur}</span></div>`;
+        return `<div class="stat-ligne"><span class="gauche"><span class="label">${label}</span><span class="${classeBadge}" style="color:${couleur}">${valeur}</span></span>${piluleHtml}</div>`;
     }
 
     // incrementN : rendu public ici — le taux de progression par doublon de chaque stat de bonus
-    // (Increment/Increment2/Increment3 côté moteur), affiché juste après la valeur de base.
+    // (Increment/Increment2/Increment3 côté moteur), affiché dans sa propre pastille à droite.
     function construireLignesStatGenerique(stat, bonus, increment, stat2, bonus2, increment2, stat3, bonus3, increment3) {
         const lignes = [];
         const ligne = (st, b, inc) => {
             if (!st) return;
             const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(st);
-            lignes.push({ label: LABELS_STAT[st] || st, valeur: formatteur(b) + noteIncrement(inc), colorer: true, stat: st, negatif: b < 0 });
+            lignes.push({ label: LABELS_STAT[st] || st, valeur: formatteur(b), pilule: pilluleIncrement(inc), colorer: true, stat: st, negatif: b < 0 });
         };
         ligne(stat, bonus, increment);
         ligne(stat2, bonus2, increment2);
