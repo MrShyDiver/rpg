@@ -12,6 +12,12 @@
 const CST = {
     BASE_ATK: 10.0, BONUS_ATK_PAR_STACK: 1.0,
     BASE_DEF: 10.0, BONUS_DEF_PAR_STACK: 1.0,
+    // Le mannequin de test n'est plus une valeur fixe : il DEMARRE a BASE_ATK/BASE_DEF/
+    // BASE_LUCK_MANNEQUIN/BASE_SPD (10 partout) et grandit ensuite au fil du combat -- voir
+    // simulerSurvieEtOffense plus bas. BASE_LUCK_MANNEQUIN est la seule valeur de depart qui
+    // n existait pas deja (les joueurs demarrent a 0 luck, le mannequin a 10 pour lui donner un
+    // peu de crit des le premier tour).
+    BASE_LUCK_MANNEQUIN: 10.0,
     BASE_PV: 100.0, BONUS_PV_PAR_STACK: 10.0,
     BASE_SPD: 10.0, SPD_MAX_BONUS: 40.0, K_SPD: 40.0,
     BASE_ESQUIVE: 15.0,
@@ -21,9 +27,22 @@ const CST = {
     COEF_LETTRE_SCALING: { S: 1.3, A: 1.0, B: 0.75, C: 0.5, D: 0.25, E: 0.1 },
     POIDS_SCALING_STAT: { atk: 1.0, def: 1.0, pv: 0.1, spd: 1.0, crit: 1.0 },
     MAX_ACTIONS: 45, ROPE_START_ACTION: 20, ROPE_CADENCE: 2,
+    // ROPE_START_ACTION/ROPE_CADENCE/FATIGUE_CROISSANCE gardent leur nom et leur valeur d origine
+    // (elles pilotaient la "fatigue" avant) mais servent maintenant a fixer le RYTHME auquel le
+    // mannequin monte en puissance -- voir simulerSurvieEtOffense. Plus de fatigue en tant que
+    // telle : le mannequin a une vie infinie, le combat s arrete quand LE JOUEUR TESTE meurt (ou
+    // au bout de MAX_ACTIONS par securite, ce qui ne devrait jamais arriver vu la croissance
+    // exponentielle).
     FATIGUE_CROISSANCE: 1.30,
     POIDS_BURST: 2.5,
-    DIVISEUR: 2.8,
+    // Contribution DIRECTE de la survie au score, en plus de son effet deja present via le cumul
+    // des degats infliges -- sans ca, une survie exceptionnelle avec une attaque quasi nulle
+    // donnait un score proche de zero. pvTotaux agrege deja proprement PV + DEF (via la
+    // mitigation) + boucliers ; le multiplier par ce poids lui donne une valeur propre, dans la
+    // meme "monnaie" que les degats infliges. Calibre contre des duels reels connus (6 a 10
+    // donnent le meme classement correct ; 8 est le choix median).
+    POIDS_DEFENSE: 8.0,
+    DIVISEUR: 4,
     // Même valeur approximative que le commentaire C# ("2 armes tir sur 7 au catalogue") —
     // à recalculer si le roster d'armes change significativement.
     PROPORTION_ARMES_TIR: 0.30,
@@ -198,25 +217,80 @@ function estimerAtkEquivalentAvecStance(s, arme) {
     return (stance0 + stance2) / 2.0;
 }
 
-function usagesEffectifsStrategeme(s) {
-    const TOURS_PROPRES_TYPE = 10.0;
+// Horizon utilise pour amorcer une toute premiere estimation de survie, avant qu on ait pu
+// calculer un survieTours reel pour CE personnage precis (voir le second passage plus bas, dans
+// calculerPowerLevelSimule).
+const HORIZON_INITIAL_TOURS = 10.0;
+
+function usagesEffectifsStrategeme(s, horizonTours) {
     const usages = Math.max(1, s.usagesParCombat || 1);
     let total = 0;
     for (let k = 1; k <= usages; k++) {
         const coolDownEcoule = (k - 1) * (s.cooldownTours || 0);
-        total += Math.max(0, 1.0 - coolDownEcoule / TOURS_PROPRES_TYPE);
+        total += Math.max(0, 1.0 - coolDownEcoule / Math.max(0.01, horizonTours));
     }
     return total;
+}
+
+// ⚠️ REMPLACE L'ANCIENNE "FATIGUE" (un multiplicateur abstrait sur les dégâts subis) PAR UN
+// MANNEQUIN QUI GRANDIT RÉELLEMENT : ses 4 stats (ATK/DEF/Chance/Vitesse) démarrent à la vraie
+// base du jeu (10, 10, 10 -- BASE_LUCK_MANNEQUIN --, 10) et progressent au même rythme que
+// l'ancienne fatigue (×FATIGUE_CROISSANCE tous les ROPE_CADENCE tours, à partir de
+// ROPE_START_ACTION -- le calendrier dépend de TA vitesse, exactement comme avant). Le mannequin a
+// une vie infinie : le combat ne s'arrête QUE quand le personnage testé meurt (ou au bout de
+// MAX_ACTIONS par sécurité, ce qui ne devrait jamais arriver vu que la croissance est
+// exponentielle). Comme sa DEF grandit aussi, on calcule maintenant tes dégâts infligés TOUR PAR
+// TOUR (et non plus en un seul dpaInflige constant multiplié par la survie) : ils diminuent au fil
+// du combat, exactement comme sa menace grandit -- un vrai bras de fer, plus une pénalité abstraite.
+function simulerSurvieEtOffense(pvTotaux, hitChance, atkEquivalent, critMulti, arme, penetrationTotal,
+                                  enemyHitChance, mitigationSelf, blocageMitig, etourdissementTotal, reductionTirTotal,
+                                  regen, lifesteal, tourDebutCroissance, toursParTickCroissance) {
+    let survieTours = CST.MAX_ACTIONS, cumulDegatsSubis = 0.0, totalDmgOffense = 0.0, paliers = 0;
+    for (let tour = 1; tour <= CST.MAX_ACTIONS; tour++) {
+        if (tour >= tourDebutCroissance) paliers = Math.floor((tour - tourDebutCroissance) / toursParTickCroissance) + 1;
+        const facteur = Math.pow(CST.FATIGUE_CROISSANCE, paliers);
+        const mannequinAtk = CST.BASE_ATK * facteur, mannequinDef = CST.BASE_DEF * facteur;
+        const mannequinLuck = CST.BASE_LUCK_MANNEQUIN * facteur, mannequinSpd = CST.BASE_SPD * facteur;
+
+        // Dégâts que TU infliges ce tour-ci -- de plus en plus mitigés, sa DEF grandissant.
+        const defCibleEff = mannequinDef * (1.0 - Math.min(1.0, penetrationTotal / 100.0));
+        const mitigationRef = mitigation(defCibleEff);
+        let dpaInfligeCeTour = hitChance * (atkEquivalent * (1.0 - mitigationRef)) * critMulti;
+        if (arme && arme.executionBonus > 0 && arme.executionSeuil > 0) {
+            dpaInfligeCeTour *= (1.0 + Math.min(1.0, arme.executionSeuil / 100.0) * (arme.executionBonus / 100.0));
+        }
+        totalDmgOffense += dpaInfligeCeTour;
+
+        // Dégâts que LE MANNEQUIN t'inflige ce tour-ci -- de plus en plus fort (ATK), plus souvent
+        // (SPD) et critique plus souvent (Chance), au même rythme.
+        const mannequinCritPct = CST.BASE_CRIT + CST.LUCK_CRIT_MAX * Math.tanh(mannequinLuck / CST.K_LUCK);
+        let dpaSubiCeTour = enemyHitChance * (mannequinAtk * (1.0 - mitigationSelf)) * (1.0 + mannequinCritPct / 100.0);
+        dpaSubiCeTour *= (1.0 - blocageMitig);
+        if (etourdissementTotal > 0) dpaSubiCeTour *= (1.0 - Math.min(0.5, hitChance * (etourdissementTotal / 100.0) * 0.7));
+        if (reductionTirTotal > 0) dpaSubiCeTour *= (1.0 - Math.min(1.0, reductionTirTotal / 100.0) * CST.PROPORTION_ARMES_TIR);
+        dpaSubiCeTour *= (mannequinSpd / CST.BASE_SPD);
+
+        const soinCeTour = regen + dpaInfligeCeTour * (lifesteal / 100.0);
+        const degatsDeCeTour = dpaSubiCeTour - Math.min(soinCeTour, dpaSubiCeTour * 0.60);
+        const cumulAvantCeTour = cumulDegatsSubis;
+        cumulDegatsSubis += degatsDeCeTour;
+        if (cumulDegatsSubis >= pvTotaux) {
+            const restant = pvTotaux - cumulAvantCeTour;
+            return { survieTours: Math.max(1.0, (tour - 1) + Math.min(1.0, restant / Math.max(0.01, degatsDeCeTour))), totalDmgOffense };
+        }
+    }
+    return { survieTours: Math.max(1.0, survieTours), totalDmgOffense };
 }
 
 // Port fidèle de CalculerPowerLevelSimule — même structure, mêmes noms de variable côté C#
 // pour qu'un futur correctif soit trivial à reporter ici par simple comparaison ligne à ligne.
 function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, offhand, torso, strat) {
-    let lifesteal = 0, regen = 0, parade = 0, blocage = 0, blocageReduc = 0, shield = 0, soinDirect = 0;
+    let lifesteal = 0, regen = 0, parade = 0, blocage = 0, blocageReduc = 0, shield = 0;
     let poisonDmg = 0, saignementDmg = 0, bonusPlatDivers = 0;
     let critBonusTotal = 0, precisionTotal = 0, penetrationTotal = 0;
     let etourdissementTotal = 0, reductionTirTotal = 0;
 
+    const gearAvecSoin = [];
     [arme, offhand, torso].forEach(g => {
         if (!g) return;
         lifesteal += g.lifesteal || 0;
@@ -225,7 +299,7 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
         blocage += g.blocage || 0;
         blocageReduc += g.blocageReduction || 0;
         shield += g.shieldMontant || 0;
-        soinDirect += (g.soinDirect || 0) * usagesEffectifsStrategeme(g);
+        if ((g.soinDirect || 0) > 0) gearAvecSoin.push(g);
         const pd = g.poisonDegats || 0;
         poisonDmg += pd * (pd + 1) / 2.0;
         saignementDmg += g.saignementDegats || 0;
@@ -246,64 +320,37 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
         bonusPlatDivers += (g.resistanceFeu || 0) * 0.2;
     });
 
-    const esquiveCibleEffective = Math.max(0, CST.BASE_ESQUIVE - precisionTotal);
-    const hitChance = (100.0 - esquiveCibleEffective) / 100.0;
+    const hitChance = (100.0 - Math.max(0, CST.BASE_ESQUIVE - precisionTotal)) / 100.0;
     const critMulti = 1.0 + (critPct + critBonusTotal) / 100.0;
-    const defCibleEffective = CST.BASE_DEF * (1.0 - Math.min(1.0, penetrationTotal / 100.0));
-    const mitigationRef = mitigation(defCibleEffective);
-    let dpaInflige = hitChance * (atkEquivalent * (1.0 - mitigationRef)) * critMulti;
-
-    if (arme && arme.executionBonus > 0 && arme.executionSeuil > 0) {
-        const fractionSousLeSeuil = Math.min(1.0, arme.executionSeuil / 100.0);
-        dpaInflige *= (1.0 + fractionSousLeSeuil * (arme.executionBonus / 100.0));
-    }
-
     let enemyHitChance = (100.0 - esquivePct) / 100.0;
     enemyHitChance *= (100.0 - parade) / 100.0;
     const mitigationSelf = mitigation(s.def);
-    let dpaSubi = enemyHitChance * (CST.BASE_ATK * (1.0 - mitigationSelf)) * (1.0 + CST.BASE_CRIT / 100.0);
-
     const blocageMitig = (blocage / 100.0) * (blocageReduc / 100.0);
-    dpaSubi *= (1.0 - blocageMitig);
-
-    if (etourdissementTotal > 0) {
-        dpaSubi *= (1.0 - Math.min(0.5, hitChance * (etourdissementTotal / 100.0) * 0.7));
-    }
-    if (reductionTirTotal > 0) {
-        dpaSubi *= (1.0 - Math.min(1.0, reductionTirTotal / 100.0) * CST.PROPORTION_ARMES_TIR);
-    }
-
-    const soinParTour = regen + (dpaInflige * (lifesteal / 100.0));
-
-    if (strat && strat.shieldMontant > 0) {
-        shield += strat.shieldMontant * usagesEffectifsStrategeme(strat);
-    }
-    const pvTotaux = s.pv + shield + soinDirect;
 
     const fractionActionsPropres = s.spd / (s.spd + CST.BASE_SPD);
-    const tourDebutFatigue = CST.ROPE_START_ACTION * fractionActionsPropres;
-    const toursParTickFatigue = Math.max(0.01, CST.ROPE_CADENCE * fractionActionsPropres);
+    const tourDebutCroissance = CST.ROPE_START_ACTION * fractionActionsPropres;
+    const toursParTickCroissance = Math.max(0.01, CST.ROPE_CADENCE * fractionActionsPropres);
 
-    let survieTours = CST.MAX_ACTIONS;
-    let cumulDegatsSubis = 0.0;
-    for (let tour = 1; tour <= CST.MAX_ACTIONS; tour++) {
-        let paliersFatigue = 0;
-        if (tour >= tourDebutFatigue) {
-            paliersFatigue = Math.floor((tour - tourDebutFatigue) / toursParTickFatigue) + 1;
-        }
-        const degatsBrutsCeTour = dpaSubi * Math.pow(CST.FATIGUE_CROISSANCE, paliersFatigue);
-        const degatsDeCeTour = degatsBrutsCeTour - Math.min(soinParTour, degatsBrutsCeTour * 0.60);
-        const cumulAvantCeTour = cumulDegatsSubis;
-        cumulDegatsSubis = cumulAvantCeTour + degatsDeCeTour;
-        if (cumulDegatsSubis >= pvTotaux) {
-            const restant = pvTotaux - cumulAvantCeTour;
-            survieTours = (tour - 1) + Math.min(1.0, restant / Math.max(0.01, degatsDeCeTour));
-            break;
-        }
-    }
-    survieTours = Math.max(1.0, survieTours);
+    // Recharges de bouclier/soin en 2 passages, comme avant : la fatigue étant remplacée par un
+    // mannequin qui grandit, l'horizon pertinent pour "combien de charges avant la mort" reste la
+    // survie ESTIMÉE, pas un chiffre fixe arbitraire.
+    const calculerPvTotaux = (horizon) => {
+        let soinDirectH = 0, shieldStratH = 0;
+        gearAvecSoin.forEach(g => { soinDirectH += (g.soinDirect || 0) * usagesEffectifsStrategeme(g, horizon); });
+        if (strat && strat.shieldMontant > 0) shieldStratH = strat.shieldMontant * usagesEffectifsStrategeme(strat, horizon);
+        return s.pv + shield + shieldStratH + soinDirectH;
+    };
 
-    let totalDmg = dpaInflige * survieTours * (s.spd / CST.BASE_SPD);
+    const passeInitiale = simulerSurvieEtOffense(calculerPvTotaux(HORIZON_INITIAL_TOURS), hitChance, atkEquivalent, critMulti, arme,
+        penetrationTotal, enemyHitChance, mitigationSelf, blocageMitig, etourdissementTotal, reductionTirTotal,
+        regen, lifesteal, tourDebutCroissance, toursParTickCroissance);
+    const pvTotaux = calculerPvTotaux(passeInitiale.survieTours);
+    const passeFinale = simulerSurvieEtOffense(pvTotaux, hitChance, atkEquivalent, critMulti, arme,
+        penetrationTotal, enemyHitChance, mitigationSelf, blocageMitig, etourdissementTotal, reductionTirTotal,
+        regen, lifesteal, tourDebutCroissance, toursParTickCroissance);
+    let survieTours = passeFinale.survieTours;
+
+    let totalDmg = passeFinale.totalDmgOffense * (s.spd / CST.BASE_SPD);
 
     const coupsQuiTouchent = hitChance * survieTours;
     const facteurPoisonSoutenu = Math.min(80.0, 1.0 + coupsQuiTouchent * coupsQuiTouchent * 0.03);
@@ -311,7 +358,7 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
     totalDmg += saignementDmg * 3.0 * Math.min(3.0, survieTours / 3.0);
 
     if (strat) {
-        let stratDegats = (strat.degatsDirects || 0) * usagesEffectifsStrategeme(strat) * Math.max(1, strat.coupsParUsage || 1);
+        let stratDegats = (strat.degatsDirects || 0) * usagesEffectifsStrategeme(strat, survieTours) * Math.max(1, strat.coupsParUsage || 1);
         if (strat.delaiTours > 0) {
             const fiabilite = Math.min(1.0, survieTours / (strat.delaiTours + 1.0));
             stratDegats *= fiabilite;
@@ -319,19 +366,19 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
         totalDmg += (stratDegats * CST.POIDS_BURST);
 
         if (strat.poisonDegats > 0) {
-            const stratPoisonDmg = strat.poisonDegats * (strat.poisonDegats + 1) / 2.0 * usagesEffectifsStrategeme(strat);
+            const stratPoisonDmg = strat.poisonDegats * (strat.poisonDegats + 1) / 2.0 * usagesEffectifsStrategeme(strat, survieTours);
             totalDmg += stratPoisonDmg * CST.POIDS_BURST;
         }
         if (strat.brulureDegats > 0 && strat.brulureDuree > 0) {
-            const stratBrulureDmg = strat.brulureDegats * strat.brulureDuree * usagesEffectifsStrategeme(strat);
+            const stratBrulureDmg = strat.brulureDegats * strat.brulureDuree * usagesEffectifsStrategeme(strat, survieTours);
             totalDmg += stratBrulureDmg * CST.POIDS_BURST;
         }
     }
 
-    const scoreBrut = totalDmg + bonusPlatDivers;
+    const scoreBrut = totalDmg + (pvTotaux * CST.POIDS_DEFENSE) + bonusPlatDivers;
     const powerLevel = scoreBrut / CST.DIVISEUR;
 
-    return { dpaInflige, dpaSubi, survieTours, totalDmg, powerLevel, pvTotaux, soinParTour };
+    return { dpaInflige: passeFinale.totalDmgOffense / Math.max(1, survieTours), survieTours, totalDmg, powerLevel, pvTotaux };
 }
 
 // Point d'entrée unique pour la page : à partir de stacks + équipement CHOISIS, renvoie tout ce
