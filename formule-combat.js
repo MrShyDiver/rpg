@@ -12,14 +12,14 @@
 const CST = {
     BASE_ATK: 10.0, BONUS_ATK_PAR_STACK: 1.0,
     BASE_DEF: 10.0, BONUS_DEF_PAR_STACK: 1.0,
-    // Mannequin "adversaire type de MA tranche", utilise uniquement par calculerPowerLevelSimule
-    // pour la survie (menace subie) et l attaque (cible mitigee) -- a ne pas confondre avec
-    // BASE_ATK/BASE_DEF ci-dessus, qui restent la vraie stat de depart (0 stack) de chacun. Courbe
-    // ancree sur cette base reelle (10) au niveau 0, pente issue d une regression sur les stats
-    // reelles de la population. A recalibrer a chaque gros patch avec des donnees fraiches, pas en
-    // continu -- pour ne pas faire fluctuer le PowerLevel de quelqu un qui n a rien change.
-    DUMMY_ATK_BASE: 10.0, DUMMY_ATK_PENTE: 0.771,
-    DUMMY_DEF_BASE: 10.0, DUMMY_DEF_PENTE: 0.332,
+    // Mannequin de reference UNIQUE et FIXE pour tout le monde, PAS par tranche -- correctif suite
+    // au cas Kargnacc : un mannequin scale sur le total de stacks de LA PERSONNE TESTEE cassait la
+    // comparabilite entre joueurs (un build a faible investissement mais tres optimise se
+    // retrouvait juge contre un pantin taille a SA PROPRE faiblesse plutot que contre une vraie
+    // menace). Calibre sur le 70e percentile reel de la population active (atkEquivalent/def) --
+    // a recalibrer a chaque gros patch avec des donnees fraiches, pas en continu.
+    DUMMY_ATK: 53.5,
+    DUMMY_DEF: 26.0,
     BASE_PV: 100.0, BONUS_PV_PAR_STACK: 10.0,
     BASE_SPD: 10.0, SPD_MAX_BONUS: 40.0, K_SPD: 40.0,
     BASE_ESQUIVE: 15.0,
@@ -218,8 +218,11 @@ const HORIZON_INITIAL_TOURS = 10.0;
 
 // Menace/cible "type" d un adversaire dont l investissement total en stacks est connu -- utilisees
 // a la place de CST.BASE_ATK/CST.BASE_DEF fixes dans calculerPowerLevelSimule.
-function dummyAtk(totalStacksInvestis) { return CST.DUMMY_ATK_BASE + CST.DUMMY_ATK_PENTE * totalStacksInvestis; }
-function dummyDef(totalStacksInvestis) { return CST.DUMMY_DEF_BASE + CST.DUMMY_DEF_PENTE * totalStacksInvestis; }
+// Le parametre totalStacksInvestis est conserve dans la signature (les appelants le fournissent
+// toujours) mais n est plus utilise -- voir le commentaire sur DUMMY_ATK/DUMMY_DEF plus haut :
+// mannequin unique desormais, pas par tranche.
+function dummyAtk(totalStacksInvestis) { return CST.DUMMY_ATK; }
+function dummyDef(totalStacksInvestis) { return CST.DUMMY_DEF; }
 
 function usagesEffectifsStrategeme(s, horizonTours) {
     const usages = Math.max(1, s.usagesParCombat || 1);
