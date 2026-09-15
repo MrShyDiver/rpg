@@ -12,6 +12,8 @@
     --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
     --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
     --atk: #ff5e3a; --def: #3b82f6; --pv: #ca2972; --spd: #FFCC00; --luck: #00ffaa;
+    --investi: #5ddd7a; --objets: #4a9fd8;
+    --positif: #5ddd7a; --negatif: #ff6b6b;
 }
 * { box-sizing: border-box; }
 body {
@@ -55,7 +57,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 .message { color: var(--paper-dim); font-size: 14px; padding: 40px 2px; text-align: center; }
 
-/* ===== Carte profil actif (avatar + points investis + PowerLevel réel) ===== */
+/* ===== Carte profil actif ===== */
 .profil-actif-carte {
     display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
     background: rgba(242,194,48,.08); border: 1px solid var(--yellow); border-radius: 8px;
@@ -81,8 +83,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
 }
 .profil-actif-stat b { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--yellow); line-height: 1; }
-.profil-actif-stat.ecart b { color: var(--red); }
-.profil-actif-stat.ok b { color: #5ddd7a; }
 
 .section { margin-bottom: 34px; }
 .section-tete { padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
@@ -100,75 +100,56 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .total-dispo .reste b { color: var(--paper); font-family: 'Oswald', sans-serif; font-size: 16px; }
 .total-dispo .reste.negatif b { color: var(--red); }
 
-.stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 14px; }
-.stat-carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+/* 5 stats sur une seule ligne (desktop) — se replie proprement en dessous */
+.stats-grille { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 10px; }
+@media (max-width: 900px) { .stats-grille { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .stats-grille { grid-template-columns: repeat(2, 1fr); } }
+
+.stat-carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 6px; padding: 12px 13px; }
 .stat-atk { border-left-color: var(--atk); } .stat-def { border-left-color: var(--def); }
 .stat-pv  { border-left-color: var(--pv); }  .stat-spd { border-left-color: var(--spd); }
 .stat-luck{ border-left-color: var(--luck);}
-.stat-carte .label { display: flex; align-items: center; gap: 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 8px; }
-.stat-ligne { display: flex; align-items: center; gap: 8px; }
+.stat-label { display: flex; align-items: center; gap: 5px; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 8px; }
+.stat-ligne { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 .stat-ligne button {
-    width: 28px; height: 28px; background: none; border: 1px solid var(--line); border-radius: 5px;
+    width: 26px; height: 26px; background: none; border: 1px solid var(--line); border-radius: 5px;
     color: var(--paper); font-size: 15px; cursor: pointer; font-family: 'Oswald', sans-serif; flex: 0 0 auto;
 }
 .stat-ligne button:hover:not([disabled]) { border-color: var(--yellow); color: var(--yellow); }
 .stat-ligne button[disabled] { opacity: .3; cursor: default; }
 .stat-ligne input {
     width: 100%; text-align: center; background: rgba(0,0,0,.3); border: 1px solid var(--line);
-    border-radius: 4px; color: var(--paper); font-family: 'Oswald', sans-serif; font-size: 16px;
-    font-weight: 700; padding: 5px 0;
+    border-radius: 4px; color: var(--paper); font-family: 'Oswald', sans-serif; font-size: 15px;
+    font-weight: 700; padding: 4px 0;
 }
-.stat-detail { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12px; }
-.stat-detail-ligne { display: flex; justify-content: space-between; color: var(--paper-dim); margin-bottom: 3px; }
-.stat-detail-ligne b { color: var(--paper); font-weight: 600; }
-.stat-detail-ligne.gear b { color: var(--yellow); }
-.stat-detail-ligne.total { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--line); }
-.stat-detail-ligne.total span { text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: .5px; font-size: 11px; }
-.stat-detail-ligne.total b { font-family: 'Oswald', sans-serif; font-size: 16px; }
+/* Décomposition base/investi/objets — code couleur identique à stats.html */
+.stat-valeur { font-size: 20px; font-weight: 800; color: var(--paper); line-height: 1; }
+.stat-detail { font-size: 11.5px; font-weight: 700; font-family: 'Oswald', sans-serif; margin-top: 3px; }
+.stat-detail .base { color: var(--paper-dim); }
+.stat-detail .investi { color: var(--investi); }
+.stat-detail .objets { color: var(--objets); }
+.stat-detail .signe { color: var(--paper-dim); font-weight: 500; margin: 0 2px; }
+.stat-delta { font-size: 11px; margin-top: 6px; font-weight: 700; }
+.stat-delta.positif { color: var(--positif); }
+.stat-delta.negatif { color: var(--negatif); }
+.stat-delta.neutre { color: var(--paper-dim); font-weight: 500; }
+.legende-detail {
+    display: flex; flex-wrap: wrap; gap: 16px; margin: 4px 0 18px; font-size: 11.5px; color: var(--paper-dim);
+}
+.legende-detail span { display: inline-flex; align-items: center; gap: 5px; }
+.legende-detail .pastille { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.legende-detail .pastille.base { background: var(--paper-dim); }
+.legende-detail .pastille.investi { background: var(--investi); }
+.legende-detail .pastille.objets { background: var(--objets); }
 
 .btn-reinit {
     font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .04em;
     text-transform: uppercase; color: var(--paper-dim); background: none; border: 1px solid var(--line);
-    border-radius: 5px; padding: 7px 13px; cursor: pointer; margin-bottom: 20px;
+    border-radius: 5px; padding: 7px 13px; cursor: pointer;
 }
 .btn-reinit:hover { color: var(--yellow); border-color: var(--yellow); }
 
-/* ===== Sélecteur d'équipement (cartes illustrées) ===== */
-.equip-bloc { margin-bottom: 22px; }
-.equip-bloc-titre {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.4px;
-    text-transform: uppercase; color: var(--paper-dim); margin-bottom: 10px;
-}
-.pick-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 10px; }
-.pick-carte {
-    --accent: var(--commun);
-    position: relative; background: var(--bg-panel); border: 2px solid var(--line);
-    border-radius: 8px; padding: 10px 8px 9px; display: flex; flex-direction: column;
-    align-items: center; text-align: center; cursor: pointer; transition: border-color .15s, transform .1s;
-}
-.pick-carte:hover { border-color: #444; }
-.pick-carte.choisi { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); transform: translateY(-2px); }
-.pick-carte-niveau {
-    position: absolute; top: 6px; left: 6px; z-index: 2;
-    font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 900; color: var(--yellow);
-    border: 1.5px solid var(--yellow); border-radius: 4px; padding: 0 4px;
-    background: rgba(242,194,48,0.12);
-}
-.pick-carte-rarete {
-    position: absolute; top: 6px; right: 6px; z-index: 2; width: 9px; height: 9px; border-radius: 50%;
-    background: var(--accent);
-}
-.pick-carte-image { width: 100%; height: 54px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
-.pick-carte-image img { max-width: 100%; max-height: 54px; object-fit: contain; }
-.pick-carte-image .emoji { font-size: 32px; line-height: 1; }
-.pick-carte-nom { font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 600; line-height: 1.25; min-height: 2.3em; display: flex; align-items: center; }
-.pick-carte-stat { font-size: 10.5px; color: var(--paper-dim); margin-top: 3px; line-height: 1.35; }
-.pick-carte-stat b { color: var(--paper); }
-.pick-carte.aucun { justify-content: center; }
-.pick-carte.aucun .pick-carte-nom { color: var(--paper-dim); font-style: italic; min-height: 0; }
-.pick-carte.aucun .pick-carte-image .emoji { font-size: 26px; opacity: .5; }
-
-/* ===== Resultats ===== */
+/* ===== Resultats (dégâts et survie) ===== */
 .resultats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .resultat-carte {
     background: var(--bg-panel); border: 1px solid var(--line); border-top: 3px solid var(--yellow);
@@ -177,17 +158,77 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .resultat-carte .valeur { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 800; color: var(--yellow); }
 .resultat-carte .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-top: 4px; }
 .resultat-carte.secondaire .valeur { color: var(--paper); font-size: 22px; }
-.resultat-carte.power .valeur { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
-.resultat-carte.power .valeur .reel { font-size: 15px; color: var(--paper-dim); font-weight: 600; }
+.resultat-delta { font-size: 12px; margin-top: 7px; font-weight: 700; }
+.resultat-delta.positif { color: var(--positif); }
+.resultat-delta.negatif { color: var(--negatif); }
+.resultat-delta.neutre { color: var(--paper-dim); font-weight: 500; }
 
-/* ===== Commande ===== */
-.zone-commande { margin-top: 18px; background: #17171a; border: 1px solid var(--yellow); border-radius: 8px; padding: 16px 18px; }
+/* ===== Équipement — cartes façon shop.html ===== */
+.equip-bloc { margin-bottom: 24px; }
+.equip-bloc-titre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--paper-dim); margin-bottom: 10px;
+}
+.equip-sous-bloc-titre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: #7a7568; margin: 12px 0 8px;
+}
+.grille-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 13px; }
+
+.card {
+    --accent: var(--commun);
+    position: relative; background: var(--bg-panel); border: 2px solid var(--accent);
+    border-radius: 10px; padding: 12px 10px 10px; display: flex; flex-direction: column;
+    align-items: center; text-align: center; box-shadow: 0 0 0 0 var(--accent);
+    transition: box-shadow .15s, transform .1s; cursor: pointer;
+}
+.card.choisi { box-shadow: 0 0 0 3px var(--accent); transform: translateY(-2px); }
+.card.desactive { opacity: .35; cursor: not-allowed; }
+.card.aucun { justify-content: center; }
+.card.aucun .card-nom { color: var(--paper-dim); font-style: italic; min-height: 0; }
+
+.card-verrou {
+    position: absolute; top: 8px; left: 8px; font-size: 12px; line-height: 1;
+    background: rgba(0,0,0,.7); border: 1px solid var(--line); border-radius: 4px;
+    padding: 3px 5px; z-index: 2;
+}
+.card-niveau {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 900; color: var(--yellow);
+    border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 6px;
+    background: rgba(242,194,48,0.12);
+}
+.card-puce-rarete {
+    position: absolute; top: 8px; right: 8px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .8px; text-transform: uppercase; color: var(--accent);
+    background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 3px; z-index: 2;
+}
+.card-puce-rarete.a-gauche { left: 8px; right: auto; }
+.card-image { width: 100%; height: 74px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+.card-image img { max-width: 100%; max-height: 74px; object-fit: contain; }
+.card-image .emoji { font-size: 42px; line-height: 1; }
+.card-nom {
+    font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; line-height: 1.25;
+    min-height: 2.5em; display: flex; align-items: center; margin-bottom: 6px;
+}
+.card-sous { font-size: 11px; color: var(--paper-dim); margin-bottom: 6px; margin-top: -3px; }
+/* Bloc ajouté (absent de shop.html) : stats de l'objet, avec le code couleur de chaque stat */
+.card-stats { font-size: 11px; line-height: 1.6; width: 100%; border-top: 1px dashed var(--line); padding-top: 6px; margin-top: 2px; }
+.card-stats .l-atk { color: var(--atk); } .card-stats .l-def { color: var(--def); }
+.card-stats .l-pv { color: var(--pv); } .card-stats .l-spd { color: var(--spd); }
+.card-stats .l-luck { color: var(--luck); } .card-stats .l-esquive { color: var(--paper); }
+.card-stats .l-degats { color: var(--yellow); } .card-stats .l-passif { color: var(--paper-dim); }
+.card-note { font-size: 10.5px; color: var(--paper-dim); margin-top: 6px; font-style: italic; }
+
+/* ===== Commande finale ===== */
+.zone-commande { margin-top: 18px; background: #17171a; border: 1px solid var(--yellow); border-radius: 8px; padding: 18px 20px; }
 .zone-commande .consigne { font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 8px; }
 .zone-commande-ligne { display: flex; gap: 9px; align-items: stretch; }
 .zone-commande-ligne code {
-    flex: 1; background: #0b0b0d; border: 1px solid var(--line); border-radius: 5px; padding: 10px 13px;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: var(--yellow);
-    overflow-x: auto; white-space: pre-line; display: flex; align-items: center; line-height: 1.6;
+    flex: 1; background: #0b0b0d; border: 1px solid var(--line); border-radius: 5px; padding: 12px 15px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--yellow);
+    overflow-x: auto; white-space: nowrap; display: flex; align-items: center;
 }
 .zone-commande-ligne button {
     font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em;
@@ -195,10 +236,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     padding: 0 20px; cursor: pointer; flex: 0 0 auto;
 }
 .zone-commande-ligne button:hover { background: #ffd75a; }
-.zone-commande .detail-lignes { margin-top: 10px; font-size: 12px; color: var(--paper-dim); }
-.zone-commande .detail-lignes div { padding: 2px 0; }
-.zone-commande .detail-lignes b { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; }
-.zone-commande .avertissement { font-size: 12px; color: var(--paper-dim); margin-top: 8px; }
+.zone-commande .avertissement { font-size: 12px; color: var(--paper-dim); margin-top: 10px; }
 
 @media (max-width: 620px) {
     .zone-commande-ligne { flex-direction: column; }
@@ -237,12 +275,15 @@ const CMD_STAT = { atk: 'atk', def: 'def', pv: 'pv', spd: 'vit', luck: 'chance' 
 const LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
 const LABEL_SLOT = { weapon: 'Arme', offhand: 'Main gauche', torso: 'Armure', strategeme: 'Stratagème' };
 const CLE_CHOIX = { weapon: 'arme', offhand: 'offhand', torso: 'torso', strategeme: 'strat' };
+const BASE_STAT_JS = { atk: 10, def: 10, pv: 100, spd: 10, luck: 0 };
 
 let JOUEURS = {}, CATALOGUE = {}, listeJoueurs = [];
 let pseudoActif = null, joueurActif = null;
 let stacksOriginaux = null;   // stacks réellement investis (immuables, pour calculer "reste à placer")
 let stacksChoisis = null;     // répartition en cours d'édition sur la page
 let equipChoisi = { arme: null, offhand: null, torso: null, strat: null }; // numéros choisis
+let statsInitiales = null;    // calculerStatsEffectives(stacksOriginaux, équipement de départ nivelé)
+let resultatInitial = null;   // simulerBuild(stacksOriginaux, équipement de départ) — la vue "avant modification"
 
 function echapper(t) {
     return String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -284,8 +325,7 @@ function choisirProfil(cle) {
     stacksChoisis = { ...stacksOriginaux };
 
     // Reprend ce qui est RÉELLEMENT équipé (loadout), pas le premier objet venu du slot dans
-    // l'inventaire — avant ce correctif, le calculateur pouvait afficher un PowerLevel/des dégâts
-    // qui ne correspondaient à AUCUN objet réellement porté par le joueur.
+    // l'inventaire.
     const lo = joueurActif.loadout || joueurActif.equipementPrefere || {};
     equipChoisi = {
         arme: lo.arme || null,
@@ -293,6 +333,16 @@ function choisirProfil(cle) {
         torso: lo.armure || null,
         strat: lo.strategeme || null,
     };
+
+    // Vue "avant modification" — figée une fois pour toutes à l'arrivée sur le profil, sert de
+    // référence à toutes les comparaisons (stats ET dégâts/survie/PowerLevel) pendant l'édition.
+    const equipementInitialBrut = {
+        arme: gearPourFormule(equipChoisi.arme), offhand: gearPourFormule(equipChoisi.offhand),
+        torso: gearPourFormule(equipChoisi.torso), strat: gearPourFormule(equipChoisi.strat),
+    };
+    resultatInitial = simulerBuild(stacksOriginaux, equipementInitialBrut);
+    statsInitiales = resultatInitial.stats;
+
     afficherPage();
 }
 
@@ -304,7 +354,6 @@ function afficherPage() {
     const avatar = joueurActif.avatar
         ? `<img class="profil-actif-avatar" src="${echapper(joueurActif.avatar)}" alt="">`
         : `<div class="profil-actif-avatar">${echapper((joueurActif.nomAffichage||pseudoActif).charAt(0).toUpperCase())}</div>`;
-    const powerLevelReel = (joueurActif.stats && joueurActif.stats.powerLevel) || 0;
 
     document.getElementById('contenu').innerHTML = `
         <div class="profil-actif-carte">
@@ -315,7 +364,6 @@ function afficherPage() {
             </div>
             <div class="profil-actif-stats">
                 <div class="profil-actif-stat"><span>Points investis</span><b>${totalOriginal}</b></div>
-                <div class="profil-actif-stat"><span>PowerLevel réel</span><b>${powerLevelReel.toFixed ? powerLevelReel.toFixed(0) : powerLevelReel}</b></div>
             </div>
         </div>
 
@@ -323,32 +371,47 @@ function afficherPage() {
             <div class="section-tete">
                 <h2>Simuler un reset</h2>
                 <p>Tu as actuellement <b style="color:var(--yellow)">${totalOriginal}</b> point(s) investi(s). Redistribue-les ci-dessous comme tu veux —
-                   la commande en bas applique exactement ce choix, sans jamais toucher à rien tant que tu ne l'as pas collée dans le chat.</p>
+                   rien n'est appliqué pour de vrai tant que tu n'as pas collé la commande, tout en bas de page.</p>
             </div>
             <div class="total-dispo">
                 <span>Points investis actuellement :</span><span class="chiffre">${totalOriginal}</span>
                 <span class="reste" id="resteAPlacer"></span>
             </div>
             <div class="stats-grille" id="statsGrille"></div>
-            <button type="button" class="btn-reinit" id="btnReinit">Revenir à ma répartition actuelle</button>
-            <div class="zone-commande" id="zoneCommandeReset"></div>
+            <div class="legende-detail">
+                <span><span class="pastille base"></span>Base du personnage</span>
+                <span><span class="pastille investi"></span>Points investis</span>
+                <span><span class="pastille objets"></span>Bonus d'objets équipés</span>
+            </div>
+            <button type="button" class="btn-reinit" id="btnReinit" style="display:none;">Revenir à ma répartition actuelle</button>
+        </section>
+
+        <section class="section">
+            <div class="section-tete">
+                <h2>Dégâts et survie</h2>
+                <p>Calculés à partir de la répartition et de l'équipement choisis. Chaque valeur est comparée à ta vue
+                   d'avant modification (ta répartition et ton équipement réels, tels que chargés au départ).</p>
+            </div>
+            <div class="resultats-grille" id="resultatsGrille"></div>
         </section>
 
         <section class="section">
             <div class="section-tete">
                 <h2>Équipement</h2>
-                <p>Clique sur un objet pour le sélectionner — les dégâts, la survie et le PowerLevel simulé plus bas se recalculent aussitôt.</p>
+                <p>Clique sur un objet pour le sélectionner. Une arme à deux mains occupe aussi la main gauche —
+                   la sélectionner vide automatiquement cet emplacement.</p>
             </div>
             <div id="equipGrille"></div>
         </section>
 
         <section class="section">
             <div class="section-tete">
-                <h2>Dégâts et survie</h2>
-                <p>Calculés à partir de la répartition et de l'équipement choisis ci-dessus. Le PowerLevel simulé est comparé à ton PowerLevel réel
-                   actuel pour vérifier que la répartition de départ correspond bien à ton build réel.</p>
+                <h2>Commande</h2>
+                <p>Une seule commande à copier-coller dans le chat Twitch pour tout appliquer d'un coup : vider ta
+                   répartition actuelle ET la remplacer par celle choisie ci-dessus. Nécessite un ticket de reset
+                   (achetable en Boutique).</p>
             </div>
-            <div class="resultats-grille" id="resultatsGrille"></div>
+            <div class="zone-commande" id="zoneCommandeReset"></div>
         </section>
     `;
 
@@ -358,6 +421,17 @@ function afficherPage() {
     recalculer();
 }
 
+/* ===================== DELTA "avant / après" ===================== */
+function texteDelta(actuel, initial, decimales, suffixe) {
+    const diff = actuel - initial;
+    const seuil = Math.pow(10, -decimales) / 2;
+    if (Math.abs(diff) < seuil) return `<span class="neutre">± 0${suffixe||''} vs avant</span>`;
+    const classe = diff > 0 ? 'positif' : 'negatif';
+    const signe = diff > 0 ? '+' : '';
+    return `<span class="${classe}">${signe}${diff.toFixed(decimales)}${suffixe||''} vs avant</span>`;
+}
+
+/* ===================== STATS (répartition) ===================== */
 function rendreStatsGrille() {
     const totalOriginal = Object.values(stacksOriginaux).reduce((a,b) => a+b, 0);
     const totalChoisi = Object.values(stacksChoisis).reduce((a,b) => a+b, 0);
@@ -367,15 +441,21 @@ function rendreStatsGrille() {
     resteEl.classList.toggle('negatif', reste < 0);
     resteEl.innerHTML = `Reste à placer : <b>${reste}</b>`;
 
+    // Le bouton "revenir à ma répartition actuelle" ne sert que dans un seul cas : on a retiré des
+    // points d'une stat et il en reste à replacer ailleurs — sinon (tout est déjà replacé, ou on
+    // n'a encore rien touché) il n'apporte rien et resterait juste un bouton de plus à l'écran.
+    const btnReinit = document.getElementById('btnReinit');
+    if (btnReinit) btnReinit.style.display = reste > 0 ? '' : 'none';
+
     document.getElementById('statsGrille').innerHTML = Object.keys(LABEL_STAT).map(st => `
         <div class="stat-carte stat-${st}">
-            <div class="label"><span>${ICONE_STAT[st]}</span> ${LABEL_STAT[st]}</div>
+            <div class="stat-label"><span>${ICONE_STAT[st]}</span> ${LABEL_STAT[st]}</div>
             <div class="stat-ligne">
                 <button type="button" data-stat="${st}" data-act="moins" ${stacksChoisis[st] <= 0 ? 'disabled' : ''}>&minus;</button>
                 <input type="number" min="0" data-stat="${st}" value="${stacksChoisis[st]}">
                 <button type="button" data-stat="${st}" data-act="plus" ${reste <= 0 ? 'disabled' : ''}>+</button>
             </div>
-            <div class="stat-detail" id="detailStat_${st}"></div>
+            <div id="detailStat_${st}"></div>
         </div>
     `).join('');
 
@@ -400,69 +480,107 @@ function rendreStatsGrille() {
         });
     });
 
-    rendreCommandeReset(totalOriginal, reste);
+    rendreCommandeFinale();
 }
 
-function rendreCommandeReset(totalOriginal, reste) {
-    const morceaux = Object.keys(stacksChoisis).filter(st => stacksChoisis[st] > 0).map(st => `!ameliorer ${CMD_STAT[st]} ${stacksChoisis[st]}`);
+function rendreCommandeFinale() {
+    const morceaux = Object.keys(stacksChoisis).filter(st => stacksChoisis[st] > 0).map(st => `${CMD_STAT[st]}${stacksChoisis[st]}`);
+    const totalOriginal = Object.values(stacksOriginaux).reduce((a,b) => a+b, 0);
     const zone = document.getElementById('zoneCommandeReset');
+    if (!zone) return;
     if (totalOriginal === 0) {
         zone.innerHTML = `<div class="avertissement">Tu n'as encore aucun point investi — rien à réinitialiser pour l'instant.</div>`;
         return;
     }
-    const lignes = ['!reset', ...morceaux];
-    window.__commandeComplete = lignes.join('\n');
+    const commande = '!reset ' + morceaux.join(' ');
     zone.innerHTML = `
-        <div class="consigne">Une seule commande à copier-coller dans le chat Twitch — colle-la telle quelle, chaque ligne part comme un message séparé, dans l'ordre. Nécessite un ticket de reset (achetable en Boutique).</div>
+        <div class="consigne">À coller dans le chat Twitch — vide ta répartition actuelle et la remplace par celle-ci en une seule commande.</div>
         <div class="zone-commande-ligne">
-            <code id="cmdComplete">${lignes.map(echapper).join('\n')}</code>
-            <button type="button" onclick="copier('cmdComplete', this, true)">Tout copier</button>
+            <code id="cmdComplete">${echapper(commande)}</code>
+            <button type="button" onclick="copier('cmdComplete', this)">Copier</button>
         </div>
-        <div class="detail-lignes">
-            ${lignes.map(m => `<div><b>${echapper(m)}</b></div>`).join('')}
-        </div>
-        ${reste !== 0 ? `<div class="avertissement">⚠️ ${reste > 0 ? `Il te reste ${reste} point(s) non placé(s).` : `Tu as placé ${-reste} point(s) de trop.`}</div>` : ''}
+        <div class="avertissement">⚠️ Cette commande combinée (<code>!reset atk28 def3 ...</code>) est un nouveau format — si ton chat ne la reconnaît pas encore, utilise <code>!reset</code> puis un <code>!ameliorer &lt;stat&gt; &lt;n&gt;</code> par stat en attendant qu'elle soit activée côté Streamer.bot.</div>
     `;
 }
 
-/* ===================== SÉLECTEUR D'ÉQUIPEMENT (cartes) ===================== */
+/* ===================== SÉLECTEUR D'ÉQUIPEMENT (cartes façon shop.html) ===================== */
 const LABEL_STAT_COURT = { Lifesteal: 'Vol de vie', PoisonDegats: 'Poison', ShieldMontant: 'Bouclier', SoinDirect: 'Soin',
     DegatsDirects: 'Impact', SaignementDegats: 'Saignement', BrulureDegats: 'Brûlure' };
+const CLASSE_STAT = { atk: 'l-atk', def: 'l-def', pv: 'l-pv', spd: 'l-spd', luck: 'l-luck', esquive: 'l-esquive' };
+const LABEL_STAT_CARTE = { atk: 'ATK', def: 'DEF', pv: 'PV', spd: 'VIT', esquive: 'Esq.', luck: 'LUCK' };
 
 function rendreEquipGrille() {
     const inv = (joueurActif.inventaire || []).map(l => ({ ...l, info: objetCatalogue(l.numero) })).filter(l => l.info);
-    const slots = ['weapon', 'offhand', 'torso', 'strategeme'];
+    const armeActuelle = objetCatalogue(equipChoisi.arme);
+    const armeEstDeuxMains = armeActuelle && armeActuelle.hand === 'two_handed';
 
-    document.getElementById('equipGrille').innerHTML = slots.map(slotKey => {
-        const choixKey = CLE_CHOIX[slotKey];
+    const blocs = [];
+
+    // --- Armes : séparées Une main / Deux mains ---
+    const armes = inv.filter(l => l.info.slot === 'weapon');
+    const armes1M = armes.filter(l => l.info.hand !== 'two_handed');
+    const armes2M = armes.filter(l => l.info.hand === 'two_handed');
+    blocs.push(`
+        <div class="equip-bloc">
+            <div class="equip-bloc-titre">${LABEL_SLOT.weapon}</div>
+            <div class="equip-sous-bloc-titre">Une main</div>
+            <div class="grille-cards">${armes1M.map(l => rendreCartePick(l, 'arme')).join('')}</div>
+            <div class="equip-sous-bloc-titre">Deux mains</div>
+            <div class="grille-cards">${armes2M.map(l => rendreCartePick(l, 'arme')).join('')}</div>
+        </div>`);
+
+    // --- Main gauche : verrouillée si une arme à deux mains est équipée ---
+    const offhands = inv.filter(l => l.info.slot === 'offhand');
+    const carteAucunOffhand = `
+        <div class="card aucun ${!equipChoisi.offhand ? 'choisi' : ''}" data-slot="offhand" data-numero="">
+            <div class="card-image"><div class="emoji">🚫</div></div>
+            <div class="card-nom">Aucun</div>
+        </div>`;
+    blocs.push(`
+        <div class="equip-bloc">
+            <div class="equip-bloc-titre">${LABEL_SLOT.offhand}</div>
+            ${armeEstDeuxMains ? `<div class="card-note" style="margin-bottom:8px;">🔒 Occupée par ton arme à deux mains — repasse sur une arme à une main pour équiper une main gauche.</div>` : ''}
+            <div class="grille-cards">${carteAucunOffhand}${offhands.map(l => rendreCartePick(l, 'offhand', armeEstDeuxMains)).join('')}</div>
+        </div>`);
+
+    // --- Armure et Stratagème : classiques ---
+    [['torso','torso'], ['strategeme','strat']].forEach(([slotKey, choixKey]) => {
         const options = inv.filter(l => l.info.slot === slotKey);
         const carteAucun = `
-            <div class="pick-carte aucun ${!equipChoisi[choixKey] ? 'choisi' : ''}" data-slot="${choixKey}" data-numero="">
-                <div class="pick-carte-image"><div class="emoji">🚫</div></div>
-                <div class="pick-carte-nom">Aucun</div>
+            <div class="card aucun ${!equipChoisi[choixKey] ? 'choisi' : ''}" data-slot="${choixKey}" data-numero="">
+                <div class="card-image"><div class="emoji">🚫</div></div>
+                <div class="card-nom">Aucun</div>
             </div>`;
-        const cartesObjets = options.map(l => rendreCartePick(l, choixKey)).join('');
-        return `
+        blocs.push(`
             <div class="equip-bloc">
                 <div class="equip-bloc-titre">${LABEL_SLOT[slotKey]}</div>
-                <div class="pick-grille">${carteAucun}${cartesObjets}</div>
-            </div>`;
-    }).join('');
+                <div class="grille-cards">${carteAucun}${options.map(l => rendreCartePick(l, choixKey)).join('')}</div>
+            </div>`);
+    });
 
-    document.getElementById('equipGrille').querySelectorAll('.pick-carte').forEach(carte => {
+    document.getElementById('equipGrille').innerHTML = blocs.join('');
+
+    document.getElementById('equipGrille').querySelectorAll('.card:not(.desactive)').forEach(carte => {
         carte.addEventListener('click', () => {
             const choixKey = carte.getAttribute('data-slot');
-            equipChoisi[choixKey] = carte.getAttribute('data-numero') || null;
+            const numero = carte.getAttribute('data-numero') || null;
+            equipChoisi[choixKey] = numero;
+
+            // Une arme à deux mains occupe la main gauche : la sélectionner vide cet emplacement.
+            if (choixKey === 'arme') {
+                const infoArme = objetCatalogue(numero);
+                if (infoArme && infoArme.hand === 'two_handed') equipChoisi.offhand = null;
+            }
             rendreEquipGrille();
             recalculer();
         });
     });
 }
 
-// Construit une carte cliquable pour un objet possédé : image, rareté, niveau, et un court résumé
-// de stats DÉJÀ NIVELÉ (via appliquerAmelioration, exposé par formule-combat.js) pour que ce qui
-// s'affiche sur la carte corresponde exactement à ce qui entre dans le calcul de dégâts/PowerLevel.
-function rendreCartePick(ligneInv, choixKey) {
+// Construit une carte façon shop.html (rareté en haut à gauche, niveau/×N en haut à droite, image,
+// nom, sous-titre) + un bloc ajouté avec les stats DÉJÀ NIVELÉES et leur code couleur, pour que la
+// carte affiche exactement ce qui entre dans le calcul de dégâts/PowerLevel.
+function rendreCartePick(ligneInv, choixKey, desactivee) {
     const info = ligneInv.info;
     const niveau = ligneInv.niveau || 0;
     const nivele = appliquerAmelioration(info, niveau);
@@ -472,37 +590,38 @@ function rendreCartePick(ligneInv, choixKey) {
         : `<div class="emoji">${echapper(info.icone || '❔')}</div>`;
 
     const lignesStat = [];
-    if (nivele.stat) lignesStat.push(formatBonusPick(nivele.stat, nivele.bonus));
-    if (nivele.stat2) lignesStat.push(formatBonusPick(nivele.stat2, nivele.bonus2));
-    if (nivele.stat3) lignesStat.push(formatBonusPick(nivele.stat3, nivele.bonus3));
+    if (nivele.stat) lignesStat.push(ligneStatCarte(nivele.stat, nivele.bonus));
+    if (nivele.stat2) lignesStat.push(ligneStatCarte(nivele.stat2, nivele.bonus2));
+    if (nivele.stat3) lignesStat.push(ligneStatCarte(nivele.stat3, nivele.bonus3));
     if (info.slot === 'weapon' && info.scaling1Stat) {
-        lignesStat.push(`Dégâts <b>${Math.round(nivele.baseDegatsMin)}–${Math.round(nivele.baseDegatsMax)}</b>`);
+        lignesStat.push(`<span class="l-degats">Dégâts <b>${Math.round(nivele.baseDegatsMin)}–${Math.round(nivele.baseDegatsMax)}</b></span>`);
     }
-    if (info.slot === 'strategeme' && info.statPrincipale) {
+    if (info.statPrincipale) {
         const champ = { Lifesteal:'lifesteal', PoisonDegats:'poisonDegats', ShieldMontant:'shieldMontant', SoinDirect:'soinDirect',
             DegatsDirects:'degatsDirects', SaignementDegats:'saignementDegats', BrulureDegats:'brulureDegats' }[info.statPrincipale];
-        if (champ && nivele[champ]) lignesStat.push(`${LABEL_STAT_COURT[info.statPrincipale] || info.statPrincipale} <b>${Math.round(nivele[champ]*10)/10}</b>`);
+        if (champ && nivele[champ]) lignesStat.push(`<span class="l-passif">${LABEL_STAT_COURT[info.statPrincipale] || info.statPrincipale} <b style="color:var(--paper)">${Math.round(nivele[champ]*10)/10}</b></span>`);
     }
 
     return `
-        <div class="pick-carte ${estChoisi ? 'choisi' : ''}" data-slot="${choixKey}" data-numero="${ligneInv.numero}"
+        <div class="card ${estChoisi ? 'choisi' : ''} ${desactivee ? 'desactive' : ''}" data-slot="${choixKey}" data-numero="${ligneInv.numero}"
              style="--accent: var(--${info.rarete || 'commun'})">
-            <div class="pick-carte-niveau">${niveau > 0 ? '+' + niveau : 'base'}</div>
-            <div class="pick-carte-rarete" title="${LABEL_RARETE[info.rarete] || info.rarete}"></div>
-            <div class="pick-carte-image">${img}</div>
-            <div class="pick-carte-nom">${echapper(info.nom)}</div>
-            <div class="pick-carte-stat">${lignesStat.join('<br>')}</div>
+            <div class="card-puce-rarete a-gauche">${LABEL_RARETE[info.rarete] || info.rarete}</div>
+            <div class="card-niveau">×${niveau + 1}</div>
+            <div class="card-image">${img}</div>
+            <div class="card-nom">${echapper(info.nom)}</div>
+            ${info.slot === 'weapon' ? `<div class="card-sous">${info.hand === 'two_handed' ? 'Deux mains' : 'Une main'}</div>` : ''}
+            <div class="card-stats">${lignesStat.join('<br>')}</div>
         </div>`;
 }
-function formatBonusPick(stat, valeur) {
-    const label = { atk: 'ATK', def: 'DEF', pv: 'PV', spd: 'VIT', esquive: 'Esq.', luck: 'LUCK' }[stat] || stat;
+function ligneStatCarte(stat, valeur) {
+    const label = LABEL_STAT_CARTE[stat] || stat;
+    const classe = CLASSE_STAT[stat] || '';
     const signe = valeur >= 0 ? '+' : '';
-    return `${label} <b>${signe}${Math.round(valeur*10)/10}</b>`;
+    return `<span class="${classe}">${label} <b>${signe}${Math.round(valeur*10)/10}</b></span>`;
 }
 
 // Construit l'objet "gear" BRUT attendu par simulerBuild (catalogue_stats.json + niveau réellement
-// possédé) — le nivelage (AppliquerAmelioration) est fait à l'intérieur de simulerBuild, une seule
-// fois, jamais ici.
+// possédé) — le nivelage (AppliquerAmelioration) est fait à l'intérieur de simulerBuild.
 function gearPourFormule(numero) {
     if (!numero) return null;
     const info = objetCatalogue(numero);
@@ -511,6 +630,7 @@ function gearPourFormule(numero) {
     return { ...info, niveau: ligneInv ? (ligneInv.niveau || 0) : 0 };
 }
 
+/* ===================== RECALCUL ===================== */
 function recalculer() {
     const equipementBrut = {
         arme: gearPourFormule(equipChoisi.arme),
@@ -519,70 +639,65 @@ function recalculer() {
         strat: gearPourFormule(equipChoisi.strat),
     };
     const r = simulerBuild(stacksChoisis, equipementBrut);
-    afficherDetailStats(equipementBrut);
-
-    const powerLevelReel = (joueurActif.stats && joueurActif.stats.powerLevel) || 0;
-    const ecart = powerLevelReel > 0 ? Math.abs(r.powerLevel - powerLevelReel) / powerLevelReel : 0;
-    const classeEcart = ecart <= 0.05 ? 'ok' : (ecart <= 0.15 ? '' : 'ecart');
+    afficherDetailStats(r.stats);
 
     document.getElementById('resultatsGrille').innerHTML = `
         <div class="resultat-carte">
             <div class="valeur">${r.dpaInflige.toFixed(1)}</div>
             <div class="label">Dégâts / attaque</div>
+            <div class="resultat-delta">${texteDelta(r.dpaInflige, resultatInitial.dpaInflige, 1)}</div>
         </div>
         <div class="resultat-carte">
             <div class="valeur">${r.survieTours.toFixed(1)}</div>
             <div class="label">Tours de survie</div>
+            <div class="resultat-delta">${texteDelta(r.survieTours, resultatInitial.survieTours, 1)}</div>
         </div>
         <div class="resultat-carte secondaire">
             <div class="valeur">${Math.round(r.totalDmg)}</div>
             <div class="label">Dégâts sur tout le combat</div>
+            <div class="resultat-delta">${texteDelta(Math.round(r.totalDmg), Math.round(resultatInitial.totalDmg), 0)}</div>
         </div>
-        <div class="resultat-carte secondaire power">
-            <div class="valeur">${r.powerLevel.toFixed(0)}<span class="reel ${classeEcart}">/ réel ${powerLevelReel.toFixed(0)}</span></div>
+        <div class="resultat-carte secondaire">
+            <div class="valeur">${r.powerLevel.toFixed(0)}</div>
             <div class="label">PowerLevel simulé</div>
+            <div class="resultat-delta">${texteDelta(Math.round(r.powerLevel), Math.round(resultatInitial.powerLevel), 0)}</div>
         </div>
     `;
 }
 
-// Alimente le détail sous chaque stat-carte : baseline / points investis / bonus d'objets
-// sélectionnés / total — calculé par décomposition (0 stack + pas d'objet, stacks seuls,
-// stacks + objets nivelés) pour rester rigoureusement cohérent avec la formule de combat.
-function afficherDetailStats(equipementBrut) {
+// Alimente le détail sous chaque stat-carte : valeur totale (avec sa décomposition base/points
+// investis/objets, code couleur stats.html) + un delta vs la vue d'avant modification.
+function afficherDetailStats(statsActuelles) {
     const zero = { atk: 0, def: 0, pv: 0, spd: 0, luck: 0 };
     const vide = { arme: null, offhand: null, torso: null, strat: null };
-    const equipementNivele = nivelerEquipement(equipementBrut);
-
     const base = calculerStatsEffectives(zero, vide);
-    const avecStacks = calculerStatsEffectives(stacksChoisis, vide);
-    const avecTout = calculerStatsEffectives(stacksChoisis, equipementNivele);
+    const avecStacksSeuls = calculerStatsEffectives(stacksChoisis, vide);
 
-    const rendre = (st, baseline, stack, gear, total, formatteur) => {
+    const rendre = (st, baseline, stack, gear, total, initial, formatteur) => {
         const el = document.getElementById('detailStat_' + st);
         if (!el) return;
         el.innerHTML = `
-            <div class="stat-detail-ligne"><span>Baseline</span><b>${formatteur(baseline)}</b></div>
-            <div class="stat-detail-ligne"><span>Points investis</span><b>+${formatteur(stack)}</b></div>
-            <div class="stat-detail-ligne gear"><span>Bonus d'objets</span><b>+${formatteur(gear)}</b></div>
-            <div class="stat-detail-ligne total"><span>Total effectif</span><b>${formatteur(total)}</b></div>
+            <div class="stat-valeur">${formatteur(total)}</div>
+            <div class="stat-detail"><span class="base">${formatteur(baseline)}</span><span class="signe">+</span><span class="investi">${formatteur(stack)}</span><span class="signe">+</span><span class="objets">${formatteur(gear)}</span></div>
+            <div class="stat-delta">${texteDelta(total, initial, 1)}</div>
         `;
     };
     const f1 = v => (Math.round(v*10)/10).toString();
 
-    rendre('atk', base.atk, avecStacks.atk - base.atk, avecTout.atk - avecStacks.atk, avecTout.atk, f1);
-    rendre('def', base.def, avecStacks.def - base.def, avecTout.def - avecStacks.def, avecTout.def, f1);
-    rendre('pv',  base.pv,  avecStacks.pv  - base.pv,  avecTout.pv  - avecStacks.pv,  avecTout.pv,  f1);
-    rendre('spd', base.spd, avecStacks.spd - base.spd, avecTout.spd - avecStacks.spd, avecTout.spd, f1);
+    rendre('atk', base.atk, avecStacksSeuls.atk - base.atk, statsActuelles.atk - avecStacksSeuls.atk, statsActuelles.atk, statsInitiales.atk, f1);
+    rendre('def', base.def, avecStacksSeuls.def - base.def, statsActuelles.def - avecStacksSeuls.def, statsActuelles.def, statsInitiales.def, f1);
+    rendre('pv',  base.pv,  avecStacksSeuls.pv  - base.pv,  statsActuelles.pv  - avecStacksSeuls.pv,  statsActuelles.pv,  statsInitiales.pv,  f1);
+    rendre('spd', base.spd, avecStacksSeuls.spd - base.spd, statsActuelles.spd - avecStacksSeuls.spd, statsActuelles.spd, statsInitiales.spd, f1);
 
-    // Luck : pas de champ "s.luck" direct (seul le total linéaire luckLineaire existe, converti en
-    // %crit par tanh plus loin) — décomposition faite directement sur cette valeur linéaire.
+    // Luck : pas de champ "s.luck" direct — décomposition faite sur luckLineaire (voir
+    // formule-combat.js), comparée au luckLineaire de la vue d'avant modification.
     const luckStack = stacksChoisis.luck;
-    const luckGear = Math.max(0, avecTout.luckLineaire - luckStack);
-    rendre('luck', 0, luckStack, luckGear, avecTout.luckLineaire, f1);
+    const luckGear = Math.max(0, statsActuelles.luckLineaire - luckStack);
+    rendre('luck', 0, luckStack, luckGear, statsActuelles.luckLineaire, statsInitiales.luckLineaire, f1);
 }
 
-function copier(idCode, bouton, multiligne) {
-    const texte = multiligne ? window.__commandeComplete : document.getElementById(idCode).textContent;
+function copier(idCode, bouton) {
+    const texte = document.getElementById(idCode).textContent;
     const fini = () => { const avant = bouton.textContent; bouton.textContent = 'Copié !'; setTimeout(() => bouton.textContent = avant, 1600); };
     if (navigator.clipboard) navigator.clipboard.writeText(texte).then(fini, fini);
     else {
