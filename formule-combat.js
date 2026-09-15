@@ -33,9 +33,68 @@ function mitigation(def) {
     return (CST.DEF_MITIGATION_MAX * Math.tanh(def / CST.K_DEF_MITIGATION)) / 100.0;
 }
 
+// Port fidèle de AppliquerAmelioration (duel.cs, ~L2252) : renvoie une COPIE de l'objet du
+// catalogue avec tous ses champs qui progressent par doublon réellement appliqués au niveau
+// possédé — les 3 stats (Bonus/Bonus2/Bonus3 via Increment/2/3), la fourchette de dégâts d'arme
+// (BaseDegatsMin/Max via IncrementBaseDegats, seulement si Scaling1Stat est renseigné), les
+// dégâts d'impact des stratagèmes (DegatsDirects via IncrementDegatsDirects), les champs de
+// stance 2 (mêmes règles que la stance 0), et le passif spécial ciblé par StatPrincipale (monté
+// de IncrementParNiveau — nommé "incrementPassif" dans catalogue_stats.json — par niveau).
+// ⚠️ AVANT ce correctif, cette fonction n'existait pas côté JS : le calculateur ne faisait monter
+// QUE les 3 stats de base, ce qui sous-estimait fortement les dégâts et le PowerLevel de tout
+// objet dont l'identité repose sur IncrementBaseDegats, IncrementDegatsDirects ou StatPrincipale
+// (la quasi-totalité des armes et stratagèmes avec doublons).
+const CHAMP_STAT_PRINCIPALE = {
+    Lifesteal: 'lifesteal', PoisonDegats: 'poisonDegats', Precision: 'precision', CritBonus: 'critBonus',
+    Penetration: 'penetration', EtourdissementChance: 'etourdissementChance', ExecutionBonus: 'executionBonus',
+    Blocage: 'blocage', BlocageReduction: 'blocageReduction', Reflection: 'reflection',
+    ResistancePoison: 'resistancePoison', Regeneration: 'regeneration', ResistanceCrit: 'resistanceCrit',
+    DegatsDirects: 'degatsDirects', SoinDirect: 'soinDirect', SaignementDegats: 'saignementDegats',
+    BrulureDegats: 'brulureDegats', AntiHealPourcentage: 'antiHealPourcentage', ShieldMontant: 'shieldMontant',
+    RageBonusMax: 'rageBonusMax', MarqueDegatsPourcentage: 'marqueDegatsPourcentage', ParadeChance: 'paradeChance',
+    TenaciteChance: 'tenaciteChance', FrenesieBonusSpd: 'frenesieBonusSpd',
+};
+
+function appliquerAmelioration(original, niveau) {
+    if (!original || !niveau || niveau <= 0) return original;
+    const c = { ...original };
+
+    if (c.stat) c.bonus = (c.bonus || 0) + niveau * (c.increment || 0);
+    if (c.stat2) c.bonus2 = (c.bonus2 || 0) + niveau * (c.increment2 || 0);
+    if (c.stat3) c.bonus3 = (c.bonus3 || 0) + niveau * (c.increment3 || 0);
+
+    if (c.scaling1Stat && c.incrementBaseDegats) {
+        c.baseDegatsMin = (c.baseDegatsMin || 0) + niveau * c.incrementBaseDegats;
+        c.baseDegatsMax = (c.baseDegatsMax || 0) + niveau * c.incrementBaseDegats;
+    }
+    if ((c.degatsDirects || 0) > 0 && c.incrementDegatsDirects) {
+        c.degatsDirects = c.degatsDirects + niveau * c.incrementDegatsDirects;
+    }
+
+    if (c.dureeStance) {
+        if (c.stance2Stat) c.stance2Bonus = (c.stance2Bonus || 0) + niveau * (c.stance2IncrementBonus || 0);
+        if (c.stance2Stat2) c.stance2Bonus2 = (c.stance2Bonus2 || 0) + niveau * (c.stance2IncrementBonus2 || 0);
+        if (c.stance2Stat3) c.stance2Bonus3 = (c.stance2Bonus3 || 0) + niveau * (c.stance2IncrementBonus3 || 0);
+        if (c.stance2Scaling1Stat && c.stance2IncrementBaseDegats) {
+            c.stance2BaseDegatsMin = (c.stance2BaseDegatsMin || 0) + niveau * c.stance2IncrementBaseDegats;
+            c.stance2BaseDegatsMax = (c.stance2BaseDegatsMax || 0) + niveau * c.stance2IncrementBaseDegats;
+        }
+    }
+
+    if (c.statPrincipale) {
+        const incrementParNiveau = c.incrementPassif > 0 ? c.incrementPassif : 1.0;
+        const champ = CHAMP_STAT_PRINCIPALE[c.statPrincipale];
+        if (champ) c[champ] = (c[champ] || 0) + niveau * incrementParNiveau;
+    }
+
+    return c;
+}
+
 // --- Construit les Stats effectives à partir de stacks CHOISIS (hypothétiques) et d'un
 // équipement CHOISI (hypothétique) — équivalent JS de GetEffectiveStats, mais sans jamais lire
-// les registres réels : tout vient des choix faits sur cette page.
+// les registres réels : tout vient des choix faits sur cette page. L'équipement reçu ici doit
+// déjà être nivelé (voir appliquerAmelioration) : cette fonction ne fait plus monter les stats
+// elle-même, pour n'avoir qu'un seul endroit où "niveau" est appliqué.
 function calculerStatsEffectives(stacks, equipement) {
     const s = {
         atk: CST.BASE_ATK + CST.BONUS_ATK_PAR_STACK * stacks.atk,
@@ -48,9 +107,9 @@ function calculerStatsEffectives(stacks, equipement) {
     };
     [equipement.arme, equipement.offhand, equipement.torso].forEach(g => {
         if (!g) return;
-        appliquerStatAuPersonnage(s, g.stat, (g.bonus || 0) + g.niveau * (g.increment || 0));
-        appliquerStatAuPersonnage(s, g.stat2, (g.bonus2 || 0) + g.niveau * (g.increment2 || 0));
-        appliquerStatAuPersonnage(s, g.stat3, (g.bonus3 || 0) + g.niveau * (g.increment3 || 0));
+        appliquerStatAuPersonnage(s, g.stat, g.bonus || 0);
+        appliquerStatAuPersonnage(s, g.stat2, g.bonus2 || 0);
+        appliquerStatAuPersonnage(s, g.stat3, g.bonus3 || 0);
     });
     return s;
 }
@@ -276,15 +335,28 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
 }
 
 // Point d'entrée unique pour la page : à partir de stacks + équipement CHOISIS, renvoie tout ce
-// qu'affiche le calculateur. `equipement` = { arme, offhand, torso, strat } (objets du catalogue,
-// avec un champ .niveau ajouté = nombre de doublons possédés, comme partout ailleurs sur le site).
-function simulerBuild(stacks, equipement) {
+// qu'affiche le calculateur. `equipementBrut` = { arme, offhand, torso, strat } (objets BRUTS du
+// catalogue, avec un champ .niveau ajouté = nombre de doublons possédés, comme partout ailleurs
+// sur le site) — le nivelage (AppliquerAmelioration) est fait ICI, une seule fois, avant tout calcul.
+function simulerBuild(stacks, equipementBrut) {
+    const equipement = nivelerEquipement(equipementBrut);
     const s = calculerStatsEffectives(stacks, equipement);
     const critPct = CST.BASE_CRIT + CST.LUCK_CRIT_MAX * Math.tanh(s.luckLineaire / CST.K_LUCK);
     const esquivePct = CST.BASE_ESQUIVE + s.esquiveGear;
     const atkEquivalent = estimerAtkEquivalentAvecStance(s, equipement.arme);
     const resultat = calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, equipement.arme, equipement.offhand, equipement.torso, equipement.strat);
-    return { stats: s, critPct, esquivePct, atkEquivalent, ...resultat };
+    return { stats: s, critPct, esquivePct, atkEquivalent, equipementNivele: equipement, ...resultat };
 }
 
-if (typeof module !== 'undefined') module.exports = { CST, simulerBuild, calculerStatsEffectives, calculerPowerLevelSimule, estimerAtkEquivalentAvecStance, mitigation };
+// Nivelle les 4 emplacements d'un coup (voir appliquerAmelioration). Centralisé ici pour qu'un
+// seul appel niveler + un seul appel simulerBuild ne double jamais l'application du niveau.
+function nivelerEquipement(equipementBrut) {
+    return {
+        arme: appliquerAmelioration(equipementBrut.arme, equipementBrut.arme ? (equipementBrut.arme.niveau || 0) : 0),
+        offhand: appliquerAmelioration(equipementBrut.offhand, equipementBrut.offhand ? (equipementBrut.offhand.niveau || 0) : 0),
+        torso: appliquerAmelioration(equipementBrut.torso, equipementBrut.torso ? (equipementBrut.torso.niveau || 0) : 0),
+        strat: appliquerAmelioration(equipementBrut.strat, equipementBrut.strat ? (equipementBrut.strat.niveau || 0) : 0),
+    };
+}
+
+if (typeof module !== 'undefined') module.exports = { CST, simulerBuild, calculerStatsEffectives, calculerPowerLevelSimule, estimerAtkEquivalentAvecStance, appliquerAmelioration, nivelerEquipement, mitigation };
