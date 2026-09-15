@@ -19,14 +19,14 @@ body {
     margin: 0; padding: 28px 18px 60px; line-height: 1.5;
 }
 h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
-.page { max-width: 1040px; margin: 0 auto; }
+.page { max-width: 1080px; margin: 0 auto; }
 
 .entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
 .entete h1 { font-size: 28px; font-weight: 700; }
 .entete h1 span { color: var(--yellow); }
 .entete p { color: var(--paper-dim); font-size: 14px; margin: 7px 0 0; max-width: 68ch; }
 
-.champ-profil { position: relative; max-width: 420px; margin-bottom: 26px; }
+.champ-profil { position: relative; max-width: 420px; margin-bottom: 22px; }
 .champ-profil label {
     display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
     letter-spacing: 1.4px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 6px;
@@ -55,6 +55,35 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 .message { color: var(--paper-dim); font-size: 14px; padding: 40px 2px; text-align: center; }
 
+/* ===== Carte profil actif (avatar + points investis + PowerLevel réel) ===== */
+.profil-actif-carte {
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    background: rgba(242,194,48,.08); border: 1px solid var(--yellow); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 28px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+}
+.profil-actif-avatar {
+    width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--yellow); flex: 0 0 auto; background: var(--bg-panel);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-size: 22px; color: var(--paper-dim);
+}
+.profil-actif-infos { display: flex; flex-direction: column; }
+.profil-actif-titre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
+}
+.profil-actif-nom { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--paper); line-height: 1.15; }
+.profil-actif-stats { margin-left: auto; display: flex; gap: 26px; flex-wrap: wrap; }
+.profil-actif-stat { display: flex; flex-direction: column; align-items: flex-end; }
+.profil-actif-stat span {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
+}
+.profil-actif-stat b { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--yellow); line-height: 1; }
+.profil-actif-stat.ecart b { color: var(--red); }
+.profil-actif-stat.ok b { color: #5ddd7a; }
+
 .section { margin-bottom: 34px; }
 .section-tete { padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
 .section-tete h2 { font-size: 19px; font-weight: 600; }
@@ -71,12 +100,12 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .total-dispo .reste b { color: var(--paper); font-family: 'Oswald', sans-serif; font-size: 16px; }
 .total-dispo .reste.negatif b { color: var(--red); }
 
-.stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 14px; }
 .stat-carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 6px; padding: 14px 16px; }
 .stat-atk { border-left-color: var(--atk); } .stat-def { border-left-color: var(--def); }
 .stat-pv  { border-left-color: var(--pv); }  .stat-spd { border-left-color: var(--spd); }
 .stat-luck{ border-left-color: var(--luck);}
-.stat-carte .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 8px; }
+.stat-carte .label { display: flex; align-items: center; gap: 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 8px; }
 .stat-ligne { display: flex; align-items: center; gap: 8px; }
 .stat-ligne button {
     width: 28px; height: 28px; background: none; border: 1px solid var(--line); border-radius: 5px;
@@ -89,7 +118,13 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     border-radius: 4px; color: var(--paper); font-family: 'Oswald', sans-serif; font-size: 16px;
     font-weight: 700; padding: 5px 0;
 }
-.stat-carte .actuel { font-size: 11.5px; color: var(--paper-dim); margin-top: 6px; }
+.stat-detail { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12px; }
+.stat-detail-ligne { display: flex; justify-content: space-between; color: var(--paper-dim); margin-bottom: 3px; }
+.stat-detail-ligne b { color: var(--paper); font-weight: 600; }
+.stat-detail-ligne.gear b { color: var(--yellow); }
+.stat-detail-ligne.total { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--line); }
+.stat-detail-ligne.total span { text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: .5px; font-size: 11px; }
+.stat-detail-ligne.total b { font-family: 'Oswald', sans-serif; font-size: 16px; }
 
 .btn-reinit {
     font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .04em;
@@ -98,14 +133,40 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .btn-reinit:hover { color: var(--yellow); border-color: var(--yellow); }
 
-/* ===== Equipement ===== */
-.equip-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
-.equip-case label { display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 6px; }
-.equip-case select {
-    width: 100%; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
-    padding: 10px 12px; color: var(--paper); font-size: 14px; font-family: 'Barlow', sans-serif;
+/* ===== Sélecteur d'équipement (cartes illustrées) ===== */
+.equip-bloc { margin-bottom: 22px; }
+.equip-bloc-titre {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--paper-dim); margin-bottom: 10px;
 }
-.equip-case select:focus { outline: none; border-color: var(--yellow); }
+.pick-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 10px; }
+.pick-carte {
+    --accent: var(--commun);
+    position: relative; background: var(--bg-panel); border: 2px solid var(--line);
+    border-radius: 8px; padding: 10px 8px 9px; display: flex; flex-direction: column;
+    align-items: center; text-align: center; cursor: pointer; transition: border-color .15s, transform .1s;
+}
+.pick-carte:hover { border-color: #444; }
+.pick-carte.choisi { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); transform: translateY(-2px); }
+.pick-carte-niveau {
+    position: absolute; top: 6px; left: 6px; z-index: 2;
+    font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 900; color: var(--yellow);
+    border: 1.5px solid var(--yellow); border-radius: 4px; padding: 0 4px;
+    background: rgba(242,194,48,0.12);
+}
+.pick-carte-rarete {
+    position: absolute; top: 6px; right: 6px; z-index: 2; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent);
+}
+.pick-carte-image { width: 100%; height: 54px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+.pick-carte-image img { max-width: 100%; max-height: 54px; object-fit: contain; }
+.pick-carte-image .emoji { font-size: 32px; line-height: 1; }
+.pick-carte-nom { font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 600; line-height: 1.25; min-height: 2.3em; display: flex; align-items: center; }
+.pick-carte-stat { font-size: 10.5px; color: var(--paper-dim); margin-top: 3px; line-height: 1.35; }
+.pick-carte-stat b { color: var(--paper); }
+.pick-carte.aucun { justify-content: center; }
+.pick-carte.aucun .pick-carte-nom { color: var(--paper-dim); font-style: italic; min-height: 0; }
+.pick-carte.aucun .pick-carte-image .emoji { font-size: 26px; opacity: .5; }
 
 /* ===== Resultats ===== */
 .resultats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
@@ -116,6 +177,8 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .resultat-carte .valeur { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 800; color: var(--yellow); }
 .resultat-carte .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-top: 4px; }
 .resultat-carte.secondaire .valeur { color: var(--paper); font-size: 22px; }
+.resultat-carte.power .valeur { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
+.resultat-carte.power .valeur .reel { font-size: 15px; color: var(--paper-dim); font-weight: 600; }
 
 /* ===== Commande ===== */
 .zone-commande { margin-top: 18px; background: #17171a; border: 1px solid var(--yellow); border-radius: 8px; padding: 16px 18px; }
@@ -124,7 +187,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .zone-commande-ligne code {
     flex: 1; background: #0b0b0d; border: 1px solid var(--line); border-radius: 5px; padding: 10px 13px;
     font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: var(--yellow);
-    overflow-x: auto; white-space: nowrap; display: flex; align-items: center;
+    overflow-x: auto; white-space: pre-line; display: flex; align-items: center; line-height: 1.6;
 }
 .zone-commande-ligne button {
     font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em;
@@ -132,11 +195,15 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     padding: 0 20px; cursor: pointer; flex: 0 0 auto;
 }
 .zone-commande-ligne button:hover { background: #ffd75a; }
+.zone-commande .detail-lignes { margin-top: 10px; font-size: 12px; color: var(--paper-dim); }
+.zone-commande .detail-lignes div { padding: 2px 0; }
+.zone-commande .detail-lignes b { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; }
 .zone-commande .avertissement { font-size: 12px; color: var(--paper-dim); margin-top: 8px; }
 
 @media (max-width: 620px) {
     .zone-commande-ligne { flex-direction: column; }
     .total-dispo .reste { width: 100%; margin-left: 0; }
+    .profil-actif-stats { margin-left: 0; width: 100%; justify-content: space-between; }
 }
 </style>
 </head>
@@ -165,8 +232,11 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 <script src="formule-combat.js"></script>
 <script>
 const LABEL_STAT = { atk: 'Attaque', def: 'Défense', pv: 'Points de vie', spd: 'Vitesse', luck: 'Chance' };
+const ICONE_STAT = { atk: '⚔️', def: '🛡️', pv: '❤️', spd: '💨', luck: '🍀' };
 const CMD_STAT = { atk: 'atk', def: 'def', pv: 'pv', spd: 'vit', luck: 'chance' };
 const LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
+const LABEL_SLOT = { weapon: 'Arme', offhand: 'Main gauche', torso: 'Armure', strategeme: 'Stratagème' };
+const CLE_CHOIX = { weapon: 'arme', offhand: 'offhand', torso: 'torso', strategeme: 'strat' };
 
 let JOUEURS = {}, CATALOGUE = {}, listeJoueurs = [];
 let pseudoActif = null, joueurActif = null;
@@ -213,14 +283,16 @@ function choisirProfil(cle) {
     stacksOriginaux = { atk: s.atkStacks||0, def: s.defStacks||0, pv: s.pvStacks||0, spd: s.spdStacks||0, luck: s.luckStacks||0 };
     stacksChoisis = { ...stacksOriginaux };
 
-    const inv = joueurActif.inventaire || [];
+    // Reprend ce qui est RÉELLEMENT équipé (loadout), pas le premier objet venu du slot dans
+    // l'inventaire — avant ce correctif, le calculateur pouvait afficher un PowerLevel/des dégâts
+    // qui ne correspondaient à AUCUN objet réellement porté par le joueur.
+    const lo = joueurActif.loadout || joueurActif.equipementPrefere || {};
     equipChoisi = {
-        arme: inv.find(l => objetCatalogue(l.numero)?.slot === 'weapon')?.numero ?? null,
-        offhand: inv.find(l => objetCatalogue(l.numero)?.slot === 'offhand')?.numero ?? null,
-        torso: inv.find(l => objetCatalogue(l.numero)?.slot === 'torso')?.numero ?? null,
-        strat: inv.find(l => objetCatalogue(l.numero)?.slot === 'strategeme')?.numero ?? null,
+        arme: lo.arme || null,
+        offhand: lo.offhand || null,
+        torso: lo.armure || null,
+        strat: lo.strategeme || null,
     };
-    // Reprend ce qui est RÉELLEMENT équipé si l'info existe, plutôt que le 1er objet venu du slot.
     afficherPage();
 }
 
@@ -229,8 +301,24 @@ function objetCatalogue(numero) { return CATALOGUE[String(numero)] || null; }
 /* ===================== AFFICHAGE PRINCIPAL ===================== */
 function afficherPage() {
     const totalOriginal = Object.values(stacksOriginaux).reduce((a,b) => a+b, 0);
+    const avatar = joueurActif.avatar
+        ? `<img class="profil-actif-avatar" src="${echapper(joueurActif.avatar)}" alt="">`
+        : `<div class="profil-actif-avatar">${echapper((joueurActif.nomAffichage||pseudoActif).charAt(0).toUpperCase())}</div>`;
+    const powerLevelReel = (joueurActif.stats && joueurActif.stats.powerLevel) || 0;
 
     document.getElementById('contenu').innerHTML = `
+        <div class="profil-actif-carte">
+            ${avatar}
+            <div class="profil-actif-infos">
+                <div class="profil-actif-titre">Build actuel</div>
+                <div class="profil-actif-nom">${echapper(joueurActif.nomAffichage || pseudoActif)}</div>
+            </div>
+            <div class="profil-actif-stats">
+                <div class="profil-actif-stat"><span>Points investis</span><b>${totalOriginal}</b></div>
+                <div class="profil-actif-stat"><span>PowerLevel réel</span><b>${powerLevelReel.toFixed ? powerLevelReel.toFixed(0) : powerLevelReel}</b></div>
+            </div>
+        </div>
+
         <section class="section">
             <div class="section-tete">
                 <h2>Simuler un reset</h2>
@@ -248,10 +336,18 @@ function afficherPage() {
 
         <section class="section">
             <div class="section-tete">
-                <h2>Dégâts et survie</h2>
-                <p>Calculés à partir de la répartition ci-dessus et de l'équipement choisi ici — change l'un ou l'autre, tout se recalcule en direct.</p>
+                <h2>Équipement</h2>
+                <p>Clique sur un objet pour le sélectionner — les dégâts, la survie et le PowerLevel simulé plus bas se recalculent aussitôt.</p>
             </div>
-            <div class="equip-grille" id="equipGrille"></div>
+            <div id="equipGrille"></div>
+        </section>
+
+        <section class="section">
+            <div class="section-tete">
+                <h2>Dégâts et survie</h2>
+                <p>Calculés à partir de la répartition et de l'équipement choisis ci-dessus. Le PowerLevel simulé est comparé à ton PowerLevel réel
+                   actuel pour vérifier que la répartition de départ correspond bien à ton build réel.</p>
+            </div>
             <div class="resultats-grille" id="resultatsGrille"></div>
         </section>
     `;
@@ -273,13 +369,13 @@ function rendreStatsGrille() {
 
     document.getElementById('statsGrille').innerHTML = Object.keys(LABEL_STAT).map(st => `
         <div class="stat-carte stat-${st}">
-            <div class="label">${LABEL_STAT[st]}</div>
+            <div class="label"><span>${ICONE_STAT[st]}</span> ${LABEL_STAT[st]}</div>
             <div class="stat-ligne">
                 <button type="button" data-stat="${st}" data-act="moins" ${stacksChoisis[st] <= 0 ? 'disabled' : ''}>&minus;</button>
                 <input type="number" min="0" data-stat="${st}" value="${stacksChoisis[st]}">
                 <button type="button" data-stat="${st}" data-act="plus" ${reste <= 0 ? 'disabled' : ''}>+</button>
             </div>
-            <div class="actuel">actuellement : ${stacksOriginaux[st]}</div>
+            <div class="stat-detail" id="detailStat_${st}"></div>
         </div>
     `).join('');
 
@@ -314,39 +410,99 @@ function rendreCommandeReset(totalOriginal, reste) {
         zone.innerHTML = `<div class="avertissement">Tu n'as encore aucun point investi — rien à réinitialiser pour l'instant.</div>`;
         return;
     }
+    const lignes = ['!reset', ...morceaux];
+    window.__commandeComplete = lignes.join('\n');
     zone.innerHTML = `
-        <div class="consigne">À coller dans le chat Twitch, dans l'ordre — nécessite un ticket de reset (achetable en Boutique)</div>
-        <div class="zone-commande-ligne" style="margin-bottom:8px;">
-            <code id="cmdReset">!reset</code>
-            <button type="button" onclick="copier('cmdReset', this)">Copier</button>
+        <div class="consigne">Une seule commande à copier-coller dans le chat Twitch — colle-la telle quelle, chaque ligne part comme un message séparé, dans l'ordre. Nécessite un ticket de reset (achetable en Boutique).</div>
+        <div class="zone-commande-ligne">
+            <code id="cmdComplete">${lignes.map(echapper).join('\n')}</code>
+            <button type="button" onclick="copier('cmdComplete', this, true)">Tout copier</button>
         </div>
-        ${morceaux.map((m, i) => `
-        <div class="zone-commande-ligne" style="margin-bottom:${i < morceaux.length-1 ? '8px' : '0'}">
-            <code id="cmdAmeliorer${i}">${echapper(m)}</code>
-            <button type="button" onclick="copier('cmdAmeliorer${i}', this)">Copier</button>
-        </div>`).join('')}
+        <div class="detail-lignes">
+            ${lignes.map(m => `<div><b>${echapper(m)}</b></div>`).join('')}
+        </div>
         ${reste !== 0 ? `<div class="avertissement">⚠️ ${reste > 0 ? `Il te reste ${reste} point(s) non placé(s).` : `Tu as placé ${-reste} point(s) de trop.`}</div>` : ''}
     `;
 }
 
+/* ===================== SÉLECTEUR D'ÉQUIPEMENT (cartes) ===================== */
+const LABEL_STAT_COURT = { Lifesteal: 'Vol de vie', PoisonDegats: 'Poison', ShieldMontant: 'Bouclier', SoinDirect: 'Soin',
+    DegatsDirects: 'Impact', SaignementDegats: 'Saignement', BrulureDegats: 'Brûlure' };
+
 function rendreEquipGrille() {
     const inv = (joueurActif.inventaire || []).map(l => ({ ...l, info: objetCatalogue(l.numero) })).filter(l => l.info);
-    const slots = [ ['weapon','arme','Arme'], ['offhand','offhand','Main gauche'], ['torso','torso','Armure'], ['strategeme','strat','Stratagème'] ];
+    const slots = ['weapon', 'offhand', 'torso', 'strategeme'];
 
-    document.getElementById('equipGrille').innerHTML = slots.map(([slotKey, choixKey, label]) => {
+    document.getElementById('equipGrille').innerHTML = slots.map(slotKey => {
+        const choixKey = CLE_CHOIX[slotKey];
         const options = inv.filter(l => l.info.slot === slotKey);
-        const optionsHtml = ['<option value="">— aucun —</option>']
-            .concat(options.map(l => `<option value="${l.numero}" ${String(equipChoisi[choixKey]) === String(l.numero) ? 'selected' : ''}>${echapper(l.info.nom)} (${LABEL_RARETE[l.info.rarete]||l.info.rarete})</option>`))
-            .join('');
-        return `<div class="equip-case"><label>${label}</label><select data-slot="${choixKey}">${optionsHtml}</select></div>`;
+        const carteAucun = `
+            <div class="pick-carte aucun ${!equipChoisi[choixKey] ? 'choisi' : ''}" data-slot="${choixKey}" data-numero="">
+                <div class="pick-carte-image"><div class="emoji">🚫</div></div>
+                <div class="pick-carte-nom">Aucun</div>
+            </div>`;
+        const cartesObjets = options.map(l => rendreCartePick(l, choixKey)).join('');
+        return `
+            <div class="equip-bloc">
+                <div class="equip-bloc-titre">${LABEL_SLOT[slotKey]}</div>
+                <div class="pick-grille">${carteAucun}${cartesObjets}</div>
+            </div>`;
     }).join('');
 
-    document.getElementById('equipGrille').querySelectorAll('select[data-slot]').forEach(sel => {
-        sel.addEventListener('change', () => { equipChoisi[sel.getAttribute('data-slot')] = sel.value || null; recalculer(); });
+    document.getElementById('equipGrille').querySelectorAll('.pick-carte').forEach(carte => {
+        carte.addEventListener('click', () => {
+            const choixKey = carte.getAttribute('data-slot');
+            equipChoisi[choixKey] = carte.getAttribute('data-numero') || null;
+            rendreEquipGrille();
+            recalculer();
+        });
     });
 }
 
-// Construit l'objet "gear" attendu par la formule (catalogue_stats.json + niveau réellement possédé).
+// Construit une carte cliquable pour un objet possédé : image, rareté, niveau, et un court résumé
+// de stats DÉJÀ NIVELÉ (via appliquerAmelioration, exposé par formule-combat.js) pour que ce qui
+// s'affiche sur la carte corresponde exactement à ce qui entre dans le calcul de dégâts/PowerLevel.
+function rendreCartePick(ligneInv, choixKey) {
+    const info = ligneInv.info;
+    const niveau = ligneInv.niveau || 0;
+    const nivele = appliquerAmelioration(info, niveau);
+    const estChoisi = String(equipChoisi[choixKey]) === String(ligneInv.numero);
+    const img = info.image
+        ? `<img src="${echapper(info.image)}" alt="">`
+        : `<div class="emoji">${echapper(info.icone || '❔')}</div>`;
+
+    const lignesStat = [];
+    if (nivele.stat) lignesStat.push(formatBonusPick(nivele.stat, nivele.bonus));
+    if (nivele.stat2) lignesStat.push(formatBonusPick(nivele.stat2, nivele.bonus2));
+    if (nivele.stat3) lignesStat.push(formatBonusPick(nivele.stat3, nivele.bonus3));
+    if (info.slot === 'weapon' && info.scaling1Stat) {
+        lignesStat.push(`Dégâts <b>${Math.round(nivele.baseDegatsMin)}–${Math.round(nivele.baseDegatsMax)}</b>`);
+    }
+    if (info.slot === 'strategeme' && info.statPrincipale) {
+        const champ = { Lifesteal:'lifesteal', PoisonDegats:'poisonDegats', ShieldMontant:'shieldMontant', SoinDirect:'soinDirect',
+            DegatsDirects:'degatsDirects', SaignementDegats:'saignementDegats', BrulureDegats:'brulureDegats' }[info.statPrincipale];
+        if (champ && nivele[champ]) lignesStat.push(`${LABEL_STAT_COURT[info.statPrincipale] || info.statPrincipale} <b>${Math.round(nivele[champ]*10)/10}</b>`);
+    }
+
+    return `
+        <div class="pick-carte ${estChoisi ? 'choisi' : ''}" data-slot="${choixKey}" data-numero="${ligneInv.numero}"
+             style="--accent: var(--${info.rarete || 'commun'})">
+            <div class="pick-carte-niveau">${niveau > 0 ? '+' + niveau : 'base'}</div>
+            <div class="pick-carte-rarete" title="${LABEL_RARETE[info.rarete] || info.rarete}"></div>
+            <div class="pick-carte-image">${img}</div>
+            <div class="pick-carte-nom">${echapper(info.nom)}</div>
+            <div class="pick-carte-stat">${lignesStat.join('<br>')}</div>
+        </div>`;
+}
+function formatBonusPick(stat, valeur) {
+    const label = { atk: 'ATK', def: 'DEF', pv: 'PV', spd: 'VIT', esquive: 'Esq.', luck: 'LUCK' }[stat] || stat;
+    const signe = valeur >= 0 ? '+' : '';
+    return `${label} <b>${signe}${Math.round(valeur*10)/10}</b>`;
+}
+
+// Construit l'objet "gear" BRUT attendu par simulerBuild (catalogue_stats.json + niveau réellement
+// possédé) — le nivelage (AppliquerAmelioration) est fait à l'intérieur de simulerBuild, une seule
+// fois, jamais ici.
 function gearPourFormule(numero) {
     if (!numero) return null;
     const info = objetCatalogue(numero);
@@ -356,13 +512,18 @@ function gearPourFormule(numero) {
 }
 
 function recalculer() {
-    const equipement = {
+    const equipementBrut = {
         arme: gearPourFormule(equipChoisi.arme),
         offhand: gearPourFormule(equipChoisi.offhand),
         torso: gearPourFormule(equipChoisi.torso),
         strat: gearPourFormule(equipChoisi.strat),
     };
-    const r = simulerBuild(stacksChoisis, equipement);
+    const r = simulerBuild(stacksChoisis, equipementBrut);
+    afficherDetailStats(equipementBrut);
+
+    const powerLevelReel = (joueurActif.stats && joueurActif.stats.powerLevel) || 0;
+    const ecart = powerLevelReel > 0 ? Math.abs(r.powerLevel - powerLevelReel) / powerLevelReel : 0;
+    const classeEcart = ecart <= 0.05 ? 'ok' : (ecart <= 0.15 ? '' : 'ecart');
 
     document.getElementById('resultatsGrille').innerHTML = `
         <div class="resultat-carte">
@@ -377,15 +538,51 @@ function recalculer() {
             <div class="valeur">${Math.round(r.totalDmg)}</div>
             <div class="label">Dégâts sur tout le combat</div>
         </div>
-        <div class="resultat-carte secondaire">
-            <div class="valeur">${r.powerLevel.toFixed(0)}</div>
-            <div class="label">PowerLevel estimé</div>
+        <div class="resultat-carte secondaire power">
+            <div class="valeur">${r.powerLevel.toFixed(0)}<span class="reel ${classeEcart}">/ réel ${powerLevelReel.toFixed(0)}</span></div>
+            <div class="label">PowerLevel simulé</div>
         </div>
     `;
 }
 
-function copier(idCode, bouton) {
-    const texte = document.getElementById(idCode).textContent;
+// Alimente le détail sous chaque stat-carte : baseline / points investis / bonus d'objets
+// sélectionnés / total — calculé par décomposition (0 stack + pas d'objet, stacks seuls,
+// stacks + objets nivelés) pour rester rigoureusement cohérent avec la formule de combat.
+function afficherDetailStats(equipementBrut) {
+    const zero = { atk: 0, def: 0, pv: 0, spd: 0, luck: 0 };
+    const vide = { arme: null, offhand: null, torso: null, strat: null };
+    const equipementNivele = nivelerEquipement(equipementBrut);
+
+    const base = calculerStatsEffectives(zero, vide);
+    const avecStacks = calculerStatsEffectives(stacksChoisis, vide);
+    const avecTout = calculerStatsEffectives(stacksChoisis, equipementNivele);
+
+    const rendre = (st, baseline, stack, gear, total, formatteur) => {
+        const el = document.getElementById('detailStat_' + st);
+        if (!el) return;
+        el.innerHTML = `
+            <div class="stat-detail-ligne"><span>Baseline</span><b>${formatteur(baseline)}</b></div>
+            <div class="stat-detail-ligne"><span>Points investis</span><b>+${formatteur(stack)}</b></div>
+            <div class="stat-detail-ligne gear"><span>Bonus d'objets</span><b>+${formatteur(gear)}</b></div>
+            <div class="stat-detail-ligne total"><span>Total effectif</span><b>${formatteur(total)}</b></div>
+        `;
+    };
+    const f1 = v => (Math.round(v*10)/10).toString();
+
+    rendre('atk', base.atk, avecStacks.atk - base.atk, avecTout.atk - avecStacks.atk, avecTout.atk, f1);
+    rendre('def', base.def, avecStacks.def - base.def, avecTout.def - avecStacks.def, avecTout.def, f1);
+    rendre('pv',  base.pv,  avecStacks.pv  - base.pv,  avecTout.pv  - avecStacks.pv,  avecTout.pv,  f1);
+    rendre('spd', base.spd, avecStacks.spd - base.spd, avecTout.spd - avecStacks.spd, avecTout.spd, f1);
+
+    // Luck : pas de champ "s.luck" direct (seul le total linéaire luckLineaire existe, converti en
+    // %crit par tanh plus loin) — décomposition faite directement sur cette valeur linéaire.
+    const luckStack = stacksChoisis.luck;
+    const luckGear = Math.max(0, avecTout.luckLineaire - luckStack);
+    rendre('luck', 0, luckStack, luckGear, avecTout.luckLineaire, f1);
+}
+
+function copier(idCode, bouton, multiligne) {
+    const texte = multiligne ? window.__commandeComplete : document.getElementById(idCode).textContent;
     const fini = () => { const avant = bouton.textContent; bouton.textContent = 'Copié !'; setTimeout(() => bouton.textContent = avant, 1600); };
     if (navigator.clipboard) navigator.clipboard.writeText(texte).then(fini, fini);
     else {
