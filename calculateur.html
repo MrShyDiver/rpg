@@ -688,9 +688,13 @@ function afficherDetailStats(statsActuelles) {
 
     // Luck : pas de champ "s.luck" direct — décomposition faite sur luckLineaire (voir
     // formule-combat.js), comparée au luckLineaire de la vue d'avant modification.
+    // ⚠️ Affichage uniquement : la baseline visuelle est fixée à 10 (comme sur stats.html, qui fait
+    // "Math.round(sp.luck) + 10"), même si la formule de combat elle-même part bien de 0 pour la
+    // luck — aucun calcul réel n'est touché, seul ce qui s'affiche ici change.
+    const BASELINE_LUCK_AFFICHEE = 10;
     const luckStack = stacksChoisis.luck;
     const luckGear = Math.max(0, statsActuelles.luckLineaire - luckStack);
-    rendre('luck', 0, luckStack, luckGear, statsActuelles.luckLineaire, statsInitiales.luckLineaire, f1);
+    rendre('luck', BASELINE_LUCK_AFFICHEE, luckStack, luckGear, BASELINE_LUCK_AFFICHEE + statsActuelles.luckLineaire, BASELINE_LUCK_AFFICHEE + statsInitiales.luckLineaire, f1);
 }
 
 function copier(idCode, bouton) {
