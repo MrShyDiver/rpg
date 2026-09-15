@@ -10,7 +10,7 @@
 :root {
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
     --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
-    --equitable: #5ddd7a; --dessus: #4a9fd8; --dessous: #8d8d8d;
+    --equitable: #5ddd7a; --dessus: #4a9fd8; --dessous: #8d8d8d; --negatif: #ff6b6b;
 }
 * { box-sizing: border-box; }
 body {
@@ -79,6 +79,18 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .tranche-section.dessus .cible-ecart { color: var(--dessus); }
 .tranche-section.dessous .cible-ecart { color: var(--dessous); }
 
+/* ===== Estimation de victoire (simulation) ===== */
+.simu { text-align: center; flex: 0 0 auto; min-width: 84px; }
+.simu .label {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: .8px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
+}
+.simu .val { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 800; }
+.simu.favorable .val { color: var(--equitable); }
+.simu.neutre .val { color: var(--paper); }
+.simu.defavorable .val { color: var(--negatif); }
+.simu .detail { font-size: 10px; color: var(--paper-dim); margin-top: 1px; }
+
 .issues { display: flex; gap: 16px; flex: 0 0 auto; }
 .issue { text-align: center; min-width: 56px; }
 .issue .label {
@@ -138,6 +150,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 @media (max-width: 640px) {
     .cible { padding: 11px 13px; }
+    .simu { order: 2; min-width: 70px; }
     .issues { width: 100%; justify-content: space-between; order: 3; }
     .cible-action { width: 100%; order: 4; }
     .cible-action button { width: 100%; }
@@ -160,11 +173,365 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 </div>
 
+<script src="formule-combat.js"></script>
+<script>
+/* =====================================================================
+   ESTIMATION DE VICTOIRE PAR SIMULATION — port fidèle de ResoudreCombatInterne
+   (moteur-combat.cs / 11_Duel.cs), pas une approximation : système d'AP par
+   vitesse (celui qui accumule le plus vite agit le plus souvent), fatigue/corde
+   partagée, parade+riposte, blocage, exécution, marque, frénésie, ténacité vs
+   étourdissement, dernier souffle, anti-heal, reflection, saignement, missiles
+   à délai. Contrairement au %d'écart de PowerLevel, ça capture les contres
+   directs (anti-crit qui neutralise un build crit, bouclier qui se recharge
+   en plein combat...) qu'aucun score agrégé ne peut voir.
+   Seule différence assumée avec le vrai moteur : "protectionActive" (une
+   mécanique de duel dont je n'ai pas pu vérifier le sens exact du côté "cible"
+   dans le code source) est toujours considérée à false ici -- elle ne
+   s'applique de toute façon qu'à des cas de duel spécifiques, pas à
+   l'équipement d'un build.
+   ===================================================================== */
+const N_SIMULATIONS = 400;
+
+// Constantes propres au VRAI combat coup par coup, absentes de formule-combat.js
+// (qui ne sert qu'à l'estimation de PowerLevel) -- copiées de moteur-combat.cs.
+const DUEL_CST = { AP_THRESHOLD: 100.0, FATIGUE_BASE: 10, PROTECTION_REDUCTION: 0.20 };
+
+function preparerCombattant(stacksBrut, equipementBrut) {
+    const equipement = nivelerEquipement(equipementBrut);
+    const stats = calculerStatsEffectives(stacksBrut, equipement);
+    return {
+        stats, arme: equipement.arme, offhand: equipement.offhand, torso: equipement.torso, strat: equipement.strat,
+        luck: stats.luckLineaire, esquive: CST.BASE_ESQUIVE + (stats.esquiveGear || 0),
+        pvMax: stats.pv,
+    };
+}
+
+// État mutable d'un combattant pour UN combat simulé -- recréé à chaque simulation (restaurerCombattant
+// ne suffit plus vu le nombre d'états à réinitialiser, plus simple et plus sûr de repartir de zéro).
+function nouvelEtatCombat(prep) {
+    const arme = prep.arme, offhand = prep.offhand, torso = prep.torso, strat = prep.strat;
+    return {
+        stats: { ...prep.stats }, arme, offhand, torso, strat, luck: prep.luck, esquive: prep.esquive,
+        pv: prep.pvMax, pvMax: prep.pvMax,
+        ap: 0, actionsPropres: 0,
+        usagesRestants: strat ? (strat.usagesParCombat || 0) : 0, prochainUsageAction: 0,
+        missileActionCible: -1, missileEnVol: null,
+        usagesSoinRestants: (offhand && offhand.soinDirect > 0) ? (offhand.usagesParCombat || 0) : 0, prochainSoinAction: 0,
+        poisonStack: 0,
+        shield: (arme?.shieldMontant || 0) + (offhand?.shieldMontant || 0) + (torso?.shieldMontant || 0),
+        saignementStacks: 0, saignementDegatsParStack: 0,
+        antiHealPourcentage: 0, antiHealDuree: 0,
+        brulureDegats: 0, brulureDuree: 0,
+        stanceActuelle: 0, tourDansStance: 0,
+        marqueDegats: 0, marqueDuree: 0,
+        dernierSouffleDispo: !!((arme && arme.dernierSouffleActif) || (offhand && offhand.dernierSouffleActif) || (torso && torso.dernierSouffleActif)),
+        frenesieBonusSpd: 0, frenesieDuree: 0,
+        etourdi: false,
+    };
+}
+
+function appliquerDegatsAvecShield(cible, degats) {
+    const absorbe = Math.min(cible.shield, degats);
+    cible.shield -= absorbe;
+    cible.pv -= (degats - absorbe);
+}
+
+function verifierDernierSouffle(c) {
+    if (c.pv <= 0 && c.dernierSouffleDispo) { c.pv = 1; c.dernierSouffleDispo = false; }
+}
+
+// Port fidèle de CalculerDegatsBaseArme (moteur-combat.cs) -- l'arme reçue est déjà "vue selon la
+// stance" (vueArmeSelonStance, formule-combat.js), donc ses champs de dégâts/scaling sont les bons.
+function calculerDegatsBaseArme(arme, statsFrappeur, diviseurCoups) {
+    if (!arme || !arme.scaling1Stat) return { valeur: statsFrappeur.atk / diviseurCoups, nouveauSysteme: false };
+    const baseMin = (arme.baseDegatsMin || 0) / diviseurCoups;
+    const baseMax = (arme.baseDegatsMax || 0) / diviseurCoups;
+    let total = baseMin + Math.random() * (baseMax - baseMin);
+    let atkDejaCompte = false;
+    const appliquer = (nomStat, lettre) => {
+        if (!nomStat) return;
+        const coef = CST.COEF_LETTRE_SCALING[lettre] || 0;
+        const valeur = valeurStat(statsFrappeur, nomStat) / diviseurCoups;
+        if (nomStat === 'atk') { total += valeur * coef; atkDejaCompte = true; }
+        else total += valeur * coef * CST.PENALITE_HORS_ATK;
+    };
+    appliquer(arme.scaling1Stat, arme.scaling1Lettre);
+    appliquer(arme.scaling2Stat, arme.scaling2Lettre);
+    if (!atkDejaCompte) total += (statsFrappeur.atk / diviseurCoups) * CST.COEF_ATK_BASE;
+    return { valeur: total, nouveauSysteme: true };
+}
+
+function declencherSoinActif(porteur, objet) {
+    const montantBrut = objet.soinDirect * (1.0 - Math.min(1.0, porteur.antiHealPourcentage / 100.0));
+    porteur.pv = Math.min(porteur.pvMax, porteur.pv + montantBrut);
+}
+
+function declencherUsageStrategeme(porteur, cible, strategeme) {
+    if (strategeme.shieldMontant > 0) { porteur.shield += strategeme.shieldMontant; return; }
+    const mitigationStrat = mitigation(cible.stats.def * (1.0 - Math.min(1.0, (strategeme.penetration || 0) / 100.0)));
+    const coupsParUsage = Math.max(1, strategeme.coupsParUsage || 1);
+    let degatsTotal = 0;
+    for (let coup = 0; coup < coupsParUsage; coup++) {
+        if (strategeme.degatsDirects > 0) {
+            const variance = 0.9 + Math.random() * 0.20;
+            degatsTotal += Math.max(0.1, strategeme.degatsDirects * (1.0 - mitigationStrat)) * variance;
+        }
+    }
+    appliquerDegatsAvecShield(cible, degatsTotal);
+    if (strategeme.poisonDegats > 0) cible.poisonStack += strategeme.poisonDegats;
+    if (strategeme.brulureDegats > 0 && strategeme.brulureDuree > 0) {
+        cible.brulureDegats = strategeme.brulureDegats;
+        cible.brulureDuree = strategeme.brulureDuree;
+    }
+}
+
+// Une seule "action propre" de l'acteur : régen, arrivée de missile, activation de stratagème/soin
+// actif, poison/saignement/brûlure DE L'ACTEUR SEULEMENT, décomptes de durées (anti-heal/marque/
+// frénésie) DES DEUX CÔTÉS, changement de stance -- reproduit l'ordre exact du moteur réel.
+function resoudreEffetsDeTour(acteur, adversaire, A, B) {
+    const regen = (acteur.torso?.regeneration || 0) + (acteur.offhand?.regeneration || 0);
+    if (regen > 0) {
+        const montantBrut = acteur.pvMax * regen / 100.0 * (1.0 - Math.min(1.0, acteur.antiHealPourcentage / 100.0));
+        acteur.pv = Math.min(acteur.pvMax, acteur.pv + montantBrut);
+    }
+
+    if (acteur.missileActionCible === acteur.actionsPropres) {
+        declencherUsageStrategeme(acteur, adversaire, acteur.missileEnVol);
+        acteur.missileActionCible = -1; acteur.missileEnVol = null;
+    }
+
+    if (acteur.strat && acteur.usagesRestants > 0 && acteur.actionsPropres >= acteur.prochainUsageAction) {
+        if (acteur.strat.delaiTours > 0) {
+            acteur.missileActionCible = acteur.actionsPropres + acteur.strat.delaiTours;
+            acteur.missileEnVol = acteur.strat;
+        } else {
+            declencherUsageStrategeme(acteur, adversaire, acteur.strat);
+        }
+        acteur.usagesRestants--;
+        acteur.prochainUsageAction = acteur.actionsPropres + 1 + (acteur.strat.cooldownTours || 0);
+    }
+
+    if (acteur.offhand && acteur.offhand.soinDirect > 0 && acteur.usagesSoinRestants > 0 && acteur.actionsPropres >= acteur.prochainSoinAction && acteur.pv < acteur.pvMax) {
+        declencherSoinActif(acteur, acteur.offhand);
+        acteur.usagesSoinRestants--;
+        acteur.prochainSoinAction = acteur.actionsPropres + 1 + (acteur.offhand.cooldownTours || 0);
+    }
+
+    if (acteur.pv <= 0 || adversaire.pv <= 0) return;
+
+    if (acteur.poisonStack > 0) {
+        const resistance = (acteur.torso?.resistancePoison || 0) + (acteur.offhand?.resistancePoison || 0);
+        acteur.pv -= acteur.poisonStack * (1.0 - Math.min(1.0, resistance / 100.0));
+        acteur.poisonStack = Math.max(0, acteur.poisonStack - 1);
+    }
+    if (acteur.saignementStacks > 0) {
+        acteur.pv -= acteur.saignementDegatsParStack * acteur.saignementStacks;
+        acteur.saignementStacks--;
+    }
+    if (acteur.brulureDuree > 0) {
+        const resistanceFeu = (acteur.torso?.resistanceFeu || 0) + (acteur.offhand?.resistanceFeu || 0);
+        appliquerDegatsAvecShield(acteur, acteur.brulureDegats * (1.0 - Math.min(1.0, resistanceFeu / 100.0)));
+        acteur.brulureDuree--;
+    }
+
+    // Décomptes de durées : les DEUX côtés, à chaque action (pas seulement l'acteur) -- fidèle au moteur.
+    [A, B].forEach(c => {
+        if (c.antiHealDuree > 0) { c.antiHealDuree--; if (c.antiHealDuree <= 0) c.antiHealPourcentage = 0; }
+        if (c.marqueDuree > 0) { c.marqueDuree--; if (c.marqueDuree <= 0) c.marqueDegats = 0; }
+        if (c.frenesieDuree > 0) { c.frenesieDuree--; if (c.frenesieDuree <= 0) c.frenesieBonusSpd = 0; }
+    });
+
+    if (acteur.arme && acteur.arme.dureeStance > 0) {
+        acteur.tourDansStance++;
+        if (acteur.tourDansStance >= acteur.arme.dureeStance) {
+            acteur.tourDansStance = 0;
+            appliquerBonusArmeStance(acteur.stats, acteur.arme, acteur.stanceActuelle, -1.0);
+            acteur.stanceActuelle = 1 - acteur.stanceActuelle;
+            appliquerBonusArmeStance(acteur.stats, acteur.arme, acteur.stanceActuelle, 1.0);
+            if (acteur.stanceActuelle === 0) { acteur.poisonStack = 0; acteur.brulureDuree = 0; acteur.brulureDegats = 0; }
+        }
+    }
+}
+
+// L'attaque proprement dite : hitchance, parade+riposte, crit, dégâts (avec exécution/marque/rage/
+// blocage/réduction tir), vol de vie, reflection, application poison/saignement/anti-heal/marque/
+// étourdissement (résisté par ténacité).
+function resoudreAttaque(acteur, adversaire) {
+    let esquiveCible = adversaire.esquive;
+    const armeFrappeur = vueArmeSelonStance(acteur.arme, acteur.stanceActuelle);
+    if (armeFrappeur && armeFrappeur.precision > 0) esquiveCible = Math.max(0, esquiveCible - armeFrappeur.precision);
+    const hitChance = Math.max(0, Math.min(100, 100 - esquiveCible));
+    let touche = Math.random() * 100.0 < hitChance;
+
+    if (touche) {
+        const paradeCible = (adversaire.torso?.paradeChance || 0) + (adversaire.offhand?.paradeChance || 0);
+        if (paradeCible > 0 && Math.random() * 100.0 < paradeCible) {
+            touche = false;
+            const mitRiposte = mitigation(acteur.stats.def);
+            const degatsRipostee = Math.max(0.1, adversaire.stats.atk * (1.0 - mitRiposte)) * (0.9 + Math.random() * 0.2);
+            appliquerDegatsAvecShield(acteur, degatsRipostee);
+            verifierDernierSouffle(acteur);
+        }
+    }
+
+    if (!touche) return;
+
+    const nbCoupsArme = armeFrappeur ? Math.max(1, armeFrappeur.coupsParUsage || 1) : 1;
+    const penetration = armeFrappeur ? (armeFrappeur.penetration || 0) : 0;
+    const defEffective = adversaire.stats.def * (1.0 - Math.min(1.0, penetration / 100.0));
+    const mitig = mitigation(defEffective);
+    const resistanceCrit = adversaire.torso ? (adversaire.torso.resistanceCrit || 0) : 0;
+    const critChance = Math.max(0, CST.BASE_CRIT + CST.LUCK_CRIT_MAX * Math.tanh(acteur.luck / CST.K_LUCK) + (armeFrappeur ? (armeFrappeur.critBonus || 0) : 0) - resistanceCrit);
+    const executionActive = !!(armeFrappeur && armeFrappeur.executionSeuil > 0 && (adversaire.pv / adversaire.pvMax * 100.0) <= armeFrappeur.executionSeuil);
+
+    let degatsTotal = 0;
+    for (let coupN = 0; coupN < nbCoupsArme; coupN++) {
+        const critCoup = Math.random() * 100.0 < Math.min(100, critChance);
+        const varianceCoup = 0.85 + Math.random() * 0.30;
+        const { valeur: degatsBaseParBalle, nouveauSysteme } = calculerDegatsBaseArme(armeFrappeur, acteur.stats, nbCoupsArme);
+        let degatsBrutsCoup = nouveauSysteme
+            ? Math.max(0.1, degatsBaseParBalle * (1.0 - mitig)) * (critCoup ? 2.0 : 1.0)
+            : Math.max(0.1, degatsBaseParBalle * (1.0 - mitig)) * varianceCoup * (critCoup ? 2.0 : 1.0);
+
+        if (critCoup && armeFrappeur && armeFrappeur.frenesieBonusSpd > 0 && armeFrappeur.frenesieDuree > 0) {
+            acteur.frenesieBonusSpd = armeFrappeur.frenesieBonusSpd;
+            acteur.frenesieDuree = armeFrappeur.frenesieDuree;
+        }
+        if (armeFrappeur && armeFrappeur.rageBonusMax > 0 && armeFrappeur.rageSeuilMin < 100) {
+            const pvPourcentFrappeur = (acteur.pv / acteur.pvMax) * 100.0;
+            const pvManquantFrappeur = 100.0 - pvPourcentFrappeur;
+            const plage = 100.0 - armeFrappeur.rageSeuilMin;
+            const rageBonus = Math.min(armeFrappeur.rageBonusMax, Math.max(0, (pvManquantFrappeur / plage) * armeFrappeur.rageBonusMax));
+            degatsBrutsCoup *= (1.0 + rageBonus / 100.0);
+        }
+        if (adversaire.marqueDegats > 0) degatsBrutsCoup *= (1.0 + adversaire.marqueDegats / 100.0);
+        if (executionActive) degatsBrutsCoup *= (1.0 + armeFrappeur.executionBonus / 100.0);
+        if (adversaire.offhand && adversaire.offhand.reductionDegatsTir > 0 && armeFrappeur && armeFrappeur.anim === 'tir') {
+            degatsBrutsCoup *= (1.0 - Math.min(1.0, adversaire.offhand.reductionDegatsTir / 100.0));
+        }
+        if (adversaire.offhand && adversaire.offhand.blocage > 0 && Math.random() * 100.0 < adversaire.offhand.blocage) {
+            degatsBrutsCoup *= (1.0 - Math.min(1.0, adversaire.offhand.blocageReduction / 100.0));
+        }
+        degatsTotal += Math.trunc(degatsBrutsCoup);
+    }
+
+    appliquerDegatsAvecShield(adversaire, degatsTotal);
+    verifierDernierSouffle(acteur); verifierDernierSouffle(adversaire);
+
+    if (armeFrappeur && armeFrappeur.lifesteal > 0 && degatsTotal > 0) {
+        acteur.pv = Math.min(acteur.pvMax, acteur.pv + Math.trunc(degatsTotal * armeFrappeur.lifesteal / 100.0));
+    }
+    if (degatsTotal > 0) {
+        const reflectionTotale = (adversaire.torso?.reflection || 0) + (adversaire.offhand?.reflection || 0);
+        if (reflectionTotale > 0) appliquerDegatsAvecShield(acteur, Math.trunc(degatsTotal * reflectionTotale / 100.0));
+    }
+    if (armeFrappeur && armeFrappeur.poisonDegats > 0) adversaire.poisonStack += armeFrappeur.poisonDegats;
+    if (armeFrappeur && armeFrappeur.saignementDegats > 0) {
+        adversaire.saignementStacks++;
+        adversaire.saignementDegatsParStack = armeFrappeur.saignementDegats;
+    }
+    if (armeFrappeur && armeFrappeur.antiHealPourcentage > 0 && armeFrappeur.antiHealDuree > 0) {
+        adversaire.antiHealPourcentage = armeFrappeur.antiHealPourcentage;
+        adversaire.antiHealDuree = armeFrappeur.antiHealDuree;
+    }
+    if (armeFrappeur && armeFrappeur.marqueDegatsPourcentage > 0 && armeFrappeur.marqueDuree > 0) {
+        adversaire.marqueDegats = armeFrappeur.marqueDegatsPourcentage;
+        adversaire.marqueDuree = armeFrappeur.marqueDuree;
+    }
+    if (armeFrappeur && armeFrappeur.etourdissementChance > 0 && Math.random() * 100.0 < armeFrappeur.etourdissementChance) {
+        const tenaciteCible = (adversaire.torso?.tenaciteChance || 0) + (adversaire.offhand?.tenaciteChance || 0);
+        const resiste = tenaciteCible > 0 && Math.random() * 100.0 < tenaciteCible;
+        if (!resiste) adversaire.etourdi = true;
+    }
+}
+
+// Port fidèle de ResoudreCombatInterne -- système d'AP (Active Time Battle) : chacun accumule de
+// l'AP proportionnellement à sa vitesse à chaque tick, agit dès qu'il atteint le seuil (peut agir
+// plusieurs fois de suite s'il est bien plus rapide), et la fatigue/corde inflige des dégâts
+// PARTAGÉS aux deux combattants simultanément une fois le compteur d'actions global assez avancé.
+function resoudreCombatInterne(prepA, prepB) {
+    const A = nouvelEtatCombat(prepA), B = nouvelEtatCombat(prepB);
+    let totalActions = 0, nDeclenchementsFatigue = 0;
+
+    while (A.pv > 0 && B.pv > 0 && totalActions < CST.MAX_ACTIONS) {
+        A.ap += A.stats.spd + A.frenesieBonusSpd;
+        B.ap += B.stats.spd + B.frenesieBonusSpd;
+
+        while ((A.ap >= DUEL_CST.AP_THRESHOLD || B.ap >= DUEL_CST.AP_THRESHOLD) && A.pv > 0 && B.pv > 0 && totalActions < CST.MAX_ACTIONS) {
+            // Vitesse la plus haute tranche qui agit quand les deux sont prêts en même temps.
+            const aJoue = A.ap >= DUEL_CST.AP_THRESHOLD && (B.ap < DUEL_CST.AP_THRESHOLD || A.stats.spd >= B.stats.spd);
+            const acteur = aJoue ? A : B, adversaire = aJoue ? B : A;
+
+            resoudreEffetsDeTour(acteur, adversaire, A, B);
+            if (A.pv <= 0 || B.pv <= 0) { totalActions++; continue; }
+
+            if (totalActions >= CST.ROPE_START_ACTION && (totalActions - CST.ROPE_START_ACTION) % CST.ROPE_CADENCE === 0) {
+                nDeclenchementsFatigue++;
+                const degatsFatigue = DUEL_CST.FATIGUE_BASE * Math.pow(CST.FATIGUE_CROISSANCE, nDeclenchementsFatigue - 1);
+                A.pv -= degatsFatigue; B.pv -= degatsFatigue;
+            }
+            verifierDernierSouffle(A); verifierDernierSouffle(B);
+            if (A.pv <= 0 || B.pv <= 0) { totalActions++; continue; }
+
+            if (acteur.etourdi) {
+                acteur.etourdi = false;
+                acteur.ap -= DUEL_CST.AP_THRESHOLD; acteur.actionsPropres++; totalActions++;
+                continue;
+            }
+
+            resoudreAttaque(acteur, adversaire);
+            acteur.ap -= DUEL_CST.AP_THRESHOLD; acteur.actionsPropres++; totalActions++;
+        }
+    }
+
+    if (A.pv <= 0 && B.pv <= 0) return Math.trunc(A.pv) === Math.trunc(B.pv) ? 0 : (A.pv >= B.pv ? 1 : 2);
+    if (A.pv <= 0) return 2;
+    if (B.pv <= 0) return 1;
+    return (A.pv / A.pvMax) >= (B.pv / B.pvMax) ? 1 : 2;
+}
+
+function estimerTauxVictoire(viewerPrep, ciblePrep) {
+    let victoires = 0, defaites = 0, egalites = 0;
+    for (let i = 0; i < N_SIMULATIONS; i++) {
+        const r = resoudreCombatInterne(viewerPrep, ciblePrep);
+        if (r === 1) victoires++; else if (r === 2) defaites++; else egalites++;
+    }
+    return {
+        victoirePct: Math.round((victoires / N_SIMULATIONS) * 100),
+        defaitePct: Math.round((defaites / N_SIMULATIONS) * 100),
+        egalitePct: Math.round((egalites / N_SIMULATIONS) * 100),
+    };
+}
+
+// Reprend le même schéma que calculateur.html : objet catalogue + niveau réellement possédé,
+// AppliquerAmelioration (via nivelerEquipement) fait le reste.
+function gearPourSimulation(joueur, catalogue, numero) {
+    if (!numero) return null;
+    const info = catalogue[String(numero)];
+    if (!info) return null;
+    const ligne = (joueur.inventaire || []).find(l => String(l.numero) === String(numero));
+    return { ...info, niveau: ligne ? (ligne.niveau || 0) : 0 };
+}
+
+function preparerDepuisJoueur(joueur, catalogue) {
+    const s = joueur.stats || {};
+    const stacks = { atk: s.atkStacks || 0, def: s.defStacks || 0, pv: s.pvStacks || 0, spd: s.spdStacks || 0, luck: s.luckStacks || 0 };
+    const lo = joueur.loadout || {};
+    const equipement = {
+        arme: gearPourSimulation(joueur, catalogue, lo.arme),
+        offhand: gearPourSimulation(joueur, catalogue, lo.offhand),
+        torso: gearPourSimulation(joueur, catalogue, lo.armure),
+        strat: gearPourSimulation(joueur, catalogue, lo.strategeme),
+    };
+    return preparerCombattant(stacks, equipement);
+}
+</script>
 <script>
 /* =====================================================================
    MÉDAILLES ATTENDUES — copie fidèle des constantes de duel.cs/auto-battle.cs
    (perspective ATTAQUANT, puisque c'est ce que le visiteur ferait avec
    !ticketduel). Purement informatif ici : aucune médaille n'est attribuée
+
    par cette page, seul le moteur de combat décide réellement du résultat.
    Si ces constantes changent côté C#, les reporter ici à l'identique.
    ===================================================================== */
@@ -253,6 +620,17 @@ function panneauComparaison(viewer, c) {
 function ligneCible(c) {
     var m = MEDAILLES[c.tranche];
     var signe = c.ecart >= 0 ? '+' : '';
+    var blocSimu;
+    if (c.victoirePct === null || c.victoirePct === undefined) {
+        blocSimu = '<div class="simu neutre"><div class="label">Victoire estimée</div><div class="val">—</div></div>';
+    } else {
+        var classeSimu = c.victoirePct >= 55 ? 'favorable' : (c.victoirePct <= 45 ? 'defavorable' : 'neutre');
+        blocSimu = '<div class="simu ' + classeSimu + '" title="Sur ' + N_SIMULATIONS + ' combats simulés avec l\'équipement réel des deux personnes">' +
+            '<div class="label">Victoire estimée</div>' +
+            '<div class="val">' + c.victoirePct + '%</div>' +
+            '<div class="detail">' + c.defaitePct + '% défaite' + (c.egalitePct >= 1 ? ' · ' + c.egalitePct + '% égalité' : '') + '</div>' +
+        '</div>';
+    }
     return '<div class="cible" data-cle="' + echapperAttr(c.cle) + '">' +
         avatarHtml(c.avatar, c.nom) +
         '<div class="cible-ident">' +
@@ -260,6 +638,7 @@ function ligneCible(c) {
             '<div class="cible-detail">PowerLevel <b>' + Math.round(c.power) + '</b> ' +
                 '<span class="cible-ecart">(' + signe + c.ecart.toFixed(0) + '%)</span></div>' +
         '</div>' +
+        blocSimu +
         '<div class="issues">' +
             '<div class="issue victoire"><div class="label">Victoire</div><div class="val">🏅 +' + m.victoire + '</div></div>' +
             '<div class="issue egalite"><div class="label">Égalité</div><div class="val">🏅 +' + m.egalite + '</div></div>' +
@@ -400,6 +779,25 @@ Promise.all([
         if (!demande || !data[demande]) return;   // le message par défaut reste affiché
 
         var viewer = tous.filter(function (c) { return c.cle === demande; })[0];
+
+        // Simulation tour par tour (voir plus haut) : pour CHAQUE cible potentielle, rejoue le
+        // duel réel plusieurs centaines de fois avec les objets effectivement équipés des deux
+        // côtés -- contrairement à l'écart de PowerLevel, ça capture les contres directs
+        // (anti-crit, bouclier qui se recharge...) propres à cette paire de personnes précise.
+        var viewerPrep = preparerDepuisJoueur(data[demande], catalogue);
+        tous.forEach(function (c) {
+            if (c.cle === demande) return;
+            try {
+                var ciblePrep = preparerDepuisJoueur(data[c.cle], catalogue);
+                var resultat = estimerTauxVictoire(viewerPrep, ciblePrep);
+                c.victoirePct = resultat.victoirePct;
+                c.defaitePct = resultat.defaitePct;
+                c.egalitePct = resultat.egalitePct;
+            } catch (e) {
+                c.victoirePct = null; c.defaitePct = null; c.egalitePct = null;
+            }
+        });
+
         afficher(viewer, tous);
     })
     .catch(function () {
