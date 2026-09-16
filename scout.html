@@ -150,7 +150,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .compare-stats-table td:nth-child(3) { text-align: center; color: var(--paper-dim); width: 20px; font-size: 11px; }
 .stat-toi-superieur { color: var(--equitable); }
 .stat-cible-superieur { color: var(--dessus); }
-
 @media (max-width: 640px) {
     .cible { padding: 11px 13px; }
     .simu { order: 2; min-width: 78px; }
@@ -555,6 +554,13 @@ var MEDAILLES = {
 };
 var SEUIL_TRANCHE = 0.30;   // ±30%, identique au seuil utilisé par le moteur de combat
 
+// Ancrage purement visuel : le moteur calcule luckLineaire à partir de 0 luck investie (aucun
+// stack, aucun gear), mais cette page affiche "10" comme point de départ commun à tout le monde,
+// par convention. N'AFFECTE QUE L'AFFICHAGE de la ligne Luck du comparateur ci-dessous -- le
+// calcul réel (crit, simulation de combat via critChanceBuild/resoudreCombatInterne) continue
+// d'utiliser la valeur brute du moteur, sans ce +10.
+var LUCK_AFFICHAGE_BASE = 10;
+
 // Comptes exclus des classements et du matchmaking réel — ne doivent pas
 // apparaître comme cibles proposées.
 var EXCLUS = ['mrshydiver', 'mikumosana', 'totomaton'];
@@ -605,12 +611,6 @@ function ligneStat(label, valeurToi, valeurCible, decimales) {
     '</tr>';
 }
 
-// IMPORTANT : viewer.combat / c.combat sont les objets "prep" retournés par preparerDepuisJoueur
-// (mêmes objets utilisés pour faire tourner la simulation de combat plus haut) -- stats déjà
-// passées par calculerStatsEffectives, donc bonus % d'équipement inclus. Ne PAS revenir à
-// viewer.stats/c.stats (stats brutes du snapshot players.json) : c'est cette confusion qui causait
-// l'écart entre le profil (stats.html, effectives) et ce panneau (ex. PV 420 affiché ici pour un
-// profil à 624 PV réels).
 function panneauComparaison(viewer, c) {
     var eq = c.equipement || {};
     if (!viewer.combat || !c.combat) {
@@ -638,7 +638,7 @@ function panneauComparaison(viewer, c) {
                 ligneStat('DEF', vs.stats.def || 0, cs.stats.def || 0, 0) +
                 ligneStat('PV', vs.stats.pv || 0, cs.stats.pv || 0, 0) +
                 ligneStat('Vitesse', vs.stats.spd || 0, cs.stats.spd || 0, 1) +
-                ligneStat('Luck', vs.luck || 0, cs.luck || 0, 0) +
+                ligneStat('Luck', (vs.luck || 0) + LUCK_AFFICHAGE_BASE, (cs.luck || 0) + LUCK_AFFICHAGE_BASE, 0) +
                 ligneStat('Crit %', critChanceBuild(vs), critChanceBuild(cs), 1) +
                 ligneStat('Esquive %', vs.esquive || 0, cs.esquive || 0, 1) +
                 ligneStat('Blocage %', vsBlocage, csBlocage, 1) +
