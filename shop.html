@@ -205,7 +205,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 /* ===== BARRE FIXE ===== */
 .barre-fixe {
     position: fixed; bottom: 20px; z-index: 50;
-    left: 50%; width: calc(100% - 36px); max-width: 1044px; 
+    left: 50%; width: calc(100% - 36px); max-width: 1080px; 
     background: rgba(15, 15, 18, 0.95);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--yellow); border-radius: 12px;
@@ -594,7 +594,6 @@ function carteProduit(cfg) {
         ? '<button type="button" data-act="max" class="btn-max" title="Tout sélectionner" ' + (cfg.quantite >= cfg.quantiteMax ? 'disabled' : '') + '>MAX</button>' 
         : '';
 
-    // Correctif Troc : Retrait complet du bloc de prix pour ne pas allonger artificiellement la carte
     var blocPrix = cfg.mode === 'troc'
         ? ''
         : '<div class="card-prix-bloc"><div class="card-prix ' + modeClasse + '">' + iconeMedaille() + ' ' + signe + cfg.prix + '</div></div>';
@@ -707,7 +706,7 @@ function rendreVente() {
     majBarreFixe();
 }
 
-/* ===================== TROC RESTRUCTURÉ & CORRIGÉ ===================== */
+/* ===================== TROC ===================== */
 function rendreTroc() {
     var zone = document.getElementById('listeTroc');
     if (!joueurActif) {
@@ -730,12 +729,10 @@ function rendreTroc() {
         var pret = Math.floor(qteChoisie / TROC[rarete].cout);
         var reste = qteChoisie % TROC[rarete].cout;
 
-        // Correctif orthographique exact du pluriel (ex: "2 Normaux sélectionnés")
         var nomRaretePluriel = (rarete === 'normal' && qteChoisie > 1) 
             ? 'Normaux' 
             : LABEL_RARETE[rarete] + (qteChoisie > 1 ? 's' : '');
 
-        // Correctif du libellé de résultat (ex: "2 Objets Normaux prêts")
         var lblCiblePluriel = (cible === 'normal' && pret > 1) 
             ? 'Normaux' 
             : LABEL_RARETE[cible] + (pret > 1 ? 's' : '');
@@ -993,9 +990,7 @@ function basculer(nom) {
     ongletCourant = nom;
     ['Acheter', 'Vendre', 'Troc'].forEach(function (n) {
         var cle = n.toLowerCase();
-        document.getElementById('ongletAcheter').setAttribute('aria-selected', String(cle === 'acheter'));
-        document.getElementById('ongletVendre').setAttribute('aria-selected', String(cle === 'vendre'));
-        document.getElementById('ongletTroc').setAttribute('aria-selected', String(cle === 'troc'));
+        document.getElementById('onglet' + n).setAttribute('aria-selected', String(cle === nom));
         document.getElementById('panneau' + n).classList.toggle('cache', cle !== nom);
     });
     majBarreFixe();
