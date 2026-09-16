@@ -258,12 +258,9 @@ table.tableau-winrate tr.ligne-cliquable:hover td { background: rgba(242,194,48,
         </table>
     </div>
 
-    <div class="titre-section">CALIBRATION DU POWERLEVEL (ÉCART RÉEL VS RÉSULTAT RÉEL)</div>
+    <div class="titre-section">Taux de victoire en fonction du PowerLevel</div>
     <p style="color:var(--paper-dim); font-size:13px; margin-bottom:16px; max-width:75ch;">
-        Pour chaque tranche d'écart de PowerLevel entre attaquant et défenseur, le taux de victoire de l'attaquant —
-        <b style="color:#f2c230">Réel</b> vient de tes vrais duels, <b style="color:#4a9fd8">Simulation</b> du simulateur
-        Monte Carlo (uniquement des paires ±30%, voir <code>!simuler</code>). Si le seuil ±30% (zone grisée) correspond
-        vraiment à un combat équitable, la courbe Réel devrait y rester proche de 50%.
+        La courbe décrit le pourcentage de chance de gagner un duel en fonction de l'écart de Powerlevel. Cette courbe décrit une moyenne, dans un contexte de builds "équilibrés" (un archétype qui en counter totalement un autre aura forcément un expected winrate plus élevé). La courbe doit tendre à 50% à Powerlevel équivalent. Idéalement, un combat devrait avoir 70% de winrate contre un adversaire 30% plus faible, et 30% de winrate contre un adversaire 30% plus puissant.
     </p>
     <div class="boite-graphique" style="height:320px; margin-bottom:30px; position:relative;">
         <canvas id="chartCalibration"></canvas>
