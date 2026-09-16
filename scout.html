@@ -80,16 +80,19 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .tranche-section.dessous .cible-ecart { color: var(--dessous); }
 
 /* ===== Estimation de victoire (simulation) ===== */
-.simu { text-align: center; flex: 0 0 auto; min-width: 84px; }
+/* Volontairement qualitative (voir libelleTauxVictoire dans le JS) : le pourcentage réel n'est
+   jamais affiché, seulement un palier textuel, pour ne pas transformer le choix de cible en
+   calcul d'optimisation. */
+.simu { text-align: center; flex: 0 0 auto; min-width: 96px; }
 .simu .label {
     font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
     letter-spacing: .8px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
 }
-.simu .val { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 800; }
+.simu .val { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: .01em; }
 .simu.favorable .val { color: var(--equitable); }
 .simu.neutre .val { color: var(--paper); }
 .simu.defavorable .val { color: var(--negatif); }
-.simu .detail { font-size: 10px; color: var(--paper-dim); margin-top: 1px; }
+.simu.attenue .val { opacity: .72; }
 
 .issues { display: flex; gap: 16px; flex: 0 0 auto; }
 .issue { text-align: center; min-width: 56px; }
@@ -150,7 +153,7 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 @media (max-width: 640px) {
     .cible { padding: 11px 13px; }
-    .simu { order: 2; min-width: 70px; }
+    .simu { order: 2; min-width: 78px; }
     .issues { width: 100%; justify-content: space-between; order: 3; }
     .cible-action { width: 100%; order: 4; }
     .cible-action button { width: 100%; }
@@ -503,6 +506,16 @@ function estimerTauxVictoire(viewerPrep, ciblePrep) {
     };
 }
 
+// Crit% "de build" affiché dans le panneau Comparer : même formule que le combat réel (base +
+// luck via tanh + bonus de l'arme équipée), mais SANS soustraire la résistance crit de
+// l'adversaire -- volontairement, pour rester une stat de build (comme Esquive/Blocage/Parade
+// juste en dessous) plutôt qu'un chiffre déjà "matché" contre cet adversaire précis. Stance de
+// départ (0) prise comme référence, une arme à stances pouvant changer en cours de combat.
+function critChanceBuild(combat) {
+    const armeVue = vueArmeSelonStance(combat.arme, 0);
+    return Math.max(0, CST.BASE_CRIT + CST.LUCK_CRIT_MAX * Math.tanh(combat.luck / CST.K_LUCK) + (armeVue ? (armeVue.critBonus || 0) : 0));
+}
+
 // Reprend le même schéma que calculateur.html : objet catalogue + niveau réellement possédé,
 // AppliquerAmelioration (via nivelerEquipement) fait le reste.
 function gearPourSimulation(joueur, catalogue, numero) {
@@ -592,9 +605,24 @@ function ligneStat(label, valeurToi, valeurCible, decimales) {
     '</tr>';
 }
 
+// IMPORTANT : viewer.combat / c.combat sont les objets "prep" retournés par preparerDepuisJoueur
+// (mêmes objets utilisés pour faire tourner la simulation de combat plus haut) -- stats déjà
+// passées par calculerStatsEffectives, donc bonus % d'équipement inclus. Ne PAS revenir à
+// viewer.stats/c.stats (stats brutes du snapshot players.json) : c'est cette confusion qui causait
+// l'écart entre le profil (stats.html, effectives) et ce panneau (ex. PV 420 affiché ici pour un
+// profil à 624 PV réels).
 function panneauComparaison(viewer, c) {
     var eq = c.equipement || {};
-    var eqMoi = viewer.equipement || {};
+    if (!viewer.combat || !c.combat) {
+        return '<div class="cible-compare-panel">' +
+            '<div class="compare-equip-vide" style="grid-column: 1 / -1;">Comparaison indisponible pour ce profil.</div>' +
+        '</div>';
+    }
+    var vs = viewer.combat, cs = c.combat;
+    var vsParade = (vs.torso?.paradeChance || 0) + (vs.offhand?.paradeChance || 0);
+    var csParade = (cs.torso?.paradeChance || 0) + (cs.offhand?.paradeChance || 0);
+    var vsBlocage = vs.offhand?.blocage || 0;
+    var csBlocage = cs.offhand?.blocage || 0;
     return '<div class="cible-compare-panel">' +
         '<div>' +
             '<div class="compare-equip-titre">Équipement de ' + echapper(c.nom) + '</div>' +
@@ -606,31 +634,43 @@ function panneauComparaison(viewer, c) {
             '<div class="compare-stats-titre">Toi vs ' + echapper(c.nom) + '</div>' +
             '<table class="compare-stats-table"><tbody>' +
                 ligneStat('PowerLevel', viewer.power, c.power, 0) +
-                ligneStat('ATK', viewer.stats.atk, c.stats.atk, 0) +
-                ligneStat('DEF', viewer.stats.def, c.stats.def, 0) +
-                ligneStat('PV', viewer.stats.pvBase, c.stats.pvBase, 0) +
-                ligneStat('Vitesse', viewer.stats.spd, c.stats.spd, 1) +
-                ligneStat('Luck', viewer.stats.luck, c.stats.luck, 0) +
-                ligneStat('Crit %', viewer.stats.crit, c.stats.crit, 1) +
+                ligneStat('ATK', vs.stats.atk || 0, cs.stats.atk || 0, 0) +
+                ligneStat('DEF', vs.stats.def || 0, cs.stats.def || 0, 0) +
+                ligneStat('PV', vs.stats.pv || 0, cs.stats.pv || 0, 0) +
+                ligneStat('Vitesse', vs.stats.spd || 0, cs.stats.spd || 0, 1) +
+                ligneStat('Luck', vs.luck || 0, cs.luck || 0, 0) +
+                ligneStat('Crit %', critChanceBuild(vs), critChanceBuild(cs), 1) +
+                ligneStat('Esquive %', vs.esquive || 0, cs.esquive || 0, 1) +
+                ligneStat('Blocage %', vsBlocage, csBlocage, 1) +
+                ligneStat('Parade %', vsParade, csParade, 1) +
             '</tbody></table>' +
         '</div>' +
     '</div>';
 }
 
+// Tranches qualitatives de l'estimation de victoire -- volontairement floues : le but est de
+// donner un ressenti ("ça devrait bien se passer" / "ça va être chaud") plutôt qu'un chiffre
+// exact exploitable pour trier ses cibles par pur calcul. Cinq paliers, avec un palier "atténué"
+// de part et d'autre du centre pour ne pas tout compresser en trois blocs plats.
+// IMPORTANT : ne jamais réintroduire c.victoirePct/defaitePct/egalitePct dans le HTML rendu ici --
+// seul le label qualitatif doit apparaître à l'écran.
+function libelleTauxVictoire(pct) {
+    if (pct === null || pct === undefined) return { classe: 'neutre', label: '—' };
+    if (pct >= 75) return { classe: 'favorable',           label: 'Favori' };
+    if (pct >= 55) return { classe: 'favorable attenue',   label: 'Léger avantage' };
+    if (pct >= 45) return { classe: 'neutre',              label: 'Équilibré' };
+    if (pct >= 25) return { classe: 'defavorable attenue', label: 'Désavantagé' };
+    return { classe: 'defavorable', label: 'Outsider' };
+}
+
 function ligneCible(c) {
     var m = MEDAILLES[c.tranche];
     var signe = c.ecart >= 0 ? '+' : '';
-    var blocSimu;
-    if (c.victoirePct === null || c.victoirePct === undefined) {
-        blocSimu = '<div class="simu neutre"><div class="label">Victoire estimée</div><div class="val">—</div></div>';
-    } else {
-        var classeSimu = c.victoirePct >= 55 ? 'favorable' : (c.victoirePct <= 45 ? 'defavorable' : 'neutre');
-        blocSimu = '<div class="simu ' + classeSimu + '" title="Sur ' + N_SIMULATIONS + ' combats simulés avec l\'équipement réel des deux personnes">' +
-            '<div class="label">Victoire estimée</div>' +
-            '<div class="val">' + c.victoirePct + '%</div>' +
-            '<div class="detail">' + c.defaitePct + '% défaite' + (c.egalitePct >= 1 ? ' · ' + c.egalitePct + '% égalité' : '') + '</div>' +
-        '</div>';
-    }
+    var tier = libelleTauxVictoire(c.victoirePct);
+    var blocSimu = '<div class="simu ' + tier.classe + '" title="Estimation basée sur l\'équipement réel des deux côtés, simulée sur ' + N_SIMULATIONS + ' combats">' +
+        '<div class="label">Issue probable</div>' +
+        '<div class="val">' + tier.label + '</div>' +
+    '</div>';
     return '<div class="cible" data-cle="' + echapperAttr(c.cle) + '">' +
         avatarHtml(c.avatar, c.nom) +
         '<div class="cible-ident">' +
@@ -784,16 +824,24 @@ Promise.all([
         // duel réel plusieurs centaines de fois avec les objets effectivement équipés des deux
         // côtés -- contrairement à l'écart de PowerLevel, ça capture les contres directs
         // (anti-crit, bouclier qui se recharge...) propres à cette paire de personnes précise.
+        // Les objets "prep" (stats déjà passées par calculerStatsEffectives -- bonus % de gear
+        // inclus, pas seulement les stacks bruts) sont conservés sur chaque joueur (c.combat) pour
+        // alimenter le panneau "Comparer" : ça évite de dupliquer le calcul ET corrige l'ancien
+        // bug où ce panneau affichait les stats "brutes" du snapshot players.json (ex. PV avant
+        // bonus % d'équipement) au lieu des stats réellement en jeu.
         var viewerPrep = preparerDepuisJoueur(data[demande], catalogue);
+        viewer.combat = viewerPrep;
         tous.forEach(function (c) {
             if (c.cle === demande) return;
             try {
                 var ciblePrep = preparerDepuisJoueur(data[c.cle], catalogue);
+                c.combat = ciblePrep;
                 var resultat = estimerTauxVictoire(viewerPrep, ciblePrep);
                 c.victoirePct = resultat.victoirePct;
                 c.defaitePct = resultat.defaitePct;
                 c.egalitePct = resultat.egalitePct;
             } catch (e) {
+                c.combat = null;
                 c.victoirePct = null; c.defaitePct = null; c.egalitePct = null;
             }
         });
