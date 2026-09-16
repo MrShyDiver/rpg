@@ -42,7 +42,7 @@ const CST = {
     // meme "monnaie" que les degats infliges. Calibre contre des duels reels connus (6 a 10
     // donnent le meme classement correct ; 8 est le choix median).
     POIDS_DEFENSE: 8.0,
-    DIVISEUR: 4,
+    DIVISEUR: 5.0,
     // Même valeur approximative que le commentaire C# ("2 armes tir sur 7 au catalogue") —
     // à recalculer si le roster d'armes change significativement.
     PROPORTION_ARMES_TIR: 0.30,
