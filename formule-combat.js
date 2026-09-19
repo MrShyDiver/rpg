@@ -115,15 +115,15 @@ function appliquerAmelioration(original, niveau) {
     // à ajouter par niveau -- un objet à 2 passifs a statPrincipale (le 1er, comme avant) PLUS une
     // entrée dans passifsExtra (le 2e), chacun montant indépendamment de l'autre.
     if (c.statPrincipale) {
-        const incrementParNiveau = c.incrementPassif > 0 ? c.incrementPassif : 1.0;
+        
         const champ = CHAMP_STAT_PRINCIPALE[c.statPrincipale];
-        if (champ) c[champ] = (c[champ] || 0) + niveau * incrementParNiveau;
+        if (champ) c[champ] = (c[champ] || 0) + niveau * c.incrementPassif;
     }
     if (c.passifsExtra) {
         c.passifsExtra.forEach(passif => {
-            const incrementParNiveau = passif.incrementPassif > 0 ? passif.incrementPassif : 1.0;
+            // ⚠️ CORRECTIF : même repli buggé que ci-dessus -- supprimé.
             const champ = CHAMP_STAT_PRINCIPALE[passif.champ];
-            if (champ) c[champ] = (c[champ] || 0) + niveau * incrementParNiveau;
+            if (champ) c[champ] = (c[champ] || 0) + niveau * passif.incrementPassif;
         });
     }
 
