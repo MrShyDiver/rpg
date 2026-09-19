@@ -76,11 +76,21 @@ const CHAMP_STAT_PRINCIPALE = {
 
 function appliquerAmelioration(original, niveau) {
     if (!original || !niveau || niveau <= 0) return original;
+    // ⚠️ EXTENSION additive : statsExtra/passifsExtra (4e stat, 5e stat, 2e passif...) -- une copie
+    // superficielle (spread) suffit pour les champs scalaires, mais statsExtra est un TABLEAU
+    // partagé avec l'objet catalogue original : il faut le recopier explicitement (map) avant d'en
+    // muter les entrées plus bas, sous peine de corrompre l'objet catalogue partagé entre tous les
+    // joueurs (identique à la précaution prise côté C#).
     const c = { ...original };
+    if (original.statsExtra) c.statsExtra = original.statsExtra.map(sl => ({ ...sl }));
+    if (original.passifsExtra) c.passifsExtra = original.passifsExtra.map(p => ({ ...p }));
 
     if (c.stat) c.bonus = (c.bonus || 0) + niveau * (c.increment || 0);
     if (c.stat2) c.bonus2 = (c.bonus2 || 0) + niveau * (c.increment2 || 0);
     if (c.stat3) c.bonus3 = (c.bonus3 || 0) + niveau * (c.increment3 || 0);
+    // ⚠️ EXTENSION : les stats supplémentaires montent elles aussi, chacune à son propre rythme --
+    // un objet sans statsExtra (tous les objets existants) traverse cette boucle sans rien faire.
+    if (c.statsExtra) c.statsExtra.forEach(slot => { slot.bonus = (slot.bonus || 0) + niveau * (slot.increment || 0); });
 
     if (c.scaling1Stat && c.incrementBaseDegats) {
         c.baseDegatsMin = (c.baseDegatsMin || 0) + niveau * c.incrementBaseDegats;
@@ -100,10 +110,21 @@ function appliquerAmelioration(original, niveau) {
         }
     }
 
+    // Le passif historique (statPrincipale) ET chaque entrée de passifsExtra suivent maintenant le
+    // même principe : un nom de champ (PascalCase, traduit via CHAMP_STAT_PRINCIPALE) + un montant
+    // à ajouter par niveau -- un objet à 2 passifs a statPrincipale (le 1er, comme avant) PLUS une
+    // entrée dans passifsExtra (le 2e), chacun montant indépendamment de l'autre.
     if (c.statPrincipale) {
         const incrementParNiveau = c.incrementPassif > 0 ? c.incrementPassif : 1.0;
         const champ = CHAMP_STAT_PRINCIPALE[c.statPrincipale];
         if (champ) c[champ] = (c[champ] || 0) + niveau * incrementParNiveau;
+    }
+    if (c.passifsExtra) {
+        c.passifsExtra.forEach(passif => {
+            const incrementParNiveau = passif.incrementPassif > 0 ? passif.incrementPassif : 1.0;
+            const champ = CHAMP_STAT_PRINCIPALE[passif.champ];
+            if (champ) c[champ] = (c[champ] || 0) + niveau * incrementParNiveau;
+        });
     }
 
     return c;
@@ -129,6 +150,9 @@ function calculerStatsEffectives(stacks, equipement) {
         appliquerStatAuPersonnage(s, g.stat, g.bonus || 0);
         appliquerStatAuPersonnage(s, g.stat2, g.bonus2 || 0);
         appliquerStatAuPersonnage(s, g.stat3, g.bonus3 || 0);
+        // ⚠️ EXTENSION : 4e stat, 5e stat... -- statsExtra absent (tous les objets existants) ne
+        // change rien au résultat par rapport à l'ancien comportement.
+        if (g.statsExtra) g.statsExtra.forEach(slot => appliquerStatAuPersonnage(s, slot.nom, slot.bonus || 0));
     });
     return s;
 }
@@ -179,6 +203,9 @@ function appliquerBonusArmeStance(s, arme, stance, signe) {
         appliquerStatAuPersonnage(s, arme.stat, signe * (arme.bonus || 0));
         appliquerStatAuPersonnage(s, arme.stat2, signe * (arme.bonus2 || 0));
         appliquerStatAuPersonnage(s, arme.stat3, signe * (arme.bonus3 || 0));
+        // ⚠️ EXTENSION : symétrique au C# -- statsExtra sur arme en stance 0 uniquement (limitation
+        // connue : stance2StatsExtra pas encore géré, ni côté C# ni ici).
+        if (arme.statsExtra) arme.statsExtra.forEach(slot => appliquerStatAuPersonnage(s, slot.nom, signe * (slot.bonus || 0)));
     } else {
         appliquerStatAuPersonnage(s, arme.stance2Stat, signe * (arme.stance2Bonus || 0));
         appliquerStatAuPersonnage(s, arme.stance2Stat2, signe * (arme.stance2Bonus2 || 0));
