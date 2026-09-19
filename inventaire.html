@@ -317,6 +317,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // StatPrincipale reçoit la mise à l'échelle par niveau — les autres s'affichent à leur
     // valeur fixe. C'est ce qui permet d'avoir un passif totalement indépendant du système
     // d'amélioration par doublon.
+    // ⚠️ EXTENSION : cherche si "nomStat" est le champ ciblé par une entrée de passifsExtra (2e,
+    // 3e passif...), symétrique à statPrincipale/incrementPassif mais répétable.
+    function trouverIncrementPassifExtra(s, nomStat) {
+        if (!s.passifsExtra) return 0;
+        const entree = s.passifsExtra.find(p => p.champ === nomStat);
+        return entree ? entree.incrementPassif : 0;
+    }
+
     function construirePassifs(s, niveau, exclureChamp, exclusionsSupplementaires) {
         const passifs = [];
         const exclusions = new Set([exclureChamp, ...(exclusionsSupplementaires || [])]);
@@ -326,8 +334,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const base = s[champ];
             const estActif = typeof base === 'boolean' ? base : base > 0;
             if (!estActif) continue;
-            const scaleAvecNiveau = s.statPrincipale === nomStat;
-            const actuel = typeof base === 'boolean' ? base : (scaleAvecNiveau ? base + niveau * s.incrementPassif : base);
+            const incrementDepuisExtra = trouverIncrementPassifExtra(s, nomStat);
+            const scaleAvecNiveau = s.statPrincipale === nomStat || incrementDepuisExtra > 0;
+            const incrementEffectif = s.statPrincipale === nomStat ? s.incrementPassif : incrementDepuisExtra;
+            const actuel = typeof base === 'boolean' ? base : (scaleAvecNiveau ? base + niveau * incrementEffectif : base);
             passifs.push(GABARITS_PASSIF[nomStat](actuel, s));
         }
         return passifs;
@@ -362,7 +372,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     // Lignes de stat génériques niveau-ajustées, pour n'importe quel triplet stat/bonus/increment
     // — réutilisée pour la stance 1 (stat/bonus/increment) ET la stance 2 (stance2Stat/...).
-    function construireLignesStatGenerique(stat, bonus, increment, stat2, bonus2, increment2, stat3, bonus3, increment3, niveau) {
+    function construireLignesStatGenerique(stat, bonus, increment, stat2, bonus2, increment2, stat3, bonus3, increment3, niveau, statsExtra) {
         const lignes = [];
         if (stat) {
             const actuel = bonus + niveau * increment;
@@ -379,6 +389,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const formatteur3 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(stat3);
             lignes.push({ label: LABELS_STAT[stat3] || stat3, valeur: formatEvolution(bonus3, actuel3, formatteur3), colorer: true });
         }
+        // ⚠️ EXTENSION : 4e stat, 5e stat... -- statsExtra absent (tous les objets existants) ne
+        // change rien à l'affichage par rapport à l'ancien comportement.
+        (statsExtra || []).forEach(slot => {
+            const actuel = slot.bonus + niveau * slot.increment;
+            const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(slot.nom);
+            lignes.push({ label: LABELS_STAT[slot.nom] || slot.nom, valeur: formatEvolution(slot.bonus, actuel, formatteur), colorer: true });
+        });
         return lignes;
     }
 
@@ -391,7 +408,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const imageStance2 = iconeOuImage({ image: s.stance2ImageUrl || s.image, icone: s.icone }, 'carte-icon');
         const scaling1 = blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
         const scaling2 = blocScalingUnique(s.stance2Scaling1Stat, s.stance2Scaling1Lettre, s.stance2Scaling2Stat, s.stance2Scaling2Lettre, s.stance2BaseDegatsMin, s.stance2BaseDegatsMax, s.stance2IncrementBaseDegats, niveau);
-        const stats1 = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, niveau).map(rendreLigneStat).join('');
+        const stats1 = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, niveau, s.statsExtra).map(rendreLigneStat).join('');
         const stats2 = construireLignesStatGenerique(s.stance2Stat, s.stance2Bonus, s.stance2IncrementBonus, s.stance2Stat2, s.stance2Bonus2, s.stance2IncrementBonus2, s.stance2Stat3, s.stance2Bonus3, s.stance2IncrementBonus3, niveau).map(rendreLigneStat).join('');
 
         return `
@@ -495,6 +512,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const formatteur3 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat3);
             lignesStat.push({ label: label3, valeur: formatEvolution(s.bonus3, actuel3, formatteur3), colorer: true });
         }
+        // ⚠️ EXTENSION : 4e stat, 5e stat... -- statsExtra absent (tous les objets existants) ne
+        // change rien à l'affichage par rapport à l'ancien comportement.
+        (s.statsExtra || []).forEach(slot => {
+            const label = LABELS_STAT[slot.nom] || slot.nom;
+            const actuel = slot.bonus + niveau * slot.increment;
+            const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(slot.nom);
+            lignesStat.push({ label, valeur: formatEvolution(slot.bonus, actuel, formatteur), colorer: true });
+        });
 
         const passifTexte = construirePassifs(s, niveau, "Bonus").join(" ");
 
