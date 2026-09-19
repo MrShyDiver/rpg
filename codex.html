@@ -269,6 +269,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // (voir pilluleIncrement/formatNombre plus haut) : dégâts de base, stats de "Bonus", et passifs
     // spéciaux pilotés par StatPrincipale. Ce taux est purement informatif ici, jamais appliqué à
     // un niveau réellement possédé — pour ça, voir calculateur.html/inventaire.html.
+    // ⚠️ EXTENSION : cherche si "nomStat" est le champ ciblé par une entrée de passifsExtra (2e,
+    // 3e passif...), symétrique à statPrincipale/incrementPassif ci-dessus mais répétable.
+    function trouverIncrementPassifExtra(s, nomStat) {
+        if (!s.passifsExtra) return 0;
+        const entree = s.passifsExtra.find(p => p.champ === nomStat);
+        return entree ? entree.incrementPassif : 0;
+    }
+
     function construirePassifs(s, exclureChamp, exclusionsSupplementaires) {
         const passifs = [];
         const exclusions = new Set([exclureChamp, ...(exclusionsSupplementaires || [])]);
@@ -279,10 +287,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const estActif = typeof valeur === 'boolean' ? valeur : valeur > 0;
             if (!estActif) continue;
             const texte = GABARITS_PASSIF[nomStat](valeur, s);
-            // Ce passif est-il CELUI que fait progresser StatPrincipale sur cet objet ? Si oui,
-            // rend public son taux de progression par doublon (IncrementPassif / "incrementPassif"),
-            // dans sa propre pastille à droite plutôt que noyé dans la phrase.
-            const pilule = (s.statPrincipale === nomStat && s.incrementPassif > 0) ? pilluleIncrement(s.incrementPassif) : '';
+            // Ce passif est-il CELUI que fait progresser statPrincipale OU une entrée de
+            // passifsExtra sur cet objet ? Si oui, rend public son taux de progression par
+            // doublon dans sa propre pastille à droite plutôt que noyé dans la phrase.
+            const incrementPrincipal = (s.statPrincipale === nomStat && s.incrementPassif > 0) ? s.incrementPassif : 0;
+            const incrementExtra = trouverIncrementPassifExtra(s, nomStat);
+            const incrementTotal = incrementPrincipal || incrementExtra;
+            const pilule = incrementTotal > 0 ? pilluleIncrement(incrementTotal) : '';
             passifs.push(`<div class="passif-ligne"><span class="texte">${texte}</span>${pilule}</div>`);
         }
         return passifs;
@@ -350,7 +361,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             return { scalingHtml: null, lignesStat, passifTexte: passifs.join("") };
         }
 
-        const lignesStat = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3);
+        const lignesStat = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, s.statsExtra);
         const passifTexte = construirePassifs(s, "Bonus").join("");
         return { scalingHtml: construireScaling(s), lignesStat, passifTexte };
     }
@@ -369,7 +380,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     // incrementN : rendu public ici — le taux de progression par doublon de chaque stat de bonus
     // (Increment/Increment2/Increment3 côté moteur), affiché dans sa propre pastille à droite.
-    function construireLignesStatGenerique(stat, bonus, increment, stat2, bonus2, increment2, stat3, bonus3, increment3) {
+    function construireLignesStatGenerique(stat, bonus, increment, stat2, bonus2, increment2, stat3, bonus3, increment3, statsExtra) {
         const lignes = [];
         const ligne = (st, b, inc) => {
             if (!st) return;
@@ -379,6 +390,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ligne(stat, bonus, increment);
         ligne(stat2, bonus2, increment2);
         ligne(stat3, bonus3, increment3);
+        // ⚠️ EXTENSION : 4e stat, 5e stat... -- statsExtra absent (tous les objets existants) ne
+        // change rien à l'affichage par rapport à l'ancien comportement.
+        (statsExtra || []).forEach(slot => ligne(slot.nom, slot.bonus, slot.increment));
         return lignes;
     }
 
@@ -391,7 +405,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const imageStance2 = iconeOuImage({ image: item.stance2ImageUrl || item.image, icone: item.icone }, 'carte-icon');
         const scaling1 = blocScalingUnique(item.scaling1Stat, item.scaling1Lettre, item.scaling2Stat, item.scaling2Lettre, item.baseDegatsMin, item.baseDegatsMax, item.incrementBaseDegats);
         const scaling2 = blocScalingUnique(item.stance2Scaling1Stat, item.stance2Scaling1Lettre, item.stance2Scaling2Stat, item.stance2Scaling2Lettre, item.stance2BaseDegatsMin, item.stance2BaseDegatsMax, item.stance2IncrementBaseDegats);
-        const stats1 = construireLignesStatGenerique(item.stat, item.bonus, item.increment, item.stat2, item.bonus2, item.increment2, item.stat3, item.bonus3, item.increment3).map(rendreLigneStat).join('');
+        const stats1 = construireLignesStatGenerique(item.stat, item.bonus, item.increment, item.stat2, item.bonus2, item.increment2, item.stat3, item.bonus3, item.increment3, item.statsExtra).map(rendreLigneStat).join('');
         const stats2 = construireLignesStatGenerique(item.stance2Stat, item.stance2Bonus, item.stance2IncrementBonus, item.stance2Stat2, item.stance2Bonus2, item.stance2IncrementBonus2, item.stance2Stat3, item.stance2Bonus3, item.stance2IncrementBonus3).map(rendreLigneStat).join('');
 
         return `
