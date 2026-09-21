@@ -72,6 +72,14 @@ const CHAMP_STAT_PRINCIPALE = {
     BrulureDegats: 'brulureDegats', AntiHealPourcentage: 'antiHealPourcentage', ShieldMontant: 'shieldMontant',
     RageBonusMax: 'rageBonusMax', MarqueDegatsPourcentage: 'marqueDegatsPourcentage', ParadeChance: 'paradeChance',
     TenaciteChance: 'tenaciteChance', FrenesieBonusSpd: 'frenesieBonusSpd',
+    // EXTENSION "PANOPLIE SEKIRO" -- mêmes principe, nouveaux champs (miroir des cas ajoutés à
+    // AppliquerPassifSurGearInfo côté C#).
+    RechargeSacrificePourcentage: 'rechargeSacrificePourcentage', ReductionPvMaxPourcentage: 'reductionPvMaxPourcentage',
+    AutoDegatsPourcentageDesDegats: 'autoDegatsPourcentageDesDegats', AmplificationSoinsPourcentage: 'amplificationSoinsPourcentage',
+    EsquiveParadeBuffPourcentage: 'esquiveParadeBuffPourcentage', BriseDefPoints: 'briseDefPoints',
+    DernierSouffleFractionPv: 'dernierSouffleFractionPv', BruleeReflectionDegats: 'bruleeReflectionDegats',
+    AmplificationDegatsFeuPourcentage: 'amplificationDegatsFeuPourcentage', SaignementChanceParCoup: 'saignementChanceParCoup',
+    ParalysieChance: 'paralysieChance', RiposteEtourdissementTousLesCoups: 'riposteEtourdissementTousLesCoups',
 };
 
 function appliquerAmelioration(original, niveau) {
@@ -84,6 +92,9 @@ function appliquerAmelioration(original, niveau) {
     const c = { ...original };
     if (original.statsExtra) c.statsExtra = original.statsExtra.map(sl => ({ ...sl }));
     if (original.passifsExtra) c.passifsExtra = original.passifsExtra.map(p => ({ ...p }));
+    // EXTENSION "PANOPLIE SEKIRO" : modesTir (Arc de Genichiro) -- même précaution, même si rien
+    // ne monte en niveau dedans (pas d'incrément par mode) : évite de partager la référence.
+    if (original.modesTir) c.modesTir = original.modesTir.map(m => ({ ...m }));
 
     if (c.stat) c.bonus = (c.bonus || 0) + niveau * (c.increment || 0);
     if (c.stat2) c.bonus2 = (c.bonus2 || 0) + niveau * (c.increment2 || 0);
@@ -115,7 +126,7 @@ function appliquerAmelioration(original, niveau) {
     // à ajouter par niveau -- un objet à 2 passifs a statPrincipale (le 1er, comme avant) PLUS une
     // entrée dans passifsExtra (le 2e), chacun montant indépendamment de l'autre.
     if (c.statPrincipale) {
-        
+
         const champ = CHAMP_STAT_PRINCIPALE[c.statPrincipale];
         if (champ) c[champ] = (c[champ] || 0) + niveau * c.incrementPassif;
     }
@@ -316,6 +327,9 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
     let poisonDmg = 0, saignementDmg = 0, bonusPlatDivers = 0;
     let critBonusTotal = 0, precisionTotal = 0, penetrationTotal = 0;
     let etourdissementTotal = 0, reductionTirTotal = 0;
+    // EXTENSION "PANOPLIE SEKIRO" : burn porté par l'équipement (weapon/offhand/torso), en plus
+    // du burn de stratagème déjà compté plus bas. Miroir de la même addition côté C#.
+    let brulureDmgGear = 0;
 
     const gearAvecSoin = [];
     [arme, offhand, torso].forEach(g => {
@@ -345,6 +359,29 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
         bonusPlatDivers += (g.frenesieBonusSpd || 0) * (g.frenesieDuree || 0) * 0.3;
         bonusPlatDivers += (g.resistancePoison || 0) * 0.2;
         bonusPlatDivers += (g.resistanceFeu || 0) * 0.2;
+        if ((g.brulureDegats || 0) > 0 && (g.brulureDuree || 0) > 0) {
+            const amp = 1.0 + ((torso && torso.amplificationDegatsFeuPourcentage) || 0) / 100.0;
+            brulureDmgGear += (g.brulureDegats || 0) * (g.brulureDuree || 0) * amp;
+        }
+        // Contributions heuristiques des nouveaux passifs "Panoplie Sekiro" -- même esprit que
+        // les lignes ci-dessus (approximations plates, pas une resimulation du mécanisme réel qui
+        // vit dans ResoudreCombatInterne côté C#, jamais porté en JS -- voir l'en-tête du fichier).
+        bonusPlatDivers += ((g.rechargeSacrificePourcentage || 0) > 0 && (g.rechargeTousLesCoups || 0) > 0) ? (30.0 / g.rechargeTousLesCoups) : 0;
+        bonusPlatDivers += (g.reductionPvMaxPourcentage || 0) * 4.0;
+        bonusPlatDivers += (g.amplificationSoinsPourcentage || 0) * 0.5;
+        bonusPlatDivers += (g.esquiveParadeBuffPourcentage || 0) * (g.esquiveParadeBuffDuree || 0) * 0.4;
+        bonusPlatDivers += (g.briseDefPoints || 0) * Math.min(g.briseDefDuree || 0, 6) * 0.6;
+        bonusPlatDivers += (g.dernierSouffleFractionPv || 0) * 100.0;
+        bonusPlatDivers += (g.bruleeReflectionDegats || 0) * (g.bruleeReflectionDuree || 0) * 0.5;
+        bonusPlatDivers += (g.saignementChanceParCoup || 0) * 0.3;
+        bonusPlatDivers += (g.paralysieChance || 0) * Math.max(1, g.paralysieDuree || 0) * 0.5;
+        bonusPlatDivers += (g.riposteEtourdissementTousLesCoups || 0) > 0 ? (40.0 / g.riposteEtourdissementTousLesCoups) : 0;
+        if (g.modesTir && g.modesTir.length > 0) {
+            let moyMulti = 0;
+            g.modesTir.forEach(m => { moyMulti += m.multiplicateurDegats || 0; });
+            moyMulti /= g.modesTir.length;
+            bonusPlatDivers += (moyMulti - 1.0) * 30.0;
+        }
     });
 
     const hitChance = (100.0 - Math.max(0, CST.BASE_ESQUIVE - precisionTotal)) / 100.0;
@@ -383,6 +420,7 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
     const facteurPoisonSoutenu = Math.min(80.0, 1.0 + coupsQuiTouchent * coupsQuiTouchent * 0.03);
     totalDmg += poisonDmg * facteurPoisonSoutenu;
     totalDmg += saignementDmg * 3.0 * Math.min(3.0, survieTours / 3.0);
+    totalDmg += brulureDmgGear;
 
     if (strat) {
         let stratDegats = (strat.degatsDirects || 0) * usagesEffectifsStrategeme(strat, survieTours) * Math.max(1, strat.coupsParUsage || 1);
