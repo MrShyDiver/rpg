@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Duel</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700;900&family=Bangers&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body {
+    margin: 0; overflow: hidden; font-family: 'Chakra Petch', sans-serif;
+    display: flex; justify-content: center; align-items: center; height: 100vh;
+    background: transparent; text-transform: uppercase; color: #d1d1d1;
+}
+
+.arena {
+    width: 900px; padding: 46px 40px 22px;
+    background-color: rgba(10, 14, 20, 0.97);
+    border: 2px solid #333;
+    box-shadow: 0 0 25px rgba(0, 170, 255, 0.2);
+    position: relative; overflow: hidden;
+}
+.arena.shake { animation: shake 0.4s; }
+@keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-8px, 4px); }
+    40% { transform: translate(8px, -4px); }
+    60% { transform: translate(-6px, -2px); }
+    80% { transform: translate(6px, 2px); }
+}
+
+.arena.shake-light { animation: shakeLight 0.3s; }
+@keyframes shakeLight {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-3px, 2px); }
+    50% { transform: translate(3px, -1px); }
+    75% { transform: translate(-2px, 1px); }
+}
+
+/* Effet de bordure lumineuse continue une fois la corde (fatigue) déclenchée,
+   façon "onde" qui tourne en permanence tout autour du cadre. */
+.arena.rope-active {
+    border-color: #ff6a00;
+}
+
+.rope-frame-wrap {
+    position: absolute; inset: 0; overflow: hidden; border-radius: inherit;
+    pointer-events: none; opacity: 0; transition: opacity 0.5s ease; z-index: 1;
+}
+.arena.rope-active .rope-frame-wrap { opacity: 1; }
+
+.rope-frame-wrap::before {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    width: 260%; height: 260%; margin-left: -130%; margin-top: -130%;
+    background: conic-gradient(from 0deg,
+        #fff3c4, #ffc84a, #ff8c1a, #ff4400, #7a1500, #ff4400, #ff8c1a, #ffc84a, #fff3c4);
+    filter: blur(10px) saturate(1.3);
+    animation: ropeRotation 4s linear infinite;
+}
+
+/* Masque : ne laisse dépasser le dégradé que sur une fine bande en bordure */
+.rope-frame-mask {
+    position: absolute; inset: 9px; background: rgba(10, 14, 20, 0.97); border-radius: inherit;
+}
+
+@keyframes ropeRotation {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Effet de vague : légère pulsation d'intensité par-dessus la rotation, pour un rendu moins mécanique */
+.rope-frame-wrap { animation: ropeWave 2.2s ease-in-out infinite; }
+@keyframes ropeWave {
+    0%, 100% { filter: brightness(0.85); }
+    50% { filter: brightness(1.25); }
+}
+
+.fatigue-banner {
+    position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    font-size: 15px; font-weight: 900; letter-spacing: 2px; color: #ff6a00;
+    text-shadow: 0 0 10px rgba(255, 106, 0, 0.8);
+    opacity: 0; transition: opacity 0.5s ease; z-index: 30; pointer-events: none;
+    white-space: nowrap;
+}
+.fatigue-banner.show { opacity: 1; animation: fatiguePulse 1.2s ease-in-out infinite alternate; }
+@keyframes fatiguePulse {
+    0% { text-shadow: 0 0 8px rgba(255,106,0,0.6); }
+    100% { text-shadow: 0 0 18px rgba(255,60,0,1); }
+}
+
+.fighters { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; position: relative; z-index: 2; }
+
+.fighter { width: 340px; text-align: center; position: relative; }
+
+.matchup-status {
+    font-size: 12px; font-weight: 900; letter-spacing: 2px; margin-bottom: 10px;
+    padding: 3px 10px; border-radius: 4px; display: inline-block;
+}
+.matchup-status.equitable { color: #aaa; background: rgba(170,170,170,0.1); border: 1px solid rgba(170,170,170,0.4); }
+.matchup-status.underdog { color: #00ffaa; background: rgba(0,255,170,0.1); border: 1px solid rgba(0,255,170,0.4); }
+.matchup-status.topdog { color: #ff6a00; background: rgba(255,106,0,0.1); border: 1px solid rgba(255,106,0,0.4); }
+.matchup-status.gain { color: #00ffaa; background: rgba(0,255,170,0.15); border: 1px solid rgba(0,255,170,0.6); font-size: 18px; text-shadow: 0 0 10px rgba(0,255,170,0.6); }
+.matchup-status.perte { color: #ff5555; background: rgba(255,85,85,0.15); border: 1px solid rgba(255,85,85,0.6); font-size: 18px; text-shadow: 0 0 10px rgba(255,85,85,0.6); }
+.matchup-status.egalite { color: #9aa5b1; background: rgba(154,165,177,0.15); border: 1px solid rgba(154,165,177,0.6); font-size: 18px; text-shadow: 0 0 10px rgba(154,165,177,0.6); }
+.medaille-icon { width: 18px; height: 18px; object-fit: contain; vertical-align: middle; }
+
+.name-row { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin-bottom: 8px; }
+.name { font-size: 17px; font-weight: 900; color: #fff; }
+.record { font-size: 12px; color: #888; letter-spacing: 1px; }
+.record .v { color: #00ffaa; font-weight: 700; }
+.record .d { color: #ff5555; font-weight: 700; }
+
+.avatar {
+    width: 90px; height: 90px; border-radius: 50%; object-fit: cover;
+    transition: transform 0.15s ease;
+}
+
+/* Contour dans son propre calque, transparent au centre, toujours au-dessus des fissures/quartiers */
+.avatar-frame {
+    position: absolute; top: 0; left: 0; width: 90px; height: 90px;
+    border-radius: 50%; pointer-events: none; z-index: 20; box-sizing: border-box;
+    border: 3px solid #00aaff; box-shadow: 0 0 15px rgba(0, 170, 255, 0.5);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.fighter.right .avatar-frame { border-color: #ff6a00; box-shadow: 0 0 15px rgba(255, 106, 0, 0.5); }
+.avatar-frame.hit-flash { transform: scale(0.9); border-color: #ff3333 !important; box-shadow: 0 0 25px rgba(255, 51, 51, 0.9) !important; }
+.avatar-frame.winner-glow { border-color: #FFE800 !important; box-shadow: 0 0 30px rgba(255, 232, 0, 0.9) !important; }
+.avatar-frame.egalite-glow { border-color: #9aa5b1 !important; box-shadow: 0 0 22px rgba(154, 165, 177, 0.8) !important; }
+.avatar-frame.loser-fade {
+    transition: border-color 0.7s ease, box-shadow 0.7s ease, opacity 0.7s ease;
+    border-color: #2a2a2a !important; box-shadow: none !important; opacity: 0.5;
+}
+/* Anneau doré pulsant tant que le Shield est actif — persiste jusqu'à ce qu'il retombe à 0 */
+.avatar-frame.shield-actif {
+    border-color: #ffcf40 !important; box-shadow: 0 0 18px rgba(255, 207, 64, 0.8) !important;
+    animation: pulseBouclier 1.6s ease-in-out infinite;
+}
+@keyframes pulseBouclier {
+    0%, 100% { box-shadow: 0 0 14px rgba(255, 207, 64, 0.6); }
+    50% { box-shadow: 0 0 26px rgba(255, 207, 64, 1); }
+}
+
+.avatar.hit-flash { transform: scale(0.9); }
+
+/* Fissures qui se révèlent progressivement à mesure que les PV chutent, jusqu'à un portrait
+   entièrement craquelé à 0 PV. Découpées en cercle pour rester dans les limites du portrait. */
+.avatar-cracks {
+    position: absolute; top: 0; left: 0; width: 90px; height: 90px;
+    border-radius: 50%; pointer-events: none; z-index: 12;
+}
+.avatar-cracks path {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    fill: none; stroke: #050505; stroke-width: 2.4;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.avatar-quartier {
+    position: absolute; top: 0; left: 0; width: 90px; height: 90px;
+    background-size: cover; background-repeat: no-repeat; background-position: center;
+    z-index: 11; pointer-events: none;
+    transition: transform 0.5s ease;
+}
+.quartiers-mask {
+    position: absolute; top: 0; left: 0; width: 90px; height: 90px;
+    border-radius: 50%; overflow: hidden; z-index: 11; pointer-events: none;
+}
+
+/* Explosion en éclats du perdant à la révélation finale */
+.avatar-shard {
+    position: absolute; z-index: 30; pointer-events: none;
+    background-repeat: no-repeat;
+    filter: grayscale(1) brightness(0.75);
+    animation: shardFly 1s cubic-bezier(0.15, 0.7, 0.35, 1) forwards;
+}
+@keyframes shardFly {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.4); opacity: 0; }
+}
+.avatar-shard.shard-reste {
+    animation: shardCasse 0.5s cubic-bezier(0.25, 0.6, 0.4, 1) forwards;
+    filter: brightness(0.8) contrast(1.1);
+}
+@keyframes shardCasse {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0.75; }
+}
+.death-flash {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle, #fff, rgba(255,255,255,0.4) 50%, transparent 75%);
+    z-index: 29; opacity: 0; pointer-events: none;
+    animation: deathFlashAnim 0.35s ease-out forwards;
+}
+@keyframes deathFlashAnim {
+    0% { opacity: 0; transform: scale(0.6); }
+    30% { opacity: 1; transform: scale(1.3); }
+    100% { opacity: 0; transform: scale(1.6); }
+}
+
+.ko-tampon {
+    position: absolute; top: 50%; left: 50%; z-index: 32;
+    font-family: 'Chakra Petch', sans-serif; font-weight: 900; font-size: 26px; letter-spacing: 1px;
+    color: #ff2222; -webkit-text-stroke: 1.5px #3a0000;
+    border: 4px solid #ff2222; border-radius: 6px; padding: 2px 10px;
+    text-shadow: 1px 1px 0 #000;
+    transform: translate(-50%, -50%) rotate(-18deg) scale(2.5);
+    opacity: 0; pointer-events: none;
+    animation: koSlam 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.3) forwards;
+}
+@keyframes koSlam {
+    0%   { opacity: 0; transform: translate(-50%, -50%) rotate(-18deg) scale(2.5); }
+    60%  { opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(0.85); }
+    100% { opacity: 1; transform: translate(-50%, -50%) rotate(-16deg) scale(1); }
+}
+
+/* ==========================================================
+   LOADOUT — 4 emplacements distincts encadrant le portrait,
+   façon inventaire Diablo. Chaque case affiche l'icône de
+   l'objet équipé, ou reste vide (pointillés) si rien n'est équipé.
+   ========================================================== */
+
+.avatar-row { display: flex; align-items: center; justify-content: center; gap: 22px; margin-bottom: 10px; }
+.avatar-wrap { position: relative; width: 90px; height: 90px; margin: 0; flex-shrink: 0; }
+
+.slot-grid {
+    display: grid; grid-template-columns: repeat(2, 52px); grid-template-rows: repeat(2, 52px);
+    gap: 10px; padding: 12px;
+    border: 1px solid #3a3a3a; border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.slot {
+    width: 52px; height: 52px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #444;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+    position: relative;
+}
+.slot.filled { border-color: #7fa8c9; background: rgba(20, 35, 50, 0.7); }
+.slot img { width: 42px; height: 42px; object-fit: contain; }
+.slot .empty-mark { color: #555; font-size: 24px; font-weight: 900; }
+
+/* Case barrée : slot indisponible (ex: off-hand avec une arme à 2 mains équipée) */
+.slot.barred { background: rgba(60, 15, 15, 0.35); border-color: #5a2a2a; }
+.slot.barred::after {
+    content: ''; position: absolute; width: 140%; height: 2px;
+    background: #aa4444; top: 50%; left: -20%; transform: rotate(45deg);
+}
+
+/* Halo bref sur l'arme au moment où elle frappe */
+.slot.glow { animation: slotGlow 0.5s ease-out; }
+@keyframes slotGlow {
+    0% { box-shadow: 0 0 0 rgba(255,255,255,0); border-color: #444; }
+    30% { box-shadow: 0 0 16px 4px rgba(255,255,255,0.9); border-color: #fff; }
+    100% { box-shadow: inset 0 0 6px rgba(0,0,0,0.8); border-color: #7fa8c9; }
+}
+
+/* Stratagème épuisé : grisé une fois tous ses usages consommés */
+.slot.epuise { filter: grayscale(1); opacity: 0.35; }
+
+/* Voile de recharge façon jeu vidéo : sombre au moment de l'usage, se retire progressivement
+   au fil des tours (balayage conique), avec le nombre de tours restants au centre. */
+.cooldown-overlay {
+    position: absolute; inset: 0; border-radius: 3px;
+    background: conic-gradient(transparent calc(var(--pct, 0) * 1%), rgba(0, 0, 0, 0.82) 0);
+    pointer-events: none; z-index: 2; transition: background 0.3s linear;
+}
+.cooldown-number {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 900; font-size: 15px; font-family: 'Chakra Petch', sans-serif;
+    text-shadow: 0 1px 3px #000, 0 0 5px #000; pointer-events: none; z-index: 3;
+}
+
+.hp-bar-outer { width: 100%; height: 18px; background: rgba(0,0,0,0.6); border: 1px solid #444; overflow: hidden; position: relative; }
+.hp-bar-inner { height: 100%; background: linear-gradient(90deg, #00ffaa, #00aaff); width: 100%; transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.fighter.right .hp-bar-inner { background: linear-gradient(90deg, #ff6a00, #ff3333); }
+/* Shield : overbar jaune par-dessus la barre de vie, proportionnelle à pv_max comme les PV eux-mêmes */
+.shield-bar {
+    position: absolute; top: 0; left: 0; height: 100%; width: 0%;
+    background: repeating-linear-gradient(135deg, #ffe14a, #ffe14a 6px, #f2c230 6px, #f2c230 12px);
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+    border-right: 2px solid #fff8d6;
+    transition: width 0.5s ease;
+    z-index: 1;
+}
+.shield-montant { color: #ffe14a; font-weight: 900; margin-left: 6px; }
+.hp-text { font-size: 12px; color: #aaa; margin-top: 5px; }
+
+/* ==========================================================
+   BARRE DE STATUTS — un badge par effet actif (poison, exécution,
+   résistance au crit, renvoi de dégâts, régénération, précision...).
+   Générique : n'importe quel nouvel effet peut réutiliser ce système.
+   ========================================================== */
+.status-bar { display: flex; justify-content: center; gap: 6px; margin-top: 8px; min-height: 26px; flex-wrap: wrap; }
+.badge-statut {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,0.5); border: 1px solid #444; border-radius: 5px;
+    padding: 3px 7px; font-size: 12px; font-weight: 700; color: #ddd;
+    animation: badgePop 0.25s ease-out;
+}
+.badge-statut img { width: 15px; height: 15px; object-fit: contain; }
+.badge-statut .valeur { font-family: 'Chakra Petch', sans-serif; }
+.badge-statut.poison { border-color: #6ad14a; color: #9dffb0; }
+.badge-statut.brulure { border-color: #ff7a1f; color: #ffb17a; }
+.badge-statut.execution { border-color: #ff3333; color: #ff8888; }
+.badge-statut.resistance_crit { border-color: #b98cff; color: #d4b8ff; }
+.badge-statut.reflection { border-color: #ff8c1a; color: #ffbb77; }
+.badge-statut.regeneration { border-color: #00ffaa; color: #7dffcf; }
+.badge-statut.precision { border-color: #4ac8ff; color: #a0e3ff; }
+.badge-statut.saignement { border-color: #c92c2c; color: #ff9d9d; }
+.badge-statut.anti_heal { border-color: #8a8a8a; color: #ccc; }
+.badge-statut.rage { border-color: #ff4400; color: #ffaa77; }
+.badge-statut.marque { border-color: #ff2266; color: #ff88aa; }
+.badge-statut.tenacite { border-color: #66ccff; color: #b3e5ff; }
+.badge-statut.frenesie { border-color: #33ffcc; color: #99ffe6; }
+
+.fx-dernier-souffle {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+    font-family: 'Chakra Petch', sans-serif; font-weight: 900; font-size: 16px; letter-spacing: 1px;
+    color: #fff8d6; -webkit-text-stroke: 1px #7a6a00; text-shadow: 0 0 14px rgba(255,232,150,0.9), 1px 1px 0 #000;
+    white-space: nowrap; z-index: 31; opacity: 0; pointer-events: none;
+    animation: dernierSouffleAnim 1.8s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+@keyframes dernierSouffleAnim {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+    15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    30%  { transform: translate(-50%, -50%) scale(1); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1) translateY(-10px); }
+}
+@keyframes badgePop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+
+.vs {
+    font-size: 26px; font-weight: 900; color: #ff3333; text-shadow: 0 0 15px rgba(255,51,51,0.6);
+    flex-shrink: 0; margin-top: 180px;
+    transform: translateY(-110px); /* position de départ : 70px de marge (180 - 110) */
+    transition: transform 0.4s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+.vs.descendu { transform: translateY(0); }
+
+/* Popup de dégâts façon "fontaine" : jaillit, retombe avec la gravité, police impact dédiée */
+.damage-popup {
+    position: absolute; top: 10%; left: 50%;
+    font-family: 'Bangers', 'Chakra Petch', sans-serif;
+    font-size: 34px; letter-spacing: 1px; color: #ff4444; opacity: 0;
+    -webkit-text-stroke: 2px #2a0000;
+    text-shadow: 0 0 10px rgba(255,68,68,0.7), 2px 2px 0 #000;
+    z-index: 25; pointer-events: none; white-space: nowrap;
+    display: flex; align-items: center; gap: 4px;
+    animation: fontaine 1s linear forwards;
+}
+.damage-popup img.popup-weapon-icon {
+    width: 24px; height: 24px; object-fit: contain;
+    filter: drop-shadow(0 0 3px rgba(0,0,0,0.9));
+}
+.damage-popup .popup-emoji-icon {
+    font-size: 22px; filter: drop-shadow(0 0 3px rgba(0,0,0,0.9));
+}
+.damage-popup.crit {
+    color: #FFE800; font-size: 40px; -webkit-text-stroke: 2.5px #4a2f00;
+    text-shadow: 0 0 18px rgba(255,232,0,0.9), 2px 2px 0 #000;
+    animation: fontaineCrit 1.1s linear forwards;
+}
+.damage-popup.miss {
+    color: #ccc; font-size: 24px; -webkit-text-stroke: 1.5px #333;
+    text-shadow: 1px 1px 0 #000; font-style: italic;
+}
+.damage-popup.parade {
+    color: #dfe8ff; font-size: 27px; -webkit-text-stroke: 2px #2a3a5c;
+    text-shadow: 0 0 12px rgba(150,180,255,0.9), 2px 2px 0 #000;
+}
+.damage-popup.fatigue {
+    color: #ff8c1a; font-size: 30px; -webkit-text-stroke: 2px #4a2400;
+    text-shadow: 0 0 12px rgba(255, 140, 26, 0.8), 2px 2px 0 #000;
+}
+.damage-popup.poison {
+    color: #8cff5a; font-size: 26px; -webkit-text-stroke: 1.5px #1a4a00;
+    text-shadow: 0 0 10px rgba(140, 255, 90, 0.8), 2px 2px 0 #000;
+}
+.damage-popup.brulure {
+    color: #ff8a3d; font-size: 26px; -webkit-text-stroke: 1.5px #6b1f00;
+    text-shadow: 0 0 10px rgba(255, 138, 61, 0.85), 2px 2px 0 #000;
+}
+.damage-popup.lifesteal {
+    color: #3ee87a; font-size: 24px; -webkit-text-stroke: 1.5px #054a20;
+    text-shadow: 0 0 10px rgba(62, 232, 122, 0.8), 2px 2px 0 #000;
+}
+.damage-popup.paralysie {
+    color: #d9b3ff; font-size: 26px; -webkit-text-stroke: 1.5px #3a1a5c;
+    text-shadow: 0 0 12px rgba(217, 179, 255, 0.9), 2px 2px 0 #000;
+    font-style: italic;
+}
+.damage-popup.shield-gain {
+    color: #ffcf40; font-size: 28px; -webkit-text-stroke: 1.5px #6b4a00;
+    text-shadow: 0 0 12px rgba(255, 207, 64, 0.8), 2px 2px 0 #000;
+}
+
+/* Étourdissement façon cartoon : étoiles qui tournent au-dessus de la tête + texte "STUN" */
+.fx-stun {
+    position: absolute; top: -14px; left: 50%; width: 0; height: 0;
+    z-index: 26; pointer-events: none;
+    animation: stunOrbite 0.9s linear infinite;
+}
+.fx-stun .etoile {
+    position: absolute; top: -8px; left: -8px; font-size: 15px; color: #ffd93d;
+    text-shadow: 0 0 3px #000, 0 1px 1px #000;
+}
+@keyframes stunOrbite {
+    from { transform: translateX(-50%) rotate(0deg); }
+    to   { transform: translateX(-50%) rotate(360deg); }
+}
+.fx-stun-texte {
+    position: absolute; top: -38px; left: 50%; transform: translateX(-50%) scale(0.5);
+    font-family: 'Chakra Petch', sans-serif; font-weight: 900; font-size: 24px; letter-spacing: 1px;
+    color: #ffd93d; -webkit-text-stroke: 1.5px #4a3a00; text-shadow: 1px 1px 0 #000;
+    z-index: 27; opacity: 0; pointer-events: none;
+    animation: stunTextePop 0.9s cubic-bezier(0.3, 1.6, 0.4, 1) forwards;
+}
+@keyframes stunTextePop {
+    0%   { opacity: 0; transform: translateX(-50%) scale(0.4); }
+    70%  { opacity: 1; transform: translateX(-50%) scale(1.15); }
+    100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.damage-popup.heal {
+    color: #00ff66; -webkit-text-stroke: 2px #003d16;
+    text-shadow: 0 0 14px rgba(0, 255, 102, 0.9), 2px 2px 0 #000;
+}
+
+.heal-particle {
+    position: absolute; width: 5px; height: 5px; border-radius: 50%;
+    background: radial-gradient(circle, #d4ffdf, #00ff66 60%, transparent);
+    box-shadow: 0 0 5px rgba(0, 255, 102, 0.8);
+    left: 50%; bottom: 6%; opacity: 0; pointer-events: none; z-index: 22;
+    animation: healRise 1.1s ease-out forwards;
+}
+@keyframes healRise {
+    0%   { transform: translate(-50%, 0) translateX(0) scale(0.5); opacity: 0; }
+    15%  { opacity: 1; }
+    100% { transform: translate(-50%, -90px) translateX(var(--dx, 10px)) scale(1); opacity: 0; }
+}
+
+/* Anneau lumineux au sol du portrait */
+.heal-ring {
+    position: absolute; left: 50%; bottom: 2%; width: 74px; height: 22px;
+    transform: translateX(-50%) scale(0.4); pointer-events: none; z-index: 21;
+    border: 2px solid #00ff66; border-radius: 50%;
+    box-shadow: 0 0 14px rgba(0, 255, 102, 0.85), inset 0 0 12px rgba(0, 255, 102, 0.5);
+    opacity: 0;
+    animation: healRingPulse 1.3s ease-out forwards;
+}
+@keyframes healRingPulse {
+    0%   { transform: translateX(-50%) scale(0.35); opacity: 0; }
+    22%  { opacity: 1; }
+    100% { transform: translateX(-50%) scale(1.35); opacity: 0; }
+}
+
+/* Faisceaux verticaux qui montent */
+.heal-beam {
+    position: absolute; bottom: 4%; width: 5px; height: 92px;
+    background: linear-gradient(to top, rgba(0, 255, 102, 0.95), rgba(0, 255, 102, 0.25) 45%, transparent 85%);
+    filter: blur(1px); pointer-events: none; z-index: 21;
+    opacity: 0; transform-origin: bottom center;
+    animation: healBeamRise 1.1s ease-out forwards;
+}
+@keyframes healBeamRise {
+    0%   { opacity: 0; transform: scaleY(0.25); }
+    25%  { opacity: 0.9; }
+    100% { opacity: 0; transform: scaleY(1.15); }
+}
+
+/* Petites croix lumineuses qui montent, comme un soin de RPG */
+.heal-cross {
+    position: absolute; bottom: 10%; left: 50%; width: 13px; height: 13px;
+    opacity: 0; pointer-events: none; z-index: 23;
+    animation: healCrossRise 1.5s ease-out forwards;
+}
+.heal-cross::before, .heal-cross::after {
+    content: ''; position: absolute; background: #9dffc4; border-radius: 1px;
+    box-shadow: 0 0 6px #00ff66, 0 0 12px rgba(0, 255, 102, 0.8);
+}
+.heal-cross::before { width: 100%; height: 32%; top: 34%; left: 0; }
+.heal-cross::after  { width: 32%; height: 100%; left: 34%; top: 0; }
+@keyframes healCrossRise {
+    0%   { opacity: 0; transform: translate(-50%, 0) scale(0.4) rotate(var(--rot, 0deg)); }
+    18%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -95px) scale(1) rotate(var(--rot, 0deg)); }
+}
+
+/* Trajectoire en arc : jaillit vers le haut, ralentit, puis retombe comme une fontaine */
+@keyframes fontaine {
+    0%   { opacity: 0; transform: translate(-50%, -15px) scale(0.6) rotate(var(--tilt, 0deg)); }
+    8%   { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), -13px) scale(1.1) rotate(var(--tilt, 0deg)); }
+    30%  { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), -3px) scale(1.03) rotate(var(--tilt, 0deg)); }
+    55%  { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), 15px) scale(0.98) rotate(var(--tilt, 0deg)); }
+    80%  { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), 38px) scale(0.92) rotate(var(--tilt, 0deg)); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--drift, 0px)), 62px) scale(0.85) rotate(var(--tilt, 0deg)); }
+}
+@keyframes fontaineCrit {
+    0%   { opacity: 0; transform: translate(-50%, -18px) scale(0.5) rotate(var(--tilt, 0deg)); }
+    8%   { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), -15px) scale(1.35) rotate(var(--tilt, 0deg)); }
+    30%  { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), -4px) scale(1.15) rotate(var(--tilt, 0deg)); }
+    55%  { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), 17px) scale(1.06) rotate(var(--tilt, 0deg)); }
+    80%  { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), 42px) scale(0.98) rotate(var(--tilt, 0deg)); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--drift, 0px)), 68px) scale(0.9) rotate(var(--tilt, 0deg)); }
+}
+@keyframes fontaineMiss {
+    0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+    20%  { opacity: 1; transform: translate(calc(-50% + var(--drift, 0px)), -20px) scale(1); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--drift, 0px)), -10px) scale(0.95); }
+}
+.damage-popup.miss { animation: fontaineMiss 1s ease-out forwards; }
+
+/* --- Animations d'armes --- */
+.fx-slash {
+    position: absolute; top: 50%; left: 50%; width: 130px; height: 8px;
+    background: linear-gradient(90deg, transparent, #fff, transparent);
+    transform: translate(-50%, -50%) rotate(-35deg) scaleX(0);
+    box-shadow: 0 0 12px #fff; z-index: 15; opacity: 0;
+    animation: slashAnim 0.35s ease-out forwards;
+}
+.fx-slash.energy { background: linear-gradient(90deg, transparent, #b100ff, transparent); box-shadow: 0 0 16px #b100ff; }
+@keyframes slashAnim {
+    0% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(0); opacity: 0; }
+    30% { opacity: 1; }
+    60% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 0; }
+}
+
+/* Balle en vol : positionnée dans .arena (position: relative), voyage en ligne droite mais avec
+   un point de départ/arrivée légèrement aléatoire à chaque tir, pour une salve qui varie. */
+.fx-balle {
+    position: absolute; width: 7px; height: 3px; background: #fff2a8; border-radius: 2px;
+    box-shadow: 0 0 7px 2px rgba(255, 210, 110, 0.85); z-index: 25; pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: balleVol 0.2s linear forwards;
+}
+@keyframes balleVol {
+    from { transform: translate(-50%, -50%) translate(0, 0); opacity: 1; }
+    to   { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)); opacity: 1; }
+}
+/* Impact de balle : positionné DANS le wrap de la cible (comme fx-slash/fx-smash), donc relatif
+   à elle et non à l'arène entière. */
+.fx-impact-balle {
+    position: absolute; top: 50%; left: 50%; width: 16px; height: 16px;
+    background: radial-gradient(circle, rgba(255,225,140,0.95) 0%, rgba(255,140,40,0.7) 45%, transparent 72%);
+    border-radius: 50%; z-index: 26; pointer-events: none;
+    animation: impactBalleAnim 0.3s ease-out forwards;
+}
+.fx-impact-balle.crit {
+    width: 26px; height: 26px;
+    background: radial-gradient(circle, rgba(255,255,180,1) 0%, rgba(255,232,0,0.85) 40%, transparent 75%);
+    animation: impactBalleAnim 0.4s ease-out forwards;
+}
+@keyframes impactBalleAnim {
+    0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; }
+}
+
+/* Nuage de poison : une bouffée centrale + quelques petites bouffées décalées, pour un effet
+   plus organique qu'une simple explosion ronde. Teinte verte toxique. */
+.fx-poison-nuage {
+    position: absolute; top: 50%; left: 50%; width: 26px; height: 26px;
+    background: radial-gradient(circle, rgba(150,255,90,0.9) 0%, rgba(90,190,60,0.65) 45%, transparent 75%);
+    border-radius: 50%; transform: translate(-50%, -50%); z-index: 20; pointer-events: none;
+    filter: blur(1px);
+    animation: poisonNuageAnim 0.9s ease-out forwards;
+}
+.fx-poison-nuage.petit { width: 16px; height: 16px; }
+@keyframes poisonNuageAnim {
+    0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0.9; }
+    35%  { opacity: 0.85; }
+    100% { transform: translate(-50%, -50%) scale(3.4); opacity: 0; }
+}
+
+/* Brûlure : effet LÉGER pour chaque tick (contrairement au nuage de poison, plus discret et plus
+   rapide) — un simple flicker orangé sur l'avatar touché, pas de nuage qui grossit. */
+.fx-brulure-tick {
+    position: absolute; top: 50%; left: 50%; width: 34px; height: 34px;
+    background: radial-gradient(circle, rgba(255,140,20,0.85) 0%, rgba(255,60,0,0.5) 50%, transparent 75%);
+    border-radius: 50%; transform: translate(-50%, -50%); z-index: 20; pointer-events: none;
+    filter: blur(1.5px);
+    animation: brulureTickAnim 0.5s ease-out forwards;
+}
+@keyframes brulureTickAnim {
+    0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 0.9; }
+    50%  { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+}
+
+.fx-smash {
+    position: absolute; top: 50%; left: 50%; width: 20px; height: 20px;
+    border: 4px solid #ffcc00; border-radius: 50%; transform: translate(-50%, -50%);
+    z-index: 15; opacity: 0; animation: smashAnim 0.5s ease-out forwards;
+}
+@keyframes smashAnim {
+    0% { width: 10px; height: 10px; opacity: 1; border-width: 8px; }
+    100% { width: 140px; height: 140px; opacity: 0; border-width: 1px; }
+}
+
+/* Charge à chaque échange : tout le cercle du frappeur (photo + contour + fissures) se jette
+   vers sa cible, puis revient — le loadout, le nom et la barre de vie restent immobiles. */
+.avatar-wrap.charge-aller {
+    transition: transform 0.15s cubic-bezier(0.55, 0, 0.85, 0.35);
+}
+.avatar-wrap.charge-retour {
+    transition: transform 0.22s cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+
+.fx-punch-impact {
+    position: absolute; top: 50%; left: 50%; width: 60px; height: 60px;
+    transform: translate(-50%, -50%) scale(0.3); border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,220,150,0.5) 45%, transparent 72%);
+    z-index: 18; opacity: 0; pointer-events: none;
+    animation: punchImpact 0.35s ease-out forwards;
+}
+@keyframes punchImpact {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.25); }
+    30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+
+.fx-explosion {
+    position: absolute; top: 50%; left: 50%; width: 20px; height: 20px;
+    background: radial-gradient(circle, #fff, #ff9900, transparent);
+    border-radius: 50%; transform: translate(-50%, -50%);
+    z-index: 16; opacity: 0; animation: explosionAnim 0.6s ease-out forwards;
+}
+@keyframes explosionAnim {
+    0% { width: 10px; height: 10px; opacity: 1; }
+    50% { opacity: 1; }
+    100% { width: 220px; height: 220px; opacity: 0; }
+}
+
+</style>
+</head>
+<body>
+<div class="arena" id="arena">
+    <div class="rope-frame-wrap"><div class="rope-frame-mask"></div></div>
+    <div class="fatigue-banner" id="fatigueBanner">🔥 FATIGUE — LE COMBAT S'ÉTERNISE 🔥</div>
+    <div class="fighters" id="fightersRow">
+        <div class="fighter left" id="fighterA">
+            <div class="matchup-status" id="statusA">COMBAT ÉQUITABLE</div>
+            <div class="avatar-row">
+                <div class="slot-grid left">
+                    <div class="slot" id="slotWeaponA"></div>
+                    <div class="slot" id="slotTorsoA"></div>
+                    <div class="slot" id="slotOffhandA"></div>
+                    <div class="slot" id="slotStrategemeA"></div>
+                </div>
+                <div class="avatar-wrap" id="avatarWrapA">
+                    <img class="avatar" id="avatarA" src="" alt="">
+                    <svg class="avatar-cracks" id="cracksA" viewBox="0 0 90 90"></svg>
+                    <div class="avatar-frame" id="frameA"></div>
+                </div>
+            </div>
+            <div class="name-row">
+                <span class="name" id="nameA">ATTAQUANT</span>
+                <span class="record" id="recordA"><span class="v">0V</span> / <span class="d">0D</span></span>
+            </div>
+            <div class="hp-bar-outer"><div class="hp-bar-inner" id="hpBarA" style="width:100%;"></div><div class="shield-bar" id="shieldBarA"></div></div>
+            <div class="hp-text"><span id="hpTextA">100</span> / <span id="hpMaxA">100</span> PV<span class="shield-montant" id="shieldTextA"></span></div>
+            <div class="status-bar" id="statusBarA"></div>
+        </div>
+
+        <div class="vs">VS</div>
+
+        <div class="fighter right" id="fighterB">
+            <div class="matchup-status" id="statusB">COMBAT ÉQUITABLE</div>
+            <div class="avatar-row">
+                <div class="avatar-wrap" id="avatarWrapB">
+                    <img class="avatar" id="avatarB" src="" alt="">
+                    <svg class="avatar-cracks" id="cracksB" viewBox="0 0 90 90"></svg>
+                    <div class="avatar-frame" id="frameB"></div>
+                </div>
+                <div class="slot-grid right">
+                    <div class="slot" id="slotWeaponB"></div>
+                    <div class="slot" id="slotTorsoB"></div>
+                    <div class="slot" id="slotOffhandB"></div>
+                    <div class="slot" id="slotStrategemeB"></div>
+                </div>
+            </div>
+            <div class="name-row">
+                <span class="name" id="nameB">DEFENSEUR</span>
+                <span class="record" id="recordB"><span class="v">0V</span> / <span class="d">0D</span></span>
+            </div>
+            <div class="hp-bar-outer"><div class="hp-bar-inner" id="hpBarB" style="width:100%;"></div><div class="shield-bar" id="shieldBarB"></div></div>
+            <div class="hp-text"><span id="hpTextB">100</span> / <span id="hpMaxB">100</span> PV<span class="shield-montant" id="shieldTextB"></span></div>
+            <div class="status-bar" id="statusBarB"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ⚠️ CORRECTIF (URL trop longue sur les combats longs) : les données du duel n'arrivent plus
+     encodées dans l'URL du browser source — duel.cs les écrit maintenant dans ce petit fichier
+     JS local, déposé dans le MÊME dossier que cette page. L'URL envoyée par Streamer.bot à OBS
+     redevient minuscule et de longueur FIXE (juste un jeton pour forcer le rechargement), quelle
+     que soit la durée du combat. Si ce fichier n'existe pas encore (avant le tout premier duel),
+     le chargement échoue silencieusement (juste une 404 dans la console) et la page retombe sur
+     les données de test ci-dessous — rien de grave. -->
+<script src="duel_data.js"></script>
+<script type="module">
+    const params = new URLSearchParams(window.location.search);
+    const rawData = params.get('data');
+    const replayId = params.get('replay');
+
+    // Variables de test
+    let data = {
+        attaquant: "TEST_ATTAQUANT", defenseur: "TEST_DEFENSEUR",
+        avatar_attaquant: "https://static-cdn.jtvnw.net/user-default-pictures-uv/default-avatar_1-70x70.png",
+        avatar_defenseur: "https://static-cdn.jtvnw.net/user-default-pictures-uv/default-avatar_1-70x70.png",
+        pv_max_attaquant: 130, pv_max_defenseur: 110,
+        gear_attaquant: ["🚀", "🤖"], gear_defenseur: ["🗡️", "🔷", "🦺"],
+        arme_attaquant_icon: "🚀", arme_attaquant_anim: "missile", arme_attaquant_image: "",
+        offhand_attaquant_icon: "", offhand_attaquant_image: "",
+        torso_attaquant_icon: "🤖", torso_attaquant_couleur: "#FFE800", torso_attaquant_image: "",
+        arme_defenseur_icon: "🗡️", arme_defenseur_anim: "slash", arme_defenseur_image: "",
+        offhand_defenseur_icon: "🔷", offhand_defenseur_image: "",
+        torso_defenseur_icon: "🦺", torso_defenseur_couleur: "#aaaaaa", torso_defenseur_image: "",
+        vainqueur: "TEST_ATTAQUANT", mise: 250, consommable_utilise: "",
+        statut_attaquant: "Outsider", statut_defenseur: "Favori",
+        victoires_attaquant: 4, defaites_attaquant: 2, victoires_defenseur: 9, defaites_defenseur: 1,
+        points_attaquant: 1500, points_defenseur: -500, round_debut_fatigue: 4,
+        medailles_attaquant: 20, medailles_defenseur: 2,
+        rounds: [
+            { round: 1, frappeur: "TEST_ATTAQUANT", cible: "TEST_DEFENSEUR", touche: true, crit: false, degats: 24, pv_attaquant_apres: 130, pv_defenseur_apres: 86 },
+            { round: 2, frappeur: "TEST_DEFENSEUR", cible: "TEST_ATTAQUANT", touche: true, crit: false, degats: 12, pv_attaquant_apres: 118, pv_defenseur_apres: 86 },
+            { round: 3, frappeur: "TEST_ATTAQUANT", cible: "TEST_DEFENSEUR", touche: true, crit: true, degats: 44, pv_attaquant_apres: 118, pv_defenseur_apres: 42 },
+            { round: 4, frappeur: "TEST_DEFENSEUR", cible: "TEST_ATTAQUANT", touche: false, crit: false, degats: 0, pv_attaquant_apres: 118, pv_defenseur_apres: 42 },
+            { round: 5, frappeur: "TEST_ATTAQUANT", cible: "TEST_DEFENSEUR", touche: true, crit: false, degats: 42, pv_attaquant_apres: 118, pv_defenseur_apres: 0 }
+        ]
+    };
+
+    if (replayId) {
+        // Mode replay : revoir un duel de l'historique. Les détails de chaque duel sont publiés
+        // par snapshot-vers-github.cs sous duels/<id>.json (même dossier que cette page).
+        try {
+            const reponse = await fetch('duels/' + encodeURIComponent(replayId) + '.json');
+            data = await reponse.json();
+        } catch (e) { console.error("Erreur de chargement du replay", e); }
+    } else if (rawData) {
+        // Mode test manuel : ouvrir le fichier avec ?data=... dans l'URL pour prévisualiser un
+        // duel précis sans passer par Streamer.bot.
+        try { data = JSON.parse(decodeURIComponent(rawData)); }
+        catch (e) { console.error("Erreur de décodage JSON", e); }
+    } else if (typeof window.dernierDuel !== 'undefined') {
+        // Mode production : les vraies données, déposées par duel.cs dans duel_data.js et
+        // chargées juste au-dessus via <script src="duel_data.js">.
+        data = window.dernierDuel;
+    }
+
+    document.getElementById('nameA').innerText = data.attaquant;
+    document.getElementById('nameB').innerText = data.defenseur;
+    document.getElementById('avatarA').src = data.avatar_attaquant;
+    document.getElementById('avatarB').src = data.avatar_defenseur;
+    document.getElementById('hpMaxA').innerText = data.pv_max_attaquant;
+    document.getElementById('hpMaxB').innerText = data.pv_max_defenseur;
+    document.getElementById('hpTextA').innerText = data.pv_max_attaquant;
+    document.getElementById('hpTextB').innerText = data.pv_max_defenseur;
+
+    // Statut de combat (équitable / underdog / topdog)
+    function appliquerStatut(elId, texte) {
+        const el = document.getElementById(elId);
+        el.innerText = texte;
+        const classe = texte === 'Outsider' ? 'underdog' : (texte === 'Favori' ? 'topdog' : 'equitable');
+        el.className = 'matchup-status ' + classe;
+    }
+    appliquerStatut('statusA', data.statut_attaquant || 'Combat équitable');
+    appliquerStatut('statusB', data.statut_defenseur || 'Combat équitable');
+
+    // Palmarès victoires/défaites
+    document.getElementById('recordA').innerHTML = `<span class="v">${data.victoires_attaquant || 0}V</span> / <span class="d">${data.defaites_attaquant || 0}D</span>`;
+    document.getElementById('recordB').innerHTML = `<span class="v">${data.victoires_defenseur || 0}V</span> / <span class="d">${data.defaites_defenseur || 0}D</span>`;
+
+    // Remplit une case de loadout : icône si équipé, croix si vide, barré si indisponible (arme 2 mains).
+    function appliquerCase(slotId, image, barre) {
+        const el = document.getElementById(slotId);
+        el.classList.remove('filled', 'barred');
+        if (barre) {
+            el.innerHTML = '';
+            el.classList.add('barred');
+        } else if (image) {
+            el.innerHTML = `<img src="${image}" alt="">`;
+            el.classList.add('filled');
+        } else {
+            el.innerHTML = '<span class="empty-mark">✕</span>';
+        }
+    }
+
+    // Chemin de l'image du poing — affichée dans la case Arme quand rien n'est équipé (combat à mains nues)
+    const IMAGE_POING = 'gear/poing.png';
+
+    // ==========================================================
+    // BARRE DE STATUTS — configure ici l'icône de chaque effet. Laisse "image": ""
+    // pour garder le symbole par défaut, ou mets un chemin (ex: "images/poison.png")
+    // pour le remplacer par ton propre visuel. Pour ajouter un futur effet, il suffit
+    // d'ajouter une entrée ici + un appel à definirBadge() au bon endroit plus bas.
+    // ==========================================================
+    const ICONES_STATUT = {
+        poison:          { defaut: '☠️', image: '' },
+        brulure:         { defaut: '🔥', image: '' },
+        execution:       { defaut: '💀', image: '' },
+        resistance_crit: { defaut: '🧿', image: '' },
+        reflection:      { defaut: '🌵', image: '' },
+        regeneration:    { defaut: '➕', image: '' },
+        precision:       { defaut: '🎯', image: '' },
+        saignement:      { defaut: '🩸', image: '' },
+        anti_heal:       { defaut: '🚫', image: '' },
+        rage:            { defaut: '🔥', image: '' },
+        marque:          { defaut: '🔻', image: '' },
+        brise_def:       { defaut: '💢', image: '' },
+        parade:          { defaut: '🤺', image: '' },
+        tenacite:        { defaut: '🧠', image: '' },
+        dernier_souffle: { defaut: '🕊️', image: '' },
+        frenesie:        { defaut: '💨', image: '' },
+        protection:      { defaut: '🛡️', image: '' },
+    };
+
+    // Crée, met à jour, ou retire (si valeur vide/nulle/0) le badge d'un effet donné
+    // sur le combattant "A" ou "B". Générique — sert à tous les effets de statut.
+    function definirBadge(suffixe, cle, valeurTexte) {
+        const bar = document.getElementById('statusBar' + suffixe);
+        if (!bar) return;
+        let badge = bar.querySelector('.badge-' + cle);
+        if (!valeurTexte) {
+            if (badge) badge.remove();
+            return;
+        }
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'badge-statut ' + cle + ' badge-' + cle;
+            bar.appendChild(badge);
+        }
+        const config = ICONES_STATUT[cle] || {};
+        const contenuIcone = config.image ? `<img src="${config.image}" alt="">` : (config.defaut || '');
+        badge.innerHTML = `${contenuIcone}<span class="valeur">${valeurTexte}</span>`;
+    }
+
+    // Protection : état valable pour TOUT le duel (décidé une fois au début côté C#), pas
+    // round par round comme les autres effets — toujours sur le défenseur, seul concerné.
+    definirBadge('B', 'protection', data.protection_active ? '-20%' : 0);
+
+    // Met à jour l'overbar jaune de Shield + le montant affiché à droite des PV.
+    // pvMax sert de référence d'échelle, comme pour la barre de vie elle-même.
+    function majShield(suffixe, montantShield, pvMax) {
+        const barre = document.getElementById('shieldBar' + suffixe);
+        const texte = document.getElementById('shieldText' + suffixe);
+        const cadre = document.getElementById('frame' + suffixe);
+        if (!montantShield || montantShield <= 0) {
+            barre.style.width = '0%';
+            texte.textContent = '';
+            if (cadre) cadre.classList.remove('shield-actif');
+            return;
+        }
+        barre.style.width = Math.min(100, (montantShield / pvMax) * 100).toFixed(1) + '%';
+        texte.textContent = ' (+' + montantShield + ')';
+        if (cadre) cadre.classList.add('shield-actif');
+    }
+
+    // Popup de gain de bouclier (icône du Stratagème + "+XX"), affiché sur le PORTEUR lui-même —
+    // à l'inverse d'un popup de dégâts, ce n'est jamais une attaque sur l'adversaire.
+    function afficherGainBouclier(wrapPorteur, montant, icone) {
+        showDamage(wrapPorteur, '+' + montant, 'shield-gain', icone);
+    }
+
+    function appliquerEquipement(suffixe, armeImage, offhandImage, torsoImage, strategemeImage, deuxMains, torsoCouleur, avatarEl) {
+        appliquerCase('slotWeapon' + suffixe, armeImage || IMAGE_POING, false);
+        appliquerCase('slotOffhand' + suffixe, offhandImage, !!deuxMains);
+        appliquerCase('slotTorso' + suffixe, torsoImage, false);
+        appliquerCase('slotStrategeme' + suffixe, strategemeImage, false);
+
+        // Liseré coloré selon le tier d'armure (le costume complet n'est plus superposé sur le portrait, uniquement dans le loadout)
+        if (torsoCouleur) {
+            avatarEl.style.borderColor = torsoCouleur;
+            avatarEl.style.boxShadow = `0 0 15px ${torsoCouleur}`;
+        }
+    }
+
+    appliquerEquipement('A', data.arme_attaquant_image, data.offhand_attaquant_image, data.torso_attaquant_image, data.strategeme_attaquant_image, data.arme_attaquant_deuxmains, data.torso_attaquant_couleur, document.getElementById('frameA'));
+    appliquerEquipement('B', data.arme_defenseur_image, data.offhand_defenseur_image, data.torso_defenseur_image, data.strategeme_defenseur_image, data.arme_defenseur_deuxmains, data.torso_defenseur_couleur, document.getElementById('frameB'));
+
+    const arena = document.getElementById('arena');
+
+    // Badges statiques (précision, renvoi, résistance au crit, régénération) : dérivés de
+    // l'équipement, valables pour toute la durée du combat — posés une fois au chargement.
+    function initBadgesStatiques(suffixe, precision, reflection, resistanceCrit, regen, tenacite) {
+        definirBadge(suffixe, 'precision', precision > 0 ? '+' + precision : 0);
+        definirBadge(suffixe, 'reflection', reflection > 0 ? reflection + '%' : 0);
+        definirBadge(suffixe, 'resistance_crit', resistanceCrit > 0 ? '-' + resistanceCrit : 0);
+        definirBadge(suffixe, 'regeneration', regen > 0 ? '+' + regen + '%' : 0);
+        definirBadge(suffixe, 'tenacite', tenacite > 0 ? tenacite + '%' : 0);
+    }
+    initBadgesStatiques('A', data.attaquant_precision, data.attaquant_reflection, data.attaquant_resistance_crit, data.attaquant_regeneration, data.attaquant_tenacite);
+    initBadgesStatiques('B', data.defenseur_precision, data.defenseur_reflection, data.defenseur_resistance_crit, data.defenseur_regeneration, data.defenseur_tenacite);
+    majShield('A', data.attaquant_shield_max, data.pv_max_attaquant);
+    majShield('B', data.defenseur_shield_max, data.pv_max_defenseur);
+    const avatarA = document.getElementById('avatarA');
+    const avatarB = document.getElementById('avatarB');
+    const wrapA = document.getElementById('avatarWrapA');
+    const wrapB = document.getElementById('avatarWrapB');
+    const hpBarA = document.getElementById('hpBarA');
+    const hpBarB = document.getElementById('hpBarB');
+    const hpTextA = document.getElementById('hpTextA');
+    const hpTextB = document.getElementById('hpTextB');
+
+    function showDamage(wrap, texte, classe, icone) {
+        const popup = document.createElement('div');
+        popup.className = 'damage-popup' + (classe ? ' ' + classe : '');
+        if (icone && classe !== 'miss') {
+            // Accepte soit un chemin d'image ("gear/xxx.png"), soit un simple emoji ("🐍") —
+            // pratique pour donner une icône aux dégâts indirects (poison, fatigue...) sans
+            // avoir besoin d'un fichier image dédié.
+            const estImage = icone.includes('/') || icone.includes('.');
+            popup.innerHTML = estImage
+                ? `<img class="popup-weapon-icon" src="${icone}" alt="">`
+                : `<span class="popup-emoji-icon">${icone}</span>`;
+        }
+        popup.appendChild(document.createTextNode(texte));
+        // Jet net à gauche OU à droite (jamais un léger tremblement proche du centre), mais
+        // resserré pour ne plus déborder sur les cases d'objets ou la zone centrale — l'essentiel
+        // de la lisibilité vient maintenant de la CHUTE verticale (effet fontaine), pas de l'écart
+        // horizontal, qui n'a plus besoin d'être aussi large.
+        // Le côté n'est plus tiré au hasard : les dégâts subis partent vers le CENTRE (côté de
+        // l'adversaire), les soins partent vers l'EXTÉRIEUR (à l'opposé) — pour A (à gauche de
+        // l'écran) le centre est à droite, pour B (à droite) le centre est à gauche. Seule
+        // l'amplitude du jet reste aléatoire, pas sa direction.
+        const estGain = (classe === 'heal' || classe === 'lifesteal');
+        const estWrapA = (wrap === wrapA);
+        const cote = estGain
+            ? (estWrapA ? -1 : 1)   // soin : vers l'extérieur (gauche pour A, droite pour B)
+            : (estWrapA ? 1 : -1);  // dégâts subis : vers le centre (droite pour A, gauche pour B)
+        const drift = (cote * (24 + Math.random() * 40)).toFixed(0) + 'px'; // 24 à 64px, direction fixe par côté/type
+        const tilt = (cote * (3 + Math.random() * 5)).toFixed(1) + 'deg';
+        const voffset = (Math.random() * 14 - 7).toFixed(0) + 'px'; // léger décalage du point de départ
+        popup.style.setProperty('--drift', drift);
+        popup.style.setProperty('--tilt', tilt);
+        popup.style.top = `calc(10% + ${voffset})`;
+        wrap.appendChild(popup);
+        setTimeout(() => popup.remove(), 1500);
+    }
+
+    const playSound = (file, vol = 0.3) => { try { const a = new Audio(file); a.volume = vol; a.play(); } catch (e) {} };
+
+    function flashAvatar(el) {
+        el.classList.add('hit-flash');
+        setTimeout(() => el.classList.remove('hit-flash'), 200);
+
+        // Le flash rouge de contour se joue sur le calque de contour dédié, toujours au-dessus
+        const frameEl = document.getElementById(el.id.replace('avatar', 'frame'));
+        if (frameEl) {
+            frameEl.classList.add('hit-flash');
+            setTimeout(() => frameEl.classList.remove('hit-flash'), 200);
+        }
+    }
+
+    // Sons de secours si un objet n'a pas encore de champ "Sons" configuré dans le catalogue.
+    // Styles d'impact disponibles (champ "Anim" du catalogue) : slash, slash_energy, smash, missile, explosion
+    const SONS_PAR_DEFAUT = {
+        slash: 'sons/sword_slash.mp3',
+        slash_energy: 'sons/energy_slash.mp3',
+        smash: 'sons/hammer_smash.mp3',
+        missile: 'sons/missile_launch.mp3',
+        explosion: 'sons/explosion.mp3',
+        poison: 'sons/explosion.mp3',
+        heal: 'sons/heal_default.mp3'
+    };
+    const SON_IMPACT_GENERIQUE = 'sons/hit_impact.mp3';
+    const SON_CRIT = 'sons/crit_hit.mp3';
+    const SON_ESQUIVE = 'sons/dodge_woosh.mp3';
+    // Joués une fois à la toute fin du combat, selon que l'ATTAQUANT (data.attaquant) remporte
+    // ou perd le duel — remplace par tes propres fichiers. Plusieurs séparés par une virgule
+    // ne sont PAS supportés ici (contrairement aux sons d'objets) ; un seul fichier chacun.
+    const SON_VICTOIRE_ATTAQUANT = 'sons/win.mp3';
+    const SON_DEFAITE_ATTAQUANT = 'sons/lose.mp3';
+    // Pas de fichier dédié confirmé — remplace par ton propre son si tu en as un pour l'égalité.
+    const SON_EGALITE = 'sons/shutdown.mp3';
+    const SON_FATIGUE_TICK = 'sons/fatigue_tick.mp3';
+    // Pas de fichier dédié confirmé dans ton dossier sons/ pour l'instant — repli sur "ticks.mp3"
+    // qui existe déjà. Remplace par un fichier dédié si tu en ajoutes un.
+    const SON_POISON_TICK = 'sons/ticks.mp3';
+    // ⚠️ Configure ICI le son joué à CHAQUE tick de brûlure subi (Souffle Draconique et tout futur
+    // objet à Brûlure) — remplace ce chemin par ton propre fichier une fois ajouté à sons/.
+    const SON_BRULURE_TICK = 'sons/feu.mp3';
+    // Icônes des dégâts INDIRECTS (pas d'arme/Stratagème associé au moment du tick) — pour
+    // qu'on comprenne d'où vient chaque dégât affiché. Emoji par défaut, remplaçable par un
+    // chemin d'image (ex: "gear/poison-icon.png") si tu préfères une vraie icône.
+    const ICONE_POISON = '🐍';
+    const ICONE_BRULURE = '🔥';
+    const ICONE_FATIGUE = '⏱️';
+    const ICONE_SAIGNEMENT = '🩸';
+    const SON_STUN = 'sons/stun.mp3';
+    // ⚠️ Pas de fichier dédié confirmé dans ton dossier sons/ pour l'instant — configure ICI le son
+    // générique joué quand un "dernier souffle" (résurrection, ex: Manteau du Loup) se déclenche et
+    // que l'objet responsable n'a pas son propre SonsDernierSouffle dans le catalogue.
+    const SON_DERNIER_SOUFFLE = 'sons/dernier_souffle.mp3';
+
+    // Pioche un son au hasard parmi la liste (séparée par des virgules) définie sur l'objet dans le catalogue.
+    // Si rien n'est configuré, retombe sur le son générique associé au type d'animation.
+    function sonDeLObjet(listeCsv, anim) {
+        const liste = (listeCsv && listeCsv.trim()) ? listeCsv.split(',').map(s => s.trim()).filter(Boolean) : [];
+        if (liste.length > 0) return 'sons/' + liste[Math.floor(Math.random() * liste.length)];
+        return SONS_PAR_DEFAUT[anim] || null;
+    }
+
+    // Joue l'animation d'arme (ou de Stratagème) correspondante sur la cible.
+    // sonsCoup = le champ "Sons" (CSV) de l'OBJET qui frappe réellement (arme équipée, ou Stratagème pour sa salve).
+    function playWeaponAnim(anim, wrapCible, fromLeft, sonsCoup, nbCoups, degatsTotal, armeImage, degatsParBalle, critParBalle) {
+        if (anim === 'slash' || anim === 'slash_energy') {
+            playSound(sonDeLObjet(sonsCoup, anim), 0.3);
+            const fx = document.createElement('div');
+            fx.className = 'fx-slash' + (anim === 'slash_energy' ? ' energy' : '');
+            wrapCible.appendChild(fx);
+            setTimeout(() => fx.remove(), 400);
+        } else if (anim === 'smash' || anim === 'missile') {
+            playSound(sonDeLObjet(sonsCoup, anim), 0.35);
+            const fx = document.createElement('div');
+            fx.className = 'fx-smash';
+            wrapCible.appendChild(fx);
+            setTimeout(() => fx.remove(), 550);
+            arena.classList.add('shake');
+            setTimeout(() => arena.classList.remove('shake'), 400);
+        } else if (anim === 'explosion') {
+            playSound(sonDeLObjet(sonsCoup, anim), 0.4);
+            const boom = document.createElement('div');
+            boom.className = 'fx-explosion';
+            wrapCible.appendChild(boom);
+            setTimeout(() => boom.remove(), 650);
+            arena.classList.add('shake');
+            setTimeout(() => arena.classList.remove('shake'), 400);
+        } else if (anim === 'poison') {
+            playSound(sonDeLObjet(sonsCoup, anim), 0.35);
+            const nuage = document.createElement('div');
+            nuage.className = 'fx-poison-nuage';
+            wrapCible.appendChild(nuage);
+            setTimeout(() => nuage.remove(), 900);
+            // Petites bouffées secondaires décalées, pour un nuage qui se déploie plutôt
+            // qu'une simple boule verte unique.
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const puff = document.createElement('div');
+                    puff.className = 'fx-poison-nuage petit';
+                    puff.style.marginLeft = ((Math.random() - 0.5) * 46) + 'px';
+                    puff.style.marginTop = ((Math.random() - 0.5) * 34) + 'px';
+                    wrapCible.appendChild(puff);
+                    setTimeout(() => puff.remove(), 750);
+                }, i * 90);
+            }
+        } else if (anim === 'tir' || anim === 'bombardement') {
+            // "bombardement" reprend exactement le même timing de rafale que "tir" (plusieurs
+            // coups qui arrivent en rapide succession, un seul son pour toute la salve), mais
+            // chaque impact déclenche une pleine explosion au lieu d'un petit point de balle —
+            // pensé pour un Stratagème type frappe aérienne plutôt qu'une arme à feu.
+            const estBombardement = anim === 'bombardement';
+            // Arme de tir en salve : plusieurs balles partent de l'attaquant vers la cible,
+            // avec un trajet légèrement aléatoire à chaque fois (mais toujours dans le bon sens).
+            // Le porteur ne charge jamais pour ce type d'arme (voir le if plus haut dans le round).
+            // Le son ne joue qu'UNE fois pour toute la rafale, pas par balle.
+            playSound(sonDeLObjet(sonsCoup, anim), 0.3);
+            const wrapSource = fromLeft ? wrapA : wrapB;
+            const rectArena = arena.getBoundingClientRect();
+            const rectSource = wrapSource.getBoundingClientRect();
+            const rectDest = wrapCible.getBoundingClientRect();
+            const xSource = rectSource.left + rectSource.width / 2 - rectArena.left;
+            const ySource = rectSource.top + rectSource.height / 2 - rectArena.top;
+            const xDest = rectDest.left + rectDest.width / 2 - rectArena.left;
+            const yDest = rectDest.top + rectDest.height / 2 - rectArena.top;
+
+            // Le nombre de balles suit le nombre RÉEL de tirs résolus côté combat (un jet de
+            // crit/dégâts indépendant par balle) — nbCoups ne sert plus que de repli si
+            // d'anciennes données sans détail par balle arrivent encore.
+            const nbBalles = (degatsParBalle && degatsParBalle.length > 0) ? degatsParBalle.length : Math.max(1, nbCoups || 1);
+
+            for (let i = 0; i < nbBalles; i++) {
+                setTimeout(() => {
+                    const decalageDepart = (Math.random() - 0.5) * 26;
+                    const decalageArriveeX = (Math.random() - 0.5) * 44;
+                    const decalageArriveeY = (Math.random() - 0.5) * 30;
+
+                    const balle = document.createElement('div');
+                    balle.className = 'fx-balle';
+                    const xDepart = xSource + decalageDepart;
+                    const yDepart = ySource + decalageDepart * 0.6;
+                    balle.style.left = xDepart + 'px';
+                    balle.style.top = yDepart + 'px';
+                    balle.style.setProperty('--dx', ((xDest + decalageArriveeX) - xDepart) + 'px');
+                    balle.style.setProperty('--dy', ((yDest + decalageArriveeY) - yDepart) + 'px');
+                    arena.appendChild(balle);
+
+                    setTimeout(() => {
+                        balle.remove();
+                        const critCetteBalle = critParBalle && critParBalle[i];
+
+                        if (estBombardement) {
+                            const boom = document.createElement('div');
+                            boom.className = 'fx-explosion';
+                            boom.style.marginLeft = decalageArriveeX + 'px';
+                            boom.style.marginTop = decalageArriveeY + 'px';
+                            wrapCible.appendChild(boom);
+                            setTimeout(() => boom.remove(), 650);
+                            arena.classList.add('shake');
+                            setTimeout(() => arena.classList.remove('shake'), 300);
+                        } else {
+                            const impact = document.createElement('div');
+                            impact.className = 'fx-impact-balle' + (critCetteBalle ? ' crit' : '');
+                            impact.style.marginLeft = decalageArriveeX + 'px';
+                            impact.style.marginTop = decalageArriveeY + 'px';
+                            wrapCible.appendChild(impact);
+                            setTimeout(() => impact.remove(), 300);
+                        }
+
+                        // Pluie de dégâts rapide : un chiffre par balle, avec son propre jet de crit —
+                        // reflète exactement ce que le combat a résolu, plus de répartition artificielle.
+                        if (degatsParBalle && degatsParBalle[i] !== undefined) {
+                            const texte = critCetteBalle ? `CRIT : ${degatsParBalle[i]}!` : '-' + degatsParBalle[i];
+                            showDamage(wrapCible, texte, critCetteBalle ? 'crit' : null, armeImage);
+                        }
+                    }, 200);
+                }, i * 70); // léger décalage entre chaque balle pour bien lire la rafale
+            }
+        } else if (anim === 'poing') {
+            // Bruit de coup de poing par défaut, quand personne n'a d'arme équipée (ATK pure).
+            // Ajoute simplement un fichier ici pour varier — jamais deux fois le même son de suite.
+            if (SONS_POING.length > 0) {
+                let choix;
+                do { choix = SONS_POING[Math.floor(Math.random() * SONS_POING.length)]; }
+                while (SONS_POING.length > 1 && choix === dernierSonPoing);
+                dernierSonPoing = choix;
+                playSound('sons/' + choix, 0.3);
+            }
+            arena.classList.add('shake-light');
+            setTimeout(() => arena.classList.remove('shake-light'), 300);
+
+            const impact = document.createElement('div');
+            impact.className = 'fx-punch-impact';
+            wrapCible.appendChild(impact);
+            setTimeout(() => impact.remove(), 400);
+        }
+    }
+
+    function exploserAvatar(avatarEl, wrapEl) {
+        const taille = 90;
+        const cols = 6, rows = 6; // 36 éclats
+        const fragW = taille / cols, fragH = taille / rows;
+        const src = avatarEl.src;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const frag = document.createElement('div');
+                const resteEnPlace = Math.random() < 0.4; // ~40% des éclats restent visibles, cassés mais reconnaissables
+                frag.className = 'avatar-shard' + (resteEnPlace ? ' shard-reste' : '');
+                frag.style.width = fragW + 'px';
+                frag.style.height = fragH + 'px';
+                frag.style.left = (c * fragW) + 'px';
+                frag.style.top = (r * fragH) + 'px';
+                frag.style.backgroundImage = `url(${src})`;
+                frag.style.backgroundPosition = `-${c * fragW}px -${r * fragH}px`;
+                frag.style.backgroundSize = `${taille}px ${taille}px`;
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = resteEnPlace ? (4 + Math.random() * 8) : (50 + Math.random() * 90);
+                frag.style.setProperty('--dx', (Math.cos(angle) * distance).toFixed(0) + 'px');
+                frag.style.setProperty('--dy', (Math.sin(angle) * distance).toFixed(0) + 'px');
+                frag.style.setProperty('--rot', ((resteEnPlace ? 25 : 360) * (Math.random() * 2 - 1)).toFixed(0) + 'deg');
+                frag.style.animationDelay = (Math.random() * 0.08).toFixed(2) + 's';
+
+                wrapEl.appendChild(frag);
+                if (!resteEnPlace) setTimeout(() => frag.remove(), 1300);
+            }
+        }
+
+        // Flash blanc bref au moment de l'explosion ; le portrait d'origine reste visible en
+        // sourdine en dessous des éclats, pour qu'on identifie encore qui vient de se faire détruire.
+        const flash = document.createElement('div');
+        flash.className = 'death-flash';
+        wrapEl.appendChild(flash);
+        setTimeout(() => flash.remove(), 350);
+
+        avatarEl.style.transition = 'opacity 0.3s ease 0.4s, filter 0.5s ease 0.3s';
+        avatarEl.style.opacity = '0.3';
+        avatarEl.style.filter = 'grayscale(1) brightness(0.7)'; // la couleur "sort" du perdant
+
+        // Le cadre du perdant s'éteint aussi (plus de couleur ni de lueur), à l'opposé du halo doré du vainqueur
+        const frameEl = document.getElementById(avatarEl.id.replace('avatar', 'frame'));
+        if (frameEl) frameEl.classList.add('loser-fade');
+
+        // Les quartiers d'image (fissures) sont un calque à part — désaturés aussi, sinon ils
+        // restent en pleine couleur et peuvent noyer la lisibilité du tampon K.O.
+        const masqueQuartiers = wrapEl.querySelector('.quartiers-mask');
+        if (masqueQuartiers) {
+            masqueQuartiers.style.transition = 'filter 0.5s ease 0.3s';
+            masqueQuartiers.style.filter = 'grayscale(1) brightness(0.7)';
+        }
+
+        // L'ensemble du portrait s'affaisse légèrement, comme un boxeur qui s'écroule
+        wrapEl.style.transition = 'transform 0.6s cubic-bezier(0.34, 0.6, 0.4, 1) 0.15s';
+        wrapEl.style.transform = 'translateY(6px) rotate(9deg)';
+
+        // Tampon "K.O." qui s'écrase sur le portrait une fois l'explosion et l'affaissement bien amorcés
+        setTimeout(() => {
+            const tampon = document.createElement('div');
+            tampon.className = 'ko-tampon';
+            tampon.innerText = 'K.O.';
+            wrapEl.appendChild(tampon);
+            arena.classList.add('shake-light');
+            setTimeout(() => arena.classList.remove('shake-light'), 300);
+        }, 550);
+    }
+
+    let delai = 500;
+    let sonFatigue = null;
+
+    // Musique de bataille : ajoute simplement un nom de fichier ici pour l'inclure dans la rotation aléatoire.
+    // Fichiers attendus dans sons/musiques/ — fondu à l'entrée, à la sortie, et enchaînement
+    // automatique sur un AUTRE morceau (jamais deux fois le même à la suite) une fois le premier terminé.
+    // Sons de coup de poing (quand personne n'a d'arme équipée) — ajoute/retire des fichiers librement
+    const SONS_POING = ['poing_1.mp3', 'poing_2.mp3', 'poing_3.mp3', 'poing_4.mp3', 'poing_5.mp3'];
+    let dernierSonPoing = null;
+
+    const MUSIQUES_BATAILLE = ['dbz_battle_2.mp3', 'sf2-guile-theme.mp3', 'shokugeki_battle.mp3','naturo_battle_1.mp3','naturo_battle_2.mp3','renoir_battle_2.mp3'];
+    const VOLUME_MUSIQUE = 0.4;
+    const FADE_DUREE_MS = 1500;
+
+    function creerLecteurMusique(liste, volumeCible, fadeMs) {
+        const el = new Audio();
+        let dernierChoix = null;
+        let timerFade = null;
+        let arrete = false;
+
+        function fade(depart, arrivee, callback) {
+            if (timerFade) clearInterval(timerFade);
+            const etapes = 30;
+            let etape = 0;
+            timerFade = setInterval(() => {
+                etape++;
+                el.volume = Math.max(0, Math.min(volumeCible, depart + (arrivee - depart) * (etape / etapes)));
+                if (etape >= etapes) {
+                    clearInterval(timerFade);
+                    timerFade = null;
+                    if (callback) callback();
+                }
+            }, fadeMs / etapes);
+        }
+
+        function jouerUnAutre() {
+            if (arrete || liste.length === 0) return;
+            let choix;
+            do {
+                choix = liste[Math.floor(Math.random() * liste.length)];
+            } while (liste.length > 1 && choix === dernierChoix);
+            dernierChoix = choix;
+
+            el.src = 'sons/musiques/' + choix;
+            el.currentTime = 0;
+            el.volume = 0;
+            el.play().catch(() => {});
+            fade(0, volumeCible, null);
+        }
+
+        // Fondu de sortie amorcé juste avant la fin naturelle du morceau, puis on enchaîne
+        el.addEventListener('timeupdate', () => {
+            if (!arrete && el.duration && (el.duration - el.currentTime) * 1000 <= fadeMs && el.volume > 0.001) {
+                fade(el.volume, 0, null);
+            }
+        });
+        el.addEventListener('ended', () => { if (!arrete) jouerUnAutre(); });
+
+        jouerUnAutre();
+
+        return {
+            arreter() {
+                arrete = true;
+                fade(el.volume, 0, () => { el.pause(); el.currentTime = 0; });
+            }
+        };
+    }
+
+    const musiqueBataille = MUSIQUES_BATAILLE.length > 0 ? creerLecteurMusique(MUSIQUES_BATAILLE, VOLUME_MUSIQUE, FADE_DUREE_MS) : null;
+    const PAUSE_ENTRE_ROUNDS = 1100; // Rythme entre chaque coup
+    const PAUSE_TOUR_ETOURDI = 350; // Un tour étourdi ne fait rien : on ne perd pas le temps d'un coup normal
+
+    // Détermine l'index du DERNIER round de Stratagème de chaque combattant,
+    // pour griser sa case juste après ce round (tous ses usages sont alors consommés).
+    let dernierStrategemeA = -1, dernierStrategemeB = -1;
+    let dernierSoinActifA = -1, dernierSoinActifB = -1;
+    data.rounds.forEach((r, idx) => {
+        if (r.strategeme) {
+            if (r.frappeur === data.attaquant) dernierStrategemeA = idx;
+            else dernierStrategemeB = idx;
+        }
+        if (r.offhand_cooldown_tours !== undefined && r.soin_applique) {
+            if (r.frappeur === data.attaquant) dernierSoinActifA = idx;
+            else dernierSoinActifB = idx;
+        }
+    });
+
+    // Génère un vrai motif de bris de verre : un point d'impact central (légèrement excentré),
+    // des lignes principales qui rayonnent jusqu'au bord, et des branches secondaires plus fines
+    // qui partent d'un point intermédiaire de chaque ligne principale — comme un pare-brise fêlé.
+    function genererFissures(svgId, nbPrincipales) {
+        const svg = document.getElementById(svgId);
+        const centre = { x: 45 + (Math.random() * 14 - 7), y: 45 + (Math.random() * 14 - 7) };
+        const rayon = 44;
+        const chemins = [];
+
+        function pointBord(angle) {
+            return { x: 45 + Math.cos(angle) * rayon, y: 45 + Math.sin(angle) * rayon };
+        }
+
+        function tracerLigne(depart, arrivee, segments, epaisseur) {
+            const points = [depart];
+            let d = `M ${depart.x.toFixed(1)} ${depart.y.toFixed(1)}`;
+            const perp = Math.atan2(arrivee.y - depart.y, arrivee.x - depart.x) + Math.PI / 2;
+            for (let s = 1; s <= segments; s++) {
+                const t = s / segments;
+                let px = depart.x + (arrivee.x - depart.x) * t;
+                let py = depart.y + (arrivee.y - depart.y) * t;
+                const decalage = (Math.random() * 10 - 5) * (s < segments ? 1 : 0.2);
+                px = Math.max(2, Math.min(88, px + Math.cos(perp) * decalage));
+                py = Math.max(2, Math.min(88, py + Math.sin(perp) * decalage));
+                d += ` L ${px.toFixed(1)} ${py.toFixed(1)}`;
+                points.push({ x: px, y: py });
+            }
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.style.strokeWidth = epaisseur.toFixed(1);
+            svg.appendChild(path);
+            chemins.push(path);
+            return points;
+        }
+
+        const angles = [];
+        for (let i = 0; i < nbPrincipales; i++) {
+            const angle = (i / nbPrincipales) * Math.PI * 2 + (Math.random() * 0.4 - 0.2);
+            angles.push(angle);
+            const arrivee = pointBord(angle);
+            const pts = tracerLigne(centre, arrivee, 3 + Math.floor(Math.random() * 2), 2.0 + Math.random() * 1.4);
+
+            // 1 à 2 branches secondaires plus fines, partant d'un point intermédiaire de la ligne principale
+            const nbBranches = Math.random() < 0.65 ? 1 : 2;
+            for (let b = 0; b < nbBranches; b++) {
+                const depuis = pts[1 + Math.floor(Math.random() * Math.max(1, pts.length - 2))];
+                const angleBranche = angle + (Math.random() * 1.7 - 0.85);
+                tracerLigne(depuis, pointBord(angleBranche), 2 + Math.floor(Math.random() * 2), 0.8 + Math.random() * 0.9);
+            }
+        }
+        return { chemins, centre, angles };
+    }
+    const fissuresA = genererFissures('cracksA', 7);
+    const fissuresB = genererFissures('cracksB', 7);
+
+    // Révèle un nombre de fissures proportionnel aux PV manquants : plus les PV baissent,
+    // plus il y a de traits visibles, jusqu'à un réseau complet à 0 PV.
+    function majFissuresCote(chemins, pct) {
+        const manquant = 100 - pct;
+        const nbVisibles = Math.round((manquant / 100) * chemins.length);
+        chemins.forEach((path, idx) => {
+            path.style.opacity = idx < nbVisibles ? '1' : '0';
+        });
+        return nbVisibles;
+    }
+
+    // Découpe le portrait en quartiers partant du même point d'impact que les fissures, pour
+    // pouvoir les décaler légèrement — donne l'impression que les morceaux ont vraiment bougé.
+    function genererQuartiersImage(avatarEl, wrapEl, centre, angles) {
+        const src = avatarEl.src;
+        const centreVrai = { x: 45, y: 45 }; // le vrai centre du cercle de l'avatar — PAS le point d'impact, qui peut être décentré
+        const rayonExterieur = 45; // rayon réel de l'avatar (cercle de 90px de diamètre)
+        const pct = (v) => (v / 90 * 100).toFixed(1) + '%';
+        const morceaux = [];
+
+        // Conteneur circulaire dédié, pour masquer le léger dépassement quand un quartier se décale
+        // vers l'extérieur — n'affecte pas les autres effets (popups, soin...) qui doivent eux sortir du cercle.
+        const masque = document.createElement('div');
+        masque.className = 'quartiers-mask';
+        wrapEl.insertBefore(masque, avatarEl.nextSibling);
+
+        function pointSurCercle(angle) {
+            return { x: centreVrai.x + Math.cos(angle) * rayonExterieur, y: centreVrai.y + Math.sin(angle) * rayonExterieur };
+        }
+
+        for (let i = 0; i < angles.length; i++) {
+            const a1 = angles[i];
+            let a2 = angles[(i + 1) % angles.length];
+            if (a2 <= a1) a2 += Math.PI * 2; // gère le passage de l'angle qui reboucle à 0
+
+            // Plusieurs points le long de l'arc RÉEL entre a1 et a2 (au lieu d'une simple corde droite),
+            // pour que le contour du quartier suive fidèlement le bord circulaire, sans laisser
+            // de petit croissant non couvert entre deux quartiers voisins.
+            const nbPointsArc = 6;
+            const pointsArc = [];
+            for (let k = 0; k <= nbPointsArc; k++) {
+                pointsArc.push(pointSurCercle(a1 + (a2 - a1) * (k / nbPointsArc)));
+            }
+
+            const morceau = document.createElement('div');
+            morceau.className = 'avatar-quartier';
+            morceau.style.backgroundImage = `url(${src})`;
+            const sommets = [`${pct(centre.x)} ${pct(centre.y)}`, ...pointsArc.map(p => `${pct(p.x)} ${pct(p.y)}`)];
+            morceau.style.clipPath = `polygon(${sommets.join(', ')})`;
+
+            const angleMilieu = (a1 + a2) / 2;
+            morceau.dataset.dx = Math.cos(angleMilieu).toFixed(3);
+            morceau.dataset.dy = Math.sin(angleMilieu).toFixed(3);
+            morceau.dataset.rot = (Math.random() * 8 - 4).toFixed(1);
+
+            masque.appendChild(morceau);
+            morceaux.push(morceau);
+        }
+        return morceaux;
+    }
+
+    // Décale chaque quartier vers l'extérieur, mais SEULEMENT une fois plus de 4 traits visibles —
+    // en dessous de ce seuil, le portrait reste intact, seules les fissures s'affichent.
+    const SEUIL_TRAITS_AVANT_DECALAGE = 4;
+    function majQuartiers(morceaux, nbVisibles, nbTraitsTotal) {
+        let intensite = 0;
+        if (nbVisibles > SEUIL_TRAITS_AVANT_DECALAGE) {
+            intensite = (nbVisibles - SEUIL_TRAITS_AVANT_DECALAGE) / Math.max(1, nbTraitsTotal - SEUIL_TRAITS_AVANT_DECALAGE);
+        }
+        morceaux.forEach(m => {
+            const dist = intensite * 5; // décalage max ~5px
+            const dx = (parseFloat(m.dataset.dx) * dist).toFixed(1);
+            const dy = (parseFloat(m.dataset.dy) * dist).toFixed(1);
+            const rot = (parseFloat(m.dataset.rot) * intensite).toFixed(1);
+            m.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+        });
+    }
+
+    const quartiersA = genererQuartiersImage(avatarA, wrapA, fissuresA.centre, fissuresA.angles);
+    const quartiersB = genererQuartiersImage(avatarB, wrapB, fissuresB.centre, fissuresB.angles);
+
+    function majFissures(pctA, pctB) {
+        const nbVisiblesA = majFissuresCote(fissuresA.chemins, pctA);
+        const nbVisiblesB = majFissuresCote(fissuresB.chemins, pctB);
+        majQuartiers(quartiersA, nbVisiblesA, fissuresA.chemins.length);
+        majQuartiers(quartiersB, nbVisiblesB, fissuresB.chemins.length);
+    }
+
+    // Charge à chaque échange : le cercle du frappeur (photo + contour + fissures + quartiers) se
+    // jette jusqu'au contact réel avec le cercle de sa cible, puis revient à sa position d'origine.
+    // La distance est calculée en direct (position réelle à l'écran), pas une valeur fixe devinée.
+    let vsDescendu = false;
+    function jouerChargePortrait(wrapFrappeur, wrapCible) {
+        // Le VS descend de sa position de départ (entre les deux avatars) une seule fois, dès la 1ère charge
+        if (!vsDescendu) {
+            vsDescendu = true;
+            document.querySelector('.vs').classList.add('descendu');
+        }
+
+        const rectF = wrapFrappeur.getBoundingClientRect();
+        const rectC = wrapCible.getBoundingClientRect();
+        const versLaDroite = rectF.left < rectC.left;
+        // Distance jusqu'au contact, avec un léger chevauchement (10px) pour bien vendre l'impact physique
+        const distance = versLaDroite ? (rectC.left - rectF.right) + 10 : (rectC.right - rectF.left) - 10;
+
+        wrapFrappeur.classList.remove('charge-retour');
+        wrapFrappeur.classList.add('charge-aller');
+        wrapFrappeur.style.zIndex = '15'; // passe au premier plan le temps de la charge
+        wrapFrappeur.style.transform = `translateX(${distance.toFixed(0)}px) scale(1.06)`;
+
+        // Petit choc pile à l'instant du contact
+        setTimeout(() => {
+            arena.classList.add('shake-light');
+            setTimeout(() => arena.classList.remove('shake-light'), 200);
+        }, 150);
+
+        // Un court temps de contact avant de repartir, pour que l'impact ait le temps de se lire
+        setTimeout(() => {
+            if (mortDejaDeclenchee) return; // l'effondrement du perdant a la priorité, on ne l'écrase pas
+            wrapFrappeur.classList.remove('charge-aller');
+            wrapFrappeur.classList.add('charge-retour');
+            wrapFrappeur.style.transform = 'translateX(0) scale(1)';
+            setTimeout(() => { wrapFrappeur.style.zIndex = ''; }, 220);
+        }, 240);
+    }
+
+    function briller(slotId) {
+        const el = document.getElementById(slotId);
+        el.classList.remove('glow');
+        void el.offsetWidth; // force le redémarrage de l'animation si elle est déjà en cours
+        el.classList.add('glow');
+    }
+
+    // Voile sombre + décompte qui se retire d'un tour à chaque round, jusqu'à disparaître (charge dispo)
+    // État de recharge par combattant, décompté sur LEURS VRAIS TOURS (pas un minuteur générique) —
+    // pour rester synchronisé avec la vraie règle de recharge côté simulation (basée sur les tours propres du porteur).
+    let cooldown = {
+        Strategeme: { A: { restant: 0, total: 0 }, B: { restant: 0, total: 0 } },
+        Offhand: { A: { restant: 0, total: 0 }, B: { restant: 0, total: 0 } }
+    };
+
+    function majCooldownVisuel(typeCase, suffixe) {
+        const slotEl = document.getElementById('slot' + typeCase + suffixe);
+        const etat = cooldown[typeCase][suffixe];
+        let overlay = slotEl.querySelector('.cooldown-overlay');
+        let nombre = slotEl.querySelector('.cooldown-number');
+
+        if (etat.restant <= 0) {
+            if (overlay) overlay.remove();
+            if (nombre) nombre.remove();
+            return;
+        }
+
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'cooldown-overlay';
+            slotEl.appendChild(overlay);
+        }
+        if (!nombre) {
+            nombre = document.createElement('div');
+            nombre.className = 'cooldown-number';
+            slotEl.appendChild(nombre);
+        }
+        overlay.style.setProperty('--pct', (((etat.total - etat.restant) / etat.total) * 100).toFixed(0));
+        nombre.innerText = etat.restant;
+    }
+
+    function demarrerRecharge(typeCase, slotEl, suffixe, toursTotal) {
+        slotEl.classList.remove('epuise');
+        // +1 : la vraie règle de recharge (côté simulation) exige CooldownTours+1 tours propres
+        // avant de pouvoir retirer, pas CooldownTours pile — sinon l'affichage indique "prêt"
+        // un tour trop tôt par rapport au moment où ça se redéclenche réellement.
+        const vraiTotal = toursTotal + 1;
+        cooldown[typeCase][suffixe] = { restant: vraiTotal, total: vraiTotal };
+        majCooldownVisuel(typeCase, suffixe);
+    }
+
+    // Décompte d'1 tour de recharge (Stratagème ET Off-hand actif) à chaque round où CE combattant précis vient de jouer
+    function decompterCooldownSiSonTour(frappeur) {
+        const suffixe = frappeur === data.attaquant ? 'A' : (frappeur === data.defenseur ? 'B' : null);
+        if (!suffixe) return;
+        ['Strategeme', 'Offhand'].forEach(typeCase => {
+            if (cooldown[typeCase][suffixe].restant > 0) {
+                cooldown[typeCase][suffixe].restant--;
+                majCooldownVisuel(typeCase, suffixe);
+            }
+        });
+    }
+
+    // Effet dramatique quand le Dernier souffle sauve un combattant d'un coup fatal
+    function afficherDernierSouffle(wrap) {
+        playSound(SON_IMPACT_GENERIQUE, 0.4);
+        const texte = document.createElement('div');
+        texte.className = 'fx-dernier-souffle';
+        texte.innerText = 'DERNIER SOUFFLE !';
+        wrap.appendChild(texte);
+        setTimeout(() => texte.remove(), 1800);
+    }
+
+    function afficherDegatsFatigue(degats) {
+        if (!degats) return;
+        showDamage(wrapA, '-' + degats, 'fatigue', ICONE_FATIGUE);
+        showDamage(wrapB, '-' + degats, 'fatigue', ICONE_FATIGUE);
+    }
+
+    // Contrairement à la fatigue (symétrique, touche les deux), le poison ne tique QUE sur le
+    // joueur dont c'est le tour — cibleEstAttaquant indique lequel des deux.
+    function afficherDegatsPoison(degats, cibleEstAttaquant) {
+        if (!degats) return;
+        showDamage(cibleEstAttaquant ? wrapA : wrapB, '-' + degats, 'poison', ICONE_POISON);
+    }
+
+    // Brûlure : même principe que le poison (popup + emoji), PLUS un léger flicker orangé sur
+    // l'avatar touché — plus discret et plus rapide que le nuage de poison (voir fx-brulure-tick).
+    function afficherDegatsBrulure(degats, cibleEstAttaquant) {
+        if (!degats) return;
+        const wrapCible = cibleEstAttaquant ? wrapA : wrapB;
+        showDamage(wrapCible, '-' + degats, 'brulure', ICONE_BRULURE);
+        const flicker = document.createElement('div');
+        flicker.className = 'fx-brulure-tick';
+        wrapCible.appendChild(flicker);
+        setTimeout(() => flicker.remove(), 500);
+    }
+
+    // Round de lancement d'un missile à déclenchement différé (ex: Solo Silo) : aucun dégât ce
+    // tour-ci, juste le son de lancement + un petit texte pour indiquer qu'il est en approche.
+    function afficherLancementMissile(wrapLanceur, sonsLancement) {
+        playSound(sonDeLObjet(sonsLancement, 'missile_lance'), 0.35);
+        const texte = document.createElement('div');
+        texte.className = 'fx-dernier-souffle'; // réutilise le style de texte flottant déjà existant
+        texte.style.color = '#ffcf5c';
+        texte.innerText = '🚀 EN APPROCHE...';
+        wrapLanceur.appendChild(texte);
+        setTimeout(() => texte.remove(), 1800);
+    }
+
+    // Effet cartoon d'étourdissement : 3 étoiles qui tournent au-dessus de la tête + texte "STUN"
+    // Démarre l'effet d'étourdissement (persiste jusqu'à ce qu'on l'arrête explicitement)
+    function demarrerEtourdissement(wrap) {
+        playSound(SON_STUN, 0.3);
+        arreterEtourdissement(wrap); // sécurité, évite un doublon si jamais déjà présent
+
+        const orbite = document.createElement('div');
+        orbite.className = 'fx-stun';
+        orbite.innerHTML = `
+            <span class="etoile" style="transform: rotate(0deg) translateX(20px);">★</span>
+            <span class="etoile" style="transform: rotate(120deg) translateX(20px);">★</span>
+            <span class="etoile" style="transform: rotate(240deg) translateX(20px);">★</span>
+        `;
+        wrap.appendChild(orbite);
+
+        const texte = document.createElement('div');
+        texte.className = 'fx-stun-texte';
+        texte.innerText = 'STUN !';
+        wrap.appendChild(texte);
+    }
+
+    // Retire l'effet d'étourdissement, une fois le tour de la victime réellement sauté
+    function arreterEtourdissement(wrap) {
+        const orbite = wrap.querySelector('.fx-stun');
+        if (orbite) orbite.remove();
+        const texte = wrap.querySelector('.fx-stun-texte');
+        if (texte) texte.remove();
+    }
+
+    function afficherSoin(wrap, montant, sonsCsv, iconeSource) {
+        if (!montant) return;
+
+        // Anneau lumineux au sol
+        const ring = document.createElement('div');
+        ring.className = 'heal-ring';
+        wrap.appendChild(ring);
+        setTimeout(() => ring.remove(), 1300);
+
+        // 2 faisceaux verticaux, légèrement décalés de part et d'autre du centre
+        [-10, 8].forEach((decalage, i) => {
+            const beam = document.createElement('div');
+            beam.className = 'heal-beam';
+            beam.style.left = `calc(50% + ${decalage}px)`;
+            beam.style.animationDelay = (i * 0.08) + 's';
+            wrap.appendChild(beam);
+            setTimeout(() => beam.remove(), 1200);
+        });
+
+        // 5 croix lumineuses qui montent avec une dérive et une inclinaison propres à chacune
+        for (let i = 0; i < 5; i++) {
+            const cross = document.createElement('div');
+            cross.className = 'heal-cross';
+            cross.style.setProperty('--dx', (Math.random() * 50 - 25).toFixed(0) + 'px');
+            cross.style.setProperty('--rot', (Math.random() * 30 - 15).toFixed(0) + 'deg');
+            cross.style.animationDelay = (i * 0.12).toFixed(2) + 's';
+            wrap.appendChild(cross);
+            setTimeout(() => cross.remove(), 1700);
+        }
+
+        // Quelques petites étincelles en complément
+        for (let i = 0; i < 4; i++) {
+            const p = document.createElement('div');
+            p.className = 'heal-particle';
+            p.style.setProperty('--dx', (Math.random() * 30 - 15).toFixed(0) + 'px');
+            p.style.animationDelay = (i * 0.09).toFixed(2) + 's';
+            wrap.appendChild(p);
+            setTimeout(() => p.remove(), 1300);
+        }
+
+        showDamage(wrap, '+' + montant, 'heal', iconeSource);
+        playSound(sonDeLObjet(sonsCsv, 'heal'), 0.3);
+    }
+
+    let mortDejaDeclenchee = false;
+    function verifierMortEtDeclencher(pvA, pvB) {
+        if (mortDejaDeclenchee) return;
+        if (pvA <= 0 || pvB <= 0) {
+            mortDejaDeclenchee = true;
+            const perdantEstA = pvA <= 0;
+            exploserAvatar(perdantEstA ? avatarA : avatarB, perdantEstA ? wrapA : wrapB);
+
+            const SONS_MORT = ['mort_1.mp3'];
+            if (SONS_MORT.length > 0) {
+                playSound('sons/' + SONS_MORT[Math.floor(Math.random() * SONS_MORT.length)], 0.4);
+            }
+        }
+    }
+
+    data.rounds.forEach((r, idx) => {
+        setTimeout(() => {
+            const frappeurEstA = r.frappeur === data.attaquant;
+            const wrapCible = frappeurEstA ? wrapB : wrapA;
+            const avatarCible = frappeurEstA ? avatarB : avatarA;
+            const armeAnim = (r.strategeme
+                ? (frappeurEstA ? data.strategeme_attaquant_anim : data.strategeme_defenseur_anim)
+                : (frappeurEstA ? data.arme_attaquant_anim : data.arme_defenseur_anim)) || 'poing';
+            const armeImage = r.strategeme
+                ? (frappeurEstA ? data.strategeme_attaquant_image : data.strategeme_defenseur_image)
+                : (frappeurEstA ? data.arme_attaquant_image : data.arme_defenseur_image);
+            const sonsCoup = r.sons_override || (r.strategeme
+                ? (frappeurEstA ? data.strategeme_attaquant_sons : data.strategeme_defenseur_sons)
+                : (frappeurEstA ? data.arme_attaquant_sons : data.arme_defenseur_sons));
+            // Nombre de coups d'une salve (CoupsParUsage côté catalogue) — 1 par défaut si le
+            // backend ne transmet pas encore ce champ, pour rester rétrocompatible.
+            const armeCoups = (r.strategeme
+                ? (frappeurEstA ? data.strategeme_attaquant_coups : data.strategeme_defenseur_coups)
+                : (frappeurEstA ? data.arme_attaquant_coups : data.arme_defenseur_coups)) || 1;
+
+            // Fait avancer la recharge d'un Stratagème d'1 tour, uniquement quand SON porteur vient
+            // de jouer — garde le décompte visuel parfaitement synchronisé avec la vraie règle de
+            // recharge côté simulation (basée sur les tours propres du porteur, pas le rythme global).
+            if (r.frappeur) decompterCooldownSiSonTour(r.frappeur);
+
+            // Badge de poison : mis à jour à chaque round à partir du nombre de tours restants
+            // (fonctionne aussi bien sur un round normal que sur le round environnemental).
+            if (r.poison_duree_attaquant !== undefined) {
+                definirBadge('A', 'poison', r.poison_duree_attaquant > 0 ? r.poison_duree_attaquant : 0);
+                definirBadge('B', 'poison', r.poison_duree_defenseur > 0 ? r.poison_duree_defenseur : 0);
+            }
+
+            // Badge de brûlure : même principe que le poison ci-dessus.
+            if (r.brulure_duree_attaquant !== undefined) {
+                definirBadge('A', 'brulure', r.brulure_duree_attaquant > 0 ? r.brulure_duree_attaquant : 0);
+                definirBadge('B', 'brulure', r.brulure_duree_defenseur > 0 ? r.brulure_duree_defenseur : 0);
+            }
+
+            // ⚠️ CORRECTIF : sans ceci, une arme à changement de stance (ex: Volto-Hache) ne
+            // montrait JAMAIS son image de stance 2 — la case d'arme était réglée UNE SEULE FOIS
+            // au chargement (voir appliquerEquipement plus haut) et jamais remise à jour ensuite.
+            // r.arme_image_override reflète la stance ACTUELLE du frappeur à CE round précis.
+            if (r.arme_image_override !== undefined && r.arme_image_override !== null && r.frappeur) {
+                const suffixeArme = frappeurEstA ? 'A' : 'B';
+                appliquerCase('slotWeapon' + suffixeArme, r.arme_image_override || IMAGE_POING, false);
+            }
+
+            // Shield : overbar jaune mise à jour à chaque round (absorbe en silence, pas d'effet dédié)
+            if (r.shield_attaquant !== undefined) {
+                majShield('A', r.shield_attaquant, data.pv_max_attaquant);
+                majShield('B', r.shield_defenseur, data.pv_max_defenseur);
+            }
+
+            // Saignement : badge avec le nombre de stacks restantes (perd 1 stack/tour)
+            if (r.saignement_stacks_attaquant !== undefined) {
+                definirBadge('A', 'saignement', r.saignement_stacks_attaquant > 0 ? r.saignement_stacks_attaquant : 0);
+                definirBadge('B', 'saignement', r.saignement_stacks_defenseur > 0 ? r.saignement_stacks_defenseur : 0);
+            }
+            if (r.saignement_tick) { showDamage(frappeurEstA ? wrapA : wrapB, '-' + r.degats_saignement, 'fatigue', ICONE_SAIGNEMENT); }
+
+            // Anti-heal : simple badge on/off tant que l'effet dure
+            if (r.anti_heal_actif_attaquant !== undefined) {
+                definirBadge('A', 'anti_heal', r.anti_heal_actif_attaquant ? 'X' : 0);
+                definirBadge('B', 'anti_heal', r.anti_heal_actif_defenseur ? 'X' : 0);
+            }
+
+            // Marque de vulnérabilité : simple badge on/off tant que l'effet dure
+            if (r.marque_active_attaquant !== undefined) {
+                definirBadge('A', 'marque', r.marque_active_attaquant ? 'X' : 0);
+                definirBadge('B', 'marque', r.marque_active_defenseur ? 'X' : 0);
+            }
+
+            // Brise-def (armure cassée, ex: Pétards Shinobi / Hache Chargée) : simple badge on/off,
+            // même principe que Marque ci-dessus.
+            if (r.brise_def_actif_attaquant !== undefined) {
+                definirBadge('A', 'brise_def', r.brise_def_actif_attaquant ? 'X' : 0);
+                definirBadge('B', 'brise_def', r.brise_def_actif_defenseur ? 'X' : 0);
+            }
+
+            // Frénésie : badge avec le bonus de Vitesse actuellement actif
+            if (r.frenesie_bonus_attaquant !== undefined) {
+                definirBadge('A', 'frenesie', r.frenesie_bonus_attaquant > 0 ? '+' + r.frenesie_bonus_attaquant : 0);
+                definirBadge('B', 'frenesie', r.frenesie_bonus_defenseur > 0 ? '+' + r.frenesie_bonus_defenseur : 0);
+            }
+
+            // Déclenchement de la fatigue (corde) : flammes autour de l'arène, bannière, son en boucle
+            // (vérifié avant le cas environnemental ci-dessous, au cas où le tout premier tic serait déjà fatal)
+            if (r.round === data.round_debut_fatigue) {
+                arena.classList.add('rope-active');
+                document.getElementById('fatigueBanner').classList.add('show');
+                sonFatigue = new Audio('sons/fatigue_loop.mp3');
+                sonFatigue.loop = true;
+                sonFatigue.volume = 0.25;
+                sonFatigue.play().catch(() => {});
+            }
+
+            // Round "environnemental" : le poison ou la fatigue vient d'achever quelqu'un avant
+            // même une action normale. Pas d'attaquant précis à animer : on se contente de mettre
+            // à jour les deux barres de vie et de faire flasher les deux avatars.
+            if (!r.frappeur) {
+                hpBarA.style.width = Math.max(0, (r.pv_attaquant_apres / data.pv_max_attaquant) * 100) + '%';
+                hpBarB.style.width = Math.max(0, (r.pv_defenseur_apres / data.pv_max_defenseur) * 100) + '%';
+                majFissures(
+                    Math.max(0, (r.pv_attaquant_apres / data.pv_max_attaquant) * 100),
+                    Math.max(0, (r.pv_defenseur_apres / data.pv_max_defenseur) * 100)
+                );
+                hpTextA.innerText = r.pv_attaquant_apres;
+                hpTextB.innerText = r.pv_defenseur_apres;
+                verifierMortEtDeclencher(r.pv_attaquant_apres, r.pv_defenseur_apres);
+                if (r.dernier_souffle_attaquant) {
+                    afficherDernierSouffle(wrapA);
+                    const sonDS = (r.sons_dernier_souffle_attaquant && r.sons_dernier_souffle_attaquant.trim()) ? sonDeLObjet(r.sons_dernier_souffle_attaquant, null) : SON_DERNIER_SOUFFLE;
+                    playSound(sonDS, 0.4);
+                }
+                if (r.dernier_souffle_defenseur) {
+                    afficherDernierSouffle(wrapB);
+                    const sonDS2 = (r.sons_dernier_souffle_defenseur && r.sons_dernier_souffle_defenseur.trim()) ? sonDeLObjet(r.sons_dernier_souffle_defenseur, null) : SON_DERNIER_SOUFFLE;
+                    playSound(sonDS2, 0.4);
+                }
+                flashAvatar(avatarA);
+                flashAvatar(avatarB);
+                if (r.fatigue_tick) { playSound(SON_FATIGUE_TICK, 0.35); afficherDegatsFatigue(r.degats_fatigue); }
+                if (r.poison_tick) { playSound(SON_POISON_TICK, 0.3); afficherDegatsPoison(r.degats_poison, r.poison_tick_attaquant); }
+                if (r.brulure_tick) { playSound(SON_BRULURE_TICK, 0.3); afficherDegatsBrulure(r.degats_brulure, r.brulure_tick_attaquant); }
+                if (r.missile_lance) afficherLancementMissile(frappeurEstA ? wrapB : wrapA, r.sons_override);
+                if (r.strategeme_bouclier) { playSound(sonDeLObjet(r.sons_override, 'shield'), 0.35); afficherGainBouclier(frappeurEstA ? wrapA : wrapB, r.montant_bouclier, armeImage); }
+                return;
+            }
+
+            // La fatigue peut aussi tiquer le même cycle qu'une action normale (ou un tour étourdi) :
+            // le son et l'affichage se superposent simplement à ce qui se passe déjà ce tour-là.
+            if (r.fatigue_tick) { playSound(SON_FATIGUE_TICK, 0.35); afficherDegatsFatigue(r.degats_fatigue); }
+                if (r.poison_tick) { playSound(SON_POISON_TICK, 0.3); afficherDegatsPoison(r.degats_poison, r.poison_tick_attaquant); }
+                if (r.brulure_tick) { playSound(SON_BRULURE_TICK, 0.3); afficherDegatsBrulure(r.degats_brulure, r.brulure_tick_attaquant); }
+                if (r.missile_lance) afficherLancementMissile(frappeurEstA ? wrapB : wrapA, r.sons_override);
+                if (r.strategeme_bouclier) { playSound(sonDeLObjet(r.sons_override, 'shield'), 0.35); afficherGainBouclier(frappeurEstA ? wrapA : wrapB, r.montant_bouclier, armeImage); }
+
+            // Config utilisateur (son + message configurables via catalog.cs, Eclair de Tomoe) :
+            // déclenchement À L'APPLICATION de la Paralysie -- affiché sur la CIBLE qui vient de la
+            // subir (wrapCible). L'autre déclenchement (chaque tour où elle bloque déjà l'arme) est
+            // géré juste en dessous, dans le round "vide" qui saute le tour.
+            if (r.paralysie_applique) {
+                if (r.sons_paralysie) playSound(sonDeLObjet(r.sons_paralysie, null), 0.35);
+                if (r.message_paralysie) showDamage(wrapCible, r.message_paralysie, 'paralysie', null);
+            }
+
+            // Tour étourdi OU paralysé (ex: passif du Marteau / Eclair de Tomoe) : le personnage ne
+            // fait rien ce tour-ci -- CORRECTIF : la paralysie (arme seule bloquée) utilise le même
+            // round "vide" que le stun (tout bloqué), donc il faut aussi sauter ici sur r.paralysie,
+            // sinon un tour de paralysie-seule tombait dans le code d'animation d'attaque normale
+            // ci-dessous alors qu'aucun coup n'a réellement eu lieu (touche/degats à 0).
+            // On retire les étoiles cartoon seulement si c'était un vrai stun (la paralysie n'a
+            // jamais déclenché cette animation, inchangé).
+            if (r.etourdi || r.paralysie) {
+                if (r.etourdi) arreterEtourdissement(frappeurEstA ? wrapA : wrapB);
+                // Rejoue le même son/message à chaque tour où la Paralysie bloque encore l'arme --
+                // affiché sur le FRAPPEUR bloqué cette fois (pas la cible, qui n'est pas concernée
+                // par ce round "vide").
+                if (r.paralysie) {
+                    if (r.sons_paralysie) playSound(sonDeLObjet(r.sons_paralysie, null), 0.35);
+                    if (r.message_paralysie) showDamage(frappeurEstA ? wrapA : wrapB, r.message_paralysie, 'paralysie', null);
+                }
+                return;
+            }
+
+            // Rounds où le porteur agit sur lui-même (soin actif, gain de bouclier) ou prépare un
+            // effet différé (lancement de missile) : l'adversaire n'a jamais été visé, donc pas
+            // d'esquive/charge d'attaque à jouer pour lui — MAIS le halo et le cooldown de la
+            // case doivent quand même s'appliquer, exactement comme un usage normal.
+            const suffixeFrappeur = frappeurEstA ? 'A' : 'B';
+            const estActionSurSoiMeme = r.missile_lance || r.strategeme_bouclier || (r.soin_applique && r.frappeur === r.cible);
+
+            if (!estActionSurSoiMeme) {
+                // Charge du frappeur vers sa cible à chaque échange normal — le Stratagème et les
+                // armes à distance (tir en rafale, tir explosif) gardent leur propre traitement
+                // d'impact à distance, sans charge physique (le porteur ne se déplace pas pour tirer).
+                // ⚠️ CORRECTIF : seul "tir" était exclu ici — une arme d'ARME (pas Stratagème) utilisant
+                // "explosion" (ex. Arbalète Explosive) tombait donc dans le cas par défaut et se
+                // voyait appliquer la charge de mêlée, faisant "dasher" une arme censée rester à
+                // distance. "bombardement" (tir en rafale où chaque impact explose) est logiquement
+                // dans le même cas et doit être exclu pour la même raison.
+                if (!r.strategeme && armeAnim !== 'tir' && armeAnim !== 'explosion' && armeAnim !== 'bombardement') {
+                    jouerChargePortrait(frappeurEstA ? wrapA : wrapB, frappeurEstA ? wrapB : wrapA);
+                }
+            }
+
+            // Soin en début de tour (armure régénérante, stimulant en off-hand...) : s'applique
+            // à celui qui JOUE ce tour (auto-soin), pas à sa cible.
+            if (r.soin_applique) afficherSoin(frappeurEstA ? wrapA : wrapB, r.soin_montant, r.soin_sons, r.soin_image);
+
+            // Halo générique arme/Stratagème — pas pour un simple soin actif d'off-hand (qui a
+            // son propre halo dédié juste après), mais bien pour un vrai coup ou un usage de
+            // Stratagème (y compris lancement de missile et gain de bouclier, de VRAIS usages
+            // de la case Stratagème malgré l'absence d'attaque sur l'adversaire).
+            if (r.strategeme || !r.soin_applique || r.frappeur !== r.cible) {
+                briller('slot' + (r.strategeme ? 'Strategeme' : 'Weapon') + suffixeFrappeur);
+            }
+
+            // Recharge de l'off-hand actif (ex: Stimulant), quand le champ est présent sur ce round
+            if (r.offhand_cooldown_tours !== undefined && r.soin_applique) {
+                const slotOff = document.getElementById('slotOffhand' + suffixeFrappeur);
+                briller('slotOffhand' + suffixeFrappeur);
+                const estLeDernierSoin = (frappeurEstA && idx === dernierSoinActifA) || (!frappeurEstA && idx === dernierSoinActifB);
+                if (estLeDernierSoin) {
+                    slotOff.classList.add('epuise');
+                } else {
+                    demarrerRecharge('Offhand', slotOff, suffixeFrappeur, r.offhand_cooldown_tours || 0);
+                }
+            }
+
+            if (r.strategeme) {
+                const slotStrat = document.getElementById('slotStrategeme' + suffixeFrappeur);
+                const estLeDernierUsage = (frappeurEstA && idx === dernierStrategemeA) || (!frappeurEstA && idx === dernierStrategemeB);
+
+                if (estLeDernierUsage) {
+                    // Plus aucune charge : grisé définitivement
+                    slotStrat.classList.add('epuise');
+                } else {
+                    // Encore des charges : voile sombre + décompte du nombre de tours avant la prochaine charge
+                    demarrerRecharge('Strategeme', slotStrat, suffixeFrappeur, r.strategeme_cooldown_tours || 0);
+                }
+            }
+
+            // Le halo et le cooldown viennent d'être traités normalement ci-dessus — pour une
+            // action sur soi-même (soin, bouclier, lancement de missile), il n'y a en revanche
+            // aucune esquive/dégâts à résoudre sur l'adversaire : on s'arrête ici.
+            if (estActionSurSoiMeme) return;
+
+            // Barre de vie ET popup de dégâts se déclenchent au même instant précis,
+            // qu'il y ait un délai d'arme (missile) ou non.
+            const appliquerPV = () => {
+                const pctA = Math.max(0, (r.pv_attaquant_apres / data.pv_max_attaquant) * 100);
+                const pctB = Math.max(0, (r.pv_defenseur_apres / data.pv_max_defenseur) * 100);
+                hpBarA.style.width = pctA + '%';
+                hpBarB.style.width = pctB + '%';
+                majFissures(pctA, pctB);
+                hpTextA.innerText = r.pv_attaquant_apres;
+                hpTextB.innerText = r.pv_defenseur_apres;
+                verifierMortEtDeclencher(r.pv_attaquant_apres, r.pv_defenseur_apres);
+                if (r.dernier_souffle_attaquant) {
+                    afficherDernierSouffle(wrapA);
+                    const sonDS = (r.sons_dernier_souffle_attaquant && r.sons_dernier_souffle_attaquant.trim()) ? sonDeLObjet(r.sons_dernier_souffle_attaquant, null) : SON_DERNIER_SOUFFLE;
+                    playSound(sonDS, 0.4);
+                }
+                if (r.dernier_souffle_defenseur) {
+                    afficherDernierSouffle(wrapB);
+                    const sonDS2 = (r.sons_dernier_souffle_defenseur && r.sons_dernier_souffle_defenseur.trim()) ? sonDeLObjet(r.sons_dernier_souffle_defenseur, null) : SON_DERNIER_SOUFFLE;
+                    playSound(sonDS2, 0.4);
+                }
+            };
+
+            // Parade/Riposte : annule l'affichage normal du coup, montre le blocage sur la cible
+            // puis la riposte immédiate sur l'attaquant d'origine. Sons dédiés configurables sur
+            // l'objet responsable (SonsParade/SonsRiposte) — repli sur les sons génériques
+            // d'esquive/impact si l'objet n'en définit pas.
+            if (r.parade_reussie) {
+                const sonParade = (r.sons_parade && r.sons_parade.trim()) ? sonDeLObjet(r.sons_parade, null) : SON_ESQUIVE;
+                playSound(sonParade, 0.3);
+                showDamage(wrapCible, 'PARADE !', 'parade');
+                setTimeout(() => {
+                    const wrapRipostee = frappeurEstA ? wrapA : wrapB;
+                    flashAvatar(frappeurEstA ? avatarA : avatarB);
+                    const sonRiposte = (r.sons_riposte && r.sons_riposte.trim()) ? sonDeLObjet(r.sons_riposte, null) : SON_IMPACT_GENERIQUE;
+                    playSound(sonRiposte, 0.3);
+                    showDamage(wrapRipostee, '-' + r.degats_ripostee, null);
+                    appliquerPV();
+                }, 350);
+                return;
+            }
+
+            if (r.touche) {
+                const jouerImpact = () => {
+                    flashAvatar(avatarCible);
+                    playSound(r.crit ? SON_CRIT : SON_IMPACT_GENERIQUE, 0.3);
+                    // Pour une arme de tir, playWeaponAnim affiche déjà un popup par balle —
+                    // le popup unique habituel serait redondant, donc on le saute pour ce cas.
+                    if (armeAnim !== 'tir' && armeAnim !== 'bombardement') {
+                        showDamage(wrapCible, (r.crit ? `CRIT : ${r.degats}!` : '-' + r.degats), r.crit ? 'crit' : null, armeImage);
+                    }
+                    appliquerPV();
+                    // Vol de vie : affiché sur le PORTEUR (pas la cible), en vert, avec l'icône
+                    // de son arme — comme un popup de dégâts mais à l'inverse (un gain, pas une perte).
+                    if (r.vol_de_vie > 0) {
+                        showDamage(frappeurEstA ? wrapA : wrapB, '+' + r.vol_de_vie, 'lifesteal', armeImage);
+                    }
+                    // Renvoi de dégâts : la CIBLE renvoie une partie des dégâts subis à
+                    // l'attaquant, avec l'icône de l'objet responsable (Bouclier épineux en
+                    // off-hand, Armure épineuse au torse...) plutôt que celle de l'arme du coup initial.
+                    if (r.degats_reflechis > 0) {
+                        showDamage(frappeurEstA ? wrapA : wrapB, '-' + r.degats_reflechis, null, r.reflection_image);
+                    }
+                    if (r.etourdi_applique) demarrerEtourdissement(wrapCible);
+                    if (r.execution_active) {
+                        const suffixeFrappeurExec = frappeurEstA ? 'A' : 'B';
+                        definirBadge(suffixeFrappeurExec, 'execution', '+' + r.execution_bonus + '%');
+                        setTimeout(() => definirBadge(suffixeFrappeurExec, 'execution', 0), 1300);
+                    }
+                    if (r.rage_bonus !== undefined) {
+                        definirBadge(frappeurEstA ? 'A' : 'B', 'rage', r.rage_bonus > 0 ? '+' + r.rage_bonus + '%' : 0);
+                    }
+                };
+                if (armeAnim) {
+                    playWeaponAnim(armeAnim, wrapCible, frappeurEstA, sonsCoup, armeCoups, r.degats, armeImage, r.degats_par_balle, r.crit_par_balle);
+                    jouerImpact();
+                } else {
+                    jouerImpact();
+                }
+            } else {
+                playSound(SON_ESQUIVE, 0.25);
+                showDamage(wrapCible, 'ESQUIVE', 'miss');
+                appliquerPV();
+            }
+        }, delai);
+        delai += (r.etourdi || r.paralysie) ? PAUSE_TOUR_ETOURDI : PAUSE_ENTRE_ROUNDS;
+    });
+
+    setTimeout(() => {
+        // Fin du combat : on coupe le son et l'effet de fatigue s'ils étaient actifs, ainsi que la musique
+        if (sonFatigue) { sonFatigue.pause(); sonFatigue.currentTime = 0; }
+        if (musiqueBataille) musiqueBataille.arreter();
+        arena.classList.remove('rope-active');
+        document.getElementById('fatigueBanner').classList.remove('show');
+
+        const gagnantEstA = data.vainqueur === data.attaquant;
+        if (data.egalite) {
+            // Égalité stricte : aucun vainqueur — anneau neutre sur LES DEUX portraits plutôt
+            // que le doré réservé à une vraie victoire.
+            document.getElementById('frameA').classList.add('egalite-glow');
+            document.getElementById('frameB').classList.add('egalite-glow');
+            playSound(SON_EGALITE, 0.4);
+        } else {
+            (gagnantEstA ? document.getElementById('frameA') : document.getElementById('frameB')).classList.add('winner-glow');
+            // Son de fin de combat, du point de vue de l'ATTAQUANT (data.attaquant) — indépendant
+            // de savoir si c'est le joueur A ou B qui occupait ce rôle dans ce duel précis.
+            playSound(data.vainqueur === data.attaquant ? SON_VICTOIRE_ATTAQUANT : SON_DEFAITE_ATTAQUANT, 0.4);
+        }
+        // L'explosion et le son de mort du perdant se déclenchent désormais dès le coup fatal
+        // (voir verifierMortEtDeclencher), plus au moment de cette révélation finale — sinon il y
+        // avait un délai perceptible entre le coup qui achève et la réaction visuelle/sonore.
+
+        // Gain/perte de points de classement : remplace le badge de statut (équitable/underdog/topdog)
+        // dans l'espace au-dessus de l'avatar, une fois le résultat connu.
+        // Les duels ne distribuent plus de lootbox (voir commentaire dans duel.cs) : c'est désormais
+        // les médailles qui récompensent le combat, des DEUX côtés et y compris en cas d'égalité —
+        // c'est pourquoi le suffixe médaille est calculé AVANT la branche égalité.
+        const IMAGE_MEDAILLE = 'assets/medaille.png';
+
+        function afficherPoints(elId, valeur, medailles) {
+            const el = document.getElementById(elId);
+            if (valeur === undefined || valeur === null) return;
+            const suffixeMedailles = medailles > 0
+                ? ` <img src="${IMAGE_MEDAILLE}" class="medaille-icon" alt="🏅" onerror="this.replaceWith('🏅')"> +${medailles}`
+                : '';
+            if (data.egalite) {
+                el.innerHTML = 'ÉGALITÉ' + suffixeMedailles;
+                el.className = 'matchup-status egalite';
+                return;
+            }
+            const positif = valeur >= 0;
+            el.innerHTML = (positif ? '+' : '') + valeur + suffixeMedailles;
+            el.className = 'matchup-status ' + (positif ? 'gain' : 'perte');
+        }
+        afficherPoints('statusA', data.points_attaquant, data.medailles_attaquant);
+        afficherPoints('statusB', data.points_defenseur, data.medailles_defenseur);
+    }, delai + 500);
+
+    setTimeout(() => {
+        arena.style.transition = 'opacity 0.5s';
+        arena.style.opacity = '0';
+    }, delai + 4500);
+</script>
+</body>
+</html>
