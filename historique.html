@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Historique des duels</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --vert: #5ddd7a; --rouge: #ff6b6b; --bleu: #4a9fd8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 40px 20px; }
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.page { max-width: 980px; margin: 0 auto; }
+
+.entete { padding-bottom: 20px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
+.entete h1 { font-size: 26px; font-weight: 700; }
+.entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 6px; }
+
+.barre-recherche { display: flex; gap: 10px; margin-bottom: 20px; }
+.barre-recherche input {
+    flex: 1; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 14px; color: var(--paper); font-family: 'Barlow', sans-serif; font-size: 14px;
+}
+.barre-recherche input:focus { outline: none; border-color: var(--yellow); }
+.barre-recherche input::placeholder { color: var(--paper-dim); }
+
+.vide-message { color: var(--paper-dim); font-style: italic; padding: 20px 0; }
+
+.liste-duels { display: flex; flex-direction: column; gap: 8px; }
+.carte-duel { background: var(--bg-panel); border: 1px solid var(--line); border-left: 3px solid var(--paper-dim); border-radius: 6px; overflow: hidden; }
+.carte-duel.victoire-attaquant { border-left-color: var(--vert); }
+.carte-duel.victoire-defenseur { border-left-color: var(--bleu); }
+.carte-duel.egalite { border-left-color: var(--paper-dim); }
+
+.ligne-resume {
+    display: flex; align-items: center; gap: 14px; padding: 12px 14px; cursor: pointer;
+    flex-wrap: wrap;
+}
+.ligne-resume:hover { background: rgba(255,255,255,0.03); }
+.resume-date { color: var(--paper-dim); font-size: 12px; width: 90px; flex-shrink: 0; }
+.resume-combattants { flex: 1; min-width: 160px; font-size: 14px; font-weight: 600; }
+.resume-combattants .vainqueur { color: var(--yellow); }
+.resume-tranche { font-size: 11px; color: var(--paper-dim); text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
+.resume-fleche { color: var(--paper-dim); font-size: 12px; transition: transform 0.15s; flex-shrink: 0; }
+.carte-duel.ouvert .resume-fleche { transform: rotate(90deg); }
+
+.detail-duel { display: none; padding: 4px 14px 16px; border-top: 1px solid var(--line); }
+.carte-duel.ouvert .detail-duel { display: block; }
+.detail-chargement { color: var(--paper-dim); font-style: italic; font-size: 13px; padding: 10px 0; }
+
+.stats-agregees { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin: 12px 0; }
+.mini-stat { background: rgba(255,255,255,0.03); border-radius: 6px; padding: 8px 10px; }
+.mini-stat .label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--paper-dim); }
+.mini-stat .valeur { font-size: 17px; font-weight: 800; margin-top: 2px; }
+
+.table-build { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+.table-build th { text-align: left; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--paper-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.table-build td { padding: 7px 8px; border-bottom: 1px solid var(--line); }
+.table-build .niveau { color: var(--yellow); font-weight: 700; font-size: 11.5px; }
+
+.bouton-replay {
+    display: inline-block; margin-top: 14px; background: var(--yellow); color: #1a1300; font-weight: 700;
+    text-decoration: none; border: none; cursor: pointer; padding: 9px 16px; border-radius: 6px; font-size: 13px;
+    text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Barlow', sans-serif;
+}
+.bouton-replay:hover { filter: brightness(1.08); }
+
+/* Modale de replay — le combat se rejoue directement sur cette page (iframe vers duel_overlay.html),
+   pas de nouvel onglet. */
+.modale-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100;
+    align-items: center; justify-content: center; padding: 20px;
+}
+.modale-overlay.ouverte { display: flex; }
+.modale-contenu { position: relative; width: 100%; max-width: 960px; }
+.modale-fermer {
+    position: absolute; top: -38px; right: 0; background: none; border: none; color: var(--paper);
+    font-size: 22px; cursor: pointer; line-height: 1;
+}
+.modale-fermer:hover { color: var(--yellow); }
+.iframe-replay { width: 100%; height: min(75vh, 720px); border: none; border-radius: 8px; background: #0a0e14; }
+
+.bouton-plus { display: block; margin: 18px auto 0; background: var(--bg-panel); border: 1px solid var(--line); color: var(--paper); padding: 10px 20px; border-radius: 6px; cursor: pointer; font-family: 'Barlow', sans-serif; font-size: 13px; }
+.bouton-plus:hover { border-color: var(--yellow); }
+
+@media (max-width: 640px) {
+    body { padding: 20px 12px; }
+    .resume-date { width: auto; }
+    .resume-tranche { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="entete">
+        <h1>Historique des duels</h1>
+        <p>Tous les combats de la chaîne — cherche un pseudo, déplie un duel pour voir le rapport complet et revoir l'animation.</p>
+    </div>
+    <div class="barre-recherche">
+        <input type="text" id="rechercheJoueur" placeholder="Rechercher un joueur...">
+    </div>
+    <div id="listeDuels" class="liste-duels"></div>
+    <button id="boutonPlus" class="bouton-plus" style="display:none;">Voir plus de duels</button>
+</div>
+
+<div id="modaleReplay" class="modale-overlay">
+    <div class="modale-contenu">
+        <button id="fermerModaleReplay" class="modale-fermer" aria-label="Fermer">✕</button>
+        <iframe id="iframeReplay" class="iframe-replay" src="" title="Replay du duel"></iframe>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const idCible = params.get('id');
+    const joueurInitial = params.get('joueur') || '';
+
+    // ponytail: pas de pagination serveur (helldivers_duel_index est déjà borné à 4000 côté
+    // duel.cs) -- on affiche par lots de PAGE_TAILLE côté client, "Voir plus" en ajoute un de plus.
+    // À revoir si l'historique devient réellement volumineux et que le rendu ralentit.
+    const PAGE_TAILLE = 30;
+    let indexComplet = [];
+    let indexFiltre = [];
+    let nbAffiches = 0;
+    const detailsCache = {};
+
+    function formatDate(iso) {
+        const d = new Date(iso);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    const LABELS_TRANCHE = { au_dessus: 'Outsider', dans_tranche: 'Équilibré', en_dessous: 'Favori' };
+
+    function classeCarte(entree) {
+        if (entree.egalite) return 'egalite';
+        return (entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase() ? 'victoire-attaquant' : 'victoire-defenseur';
+    }
+
+    function rendreResume(entree) {
+        const texteResultat = entree.egalite
+            ? `${entree.attaquant} <span class="vainqueur">⚖ égalité</span> ${entree.defenseur}`
+            : `<span class="vainqueur">${entree.vainqueur}</span> bat ${entree.vainqueur === entree.attaquant ? entree.defenseur : entree.attaquant}`;
+        return `
+            <div class="ligne-resume">
+                <span class="resume-date">${formatDate(entree.date)}</span>
+                <span class="resume-combattants">${texteResultat}</span>
+                <span class="resume-tranche">${LABELS_TRANCHE[entree.tranche] || ''}</span>
+                <span class="resume-fleche">▶</span>
+            </div>
+            <div class="detail-duel"><div class="detail-chargement">Chargement du rapport…</div></div>
+        `;
+    }
+
+    function rendreLigneBuild(label, buildA, buildB) {
+        const item = (b) => b ? `${b.nom || '—'}${b.niveau > 0 ? ` <span class="niveau">+${b.niveau}</span>` : ''}` : '—';
+        return `<tr><td>${label}</td><td>${item(buildA)}</td><td>${item(buildB)}</td></tr>`;
+    }
+
+    function rendreDetail(entree, detail) {
+        const build = (prefixe) => detail[`build_${prefixe}`] || {};
+        const buildA = build('attaquant'), buildB = build('defenseur');
+        return `
+            <div class="stats-agregees">
+                <div class="mini-stat"><div class="label">PowerLevel ${detail.attaquant || entree.attaquant}</div><div class="valeur">${Math.round(detail.power_attaquant || 0)}</div></div>
+                <div class="mini-stat"><div class="label">PowerLevel ${detail.defenseur || entree.defenseur}</div><div class="valeur">${Math.round(detail.power_defenseur || 0)}</div></div>
+                <div class="mini-stat"><div class="label">Dégâts ${entree.attaquant}</div><div class="valeur">${detail.degats_infliges_attaquant || 0}</div></div>
+                <div class="mini-stat"><div class="label">Dégâts ${entree.defenseur}</div><div class="valeur">${detail.degats_infliges_defenseur || 0}</div></div>
+                <div class="mini-stat"><div class="label">Plus gros coup ${entree.attaquant}</div><div class="valeur">${detail.plus_gros_coup_attaquant || 0}</div></div>
+                <div class="mini-stat"><div class="label">Plus gros coup ${entree.defenseur}</div><div class="valeur">${detail.plus_gros_coup_defenseur || 0}</div></div>
+                <div class="mini-stat"><div class="label">Rounds</div><div class="valeur">${entree.rounds || '—'}</div></div>
+            </div>
+            <table class="table-build">
+                <thead><tr><th>Équipement</th><th>${entree.attaquant}</th><th>${entree.defenseur}</th></tr></thead>
+                <tbody>
+                    ${rendreLigneBuild('Arme', buildA.arme, buildB.arme)}
+                    ${rendreLigneBuild('Off-hand', buildA.offhand, buildB.offhand)}
+                    ${rendreLigneBuild('Armure', buildA.torso, buildB.torso)}
+                    ${rendreLigneBuild('Stratagème', buildA.strategeme, buildB.strategeme)}
+                </tbody>
+            </table>
+            <button class="bouton-replay" data-id="${entree.id}">Voir le replay</button>
+        `;
+    }
+
+    // Modale de replay — un seul iframe réutilisé pour tous les duels, rechargé à chaque
+    // ouverture (même clic sur le même duel = relance l'animation depuis le début).
+    const modaleReplay = document.getElementById('modaleReplay');
+    const iframeReplay = document.getElementById('iframeReplay');
+    function ouvrirReplay(id) {
+        iframeReplay.src = `duel_overlay.html?replay=${encodeURIComponent(id)}`;
+        modaleReplay.classList.add('ouverte');
+    }
+    function fermerReplay() {
+        modaleReplay.classList.remove('ouverte');
+        iframeReplay.src = ''; // stoppe l'animation/le son en cours
+    }
+    document.getElementById('fermerModaleReplay').addEventListener('click', fermerReplay);
+    modaleReplay.addEventListener('click', (e) => { if (e.target === modaleReplay) fermerReplay(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerReplay(); });
+    document.getElementById('listeDuels').addEventListener('click', (e) => {
+        const bouton = e.target.closest('.bouton-replay');
+        if (bouton) { e.stopPropagation(); ouvrirReplay(bouton.dataset.id); }
+    });
+
+    function basculerDuel(carte, entree) {
+        const dejaOuvert = carte.classList.contains('ouvert');
+        if (dejaOuvert) { carte.classList.remove('ouvert'); return; }
+        carte.classList.add('ouvert');
+        const zoneDetail = carte.querySelector('.detail-duel');
+        if (detailsCache[entree.id]) {
+            zoneDetail.innerHTML = rendreDetail(entree, detailsCache[entree.id]);
+            return;
+        }
+        fetch(`duels/${encodeURIComponent(entree.id)}.json?v=${Date.now()}`)
+            .then(r => r.json())
+            .then(detail => {
+                detailsCache[entree.id] = detail;
+                zoneDetail.innerHTML = rendreDetail(entree, detail);
+            })
+            .catch(() => {
+                zoneDetail.innerHTML = '<div class="vide-message">Rapport indisponible pour ce duel.</div>';
+            });
+    }
+
+    function afficherLot() {
+        const zone = document.getElementById('listeDuels');
+        const lot = indexFiltre.slice(nbAffiches, nbAffiches + PAGE_TAILLE);
+        lot.forEach(entree => {
+            const carte = document.createElement('div');
+            carte.className = `carte-duel ${classeCarte(entree)}`;
+            carte.innerHTML = rendreResume(entree);
+            carte.querySelector('.ligne-resume').addEventListener('click', () => basculerDuel(carte, entree));
+            zone.appendChild(carte);
+            if (idCible && entree.id === idCible) basculerDuel(carte, entree);
+        });
+        nbAffiches += lot.length;
+        document.getElementById('boutonPlus').style.display = nbAffiches < indexFiltre.length ? 'block' : 'none';
+    }
+
+    function appliquerRecherche() {
+        const terme = document.getElementById('rechercheJoueur').value.trim().toLowerCase();
+        indexFiltre = terme
+            ? indexComplet.filter(e => (e.attaquant || '').toLowerCase().includes(terme) || (e.defenseur || '').toLowerCase().includes(terme))
+            : indexComplet;
+        nbAffiches = 0;
+        document.getElementById('listeDuels').innerHTML = '';
+        if (indexFiltre.length === 0) {
+            document.getElementById('listeDuels').innerHTML = '<div class="vide-message">Aucun duel trouvé.</div>';
+            document.getElementById('boutonPlus').style.display = 'none';
+            return;
+        }
+        afficherLot();
+    }
+
+    document.getElementById('rechercheJoueur').value = joueurInitial;
+    document.getElementById('rechercheJoueur').addEventListener('input', appliquerRecherche);
+    document.getElementById('boutonPlus').addEventListener('click', afficherLot);
+
+    fetch('duels_index.json?v=' + Date.now())
+        .then(r => r.json())
+        .then(index => {
+            indexComplet = index.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+            appliquerRecherche();
+        })
+        .catch(() => {
+            document.getElementById('listeDuels').innerHTML = '<div class="vide-message">Impossible de charger duels_index.json — vérifie qu\'il est bien présent à côté de cette page.</div>';
+        });
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>
