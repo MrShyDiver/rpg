@@ -3,25 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Historique des Duels - Arène</title>
-<link href="https://fonts.googleapis.com/css2?family=Beaufort+for+LOL:wght@400;700&family=Spiegel:wght@400;600&family=Oswald:wght@500;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Historique des Duels - L'Arène</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* 
-  Palette inspirée de l'univers "Hextech" (League of Legends)
+  === THEME HEXTECH / E-SPORT ===
 */
 :root {
-    --bg-main: #010a13; /* Bleu très sombre */
+    --bg-main: #010a13; 
     --bg-panel: #091428;
     --bg-hover: #1e283d;
-    --hextech-gold: #c8aa6e;
-    --hextech-gold-hover: #f0e6d2;
+    --hex-gold: #c8aa6e;
+    --hex-gold-glow: rgba(200, 170, 110, 0.4);
     --text-main: #a09b8c;
     --text-light: #f0e6d2;
-    --win-color: #0ac8b9; /* Cyan */
-    --loss-color: #e84057; /* Rouge */
-    --draw-color: #8c92a0; /* Gris */
+    --win-color: #0ac8b9; 
+    --loss-color: #e84057; 
     --border-color: #1e2328;
-    --font-heading: 'Oswald', sans-serif;
+    
+    /* Couleurs de rareté des items */
+    --rarity-commun: #8c92a0;
+    --rarity-normal: #1eff00; /* Vert */
+    --rarity-rare: #0070dd;   /* Bleu */
+    --rarity-epic: #a335ee;   /* Violet (au cas où) */
+
+    --font-head: 'Oswald', sans-serif;
     --font-body: 'Barlow', sans-serif;
 }
 
@@ -29,299 +35,140 @@
 
 body { 
     background-color: var(--bg-main); 
-    background-image: radial-gradient(circle at top, #0d1e3a 0%, var(--bg-main) 60%);
+    background-image: radial-gradient(circle at top center, #0d1e3a 0%, var(--bg-main) 70%);
     color: var(--text-main); 
     font-family: var(--font-body); 
     min-height: 100vh; 
     padding: 40px 20px; 
 }
 
-.page { max-width: 900px; margin: 0 auto; }
+.page { max-width: 950px; margin: 0 auto; }
 
 /* --- EN-TÊTE --- */
-.entete { 
-    text-align: center;
-    padding-bottom: 30px; 
-    margin-bottom: 30px; 
-}
+.entete { text-align: center; margin-bottom: 40px; }
 .entete h1 { 
-    font-family: var(--font-heading); 
-    font-size: 36px; 
-    color: var(--hextech-gold);
-    text-transform: uppercase; 
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(200, 170, 110, 0.3);
+    font-family: var(--font-head); font-size: 42px; 
+    color: var(--hex-gold); text-transform: uppercase; letter-spacing: 3px;
+    text-shadow: 0 0 15px var(--hex-gold-glow);
 }
-.entete p { 
-    font-size: 15px; 
-    margin-top: 8px; 
-}
+.entete p { font-size: 16px; margin-top: 10px; color: var(--text-light); opacity: 0.8; }
 
 /* --- RECHERCHE --- */
-.barre-recherche { 
-    display: flex; 
-    justify-content: center;
-    margin-bottom: 30px; 
-}
+.barre-recherche { display: flex; justify-content: center; margin-bottom: 30px; }
 .barre-recherche input {
-    width: 100%;
-    max-width: 500px;
-    background: rgba(9, 20, 40, 0.8); 
-    border: 1px solid var(--hextech-gold); 
-    border-radius: 4px;
-    padding: 12px 20px; 
-    color: var(--text-light); 
-    font-family: var(--font-body); 
-    font-size: 16px;
-    box-shadow: 0 0 15px rgba(200, 170, 110, 0.1) inset;
-    transition: all 0.3s ease;
+    width: 100%; max-width: 600px;
+    background: rgba(9, 20, 40, 0.8); border: 1px solid var(--hex-gold); 
+    border-radius: 4px; padding: 14px 20px; color: var(--text-light); 
+    font-family: var(--font-body); font-size: 16px;
+    box-shadow: 0 0 15px var(--hex-gold-glow) inset; transition: all 0.3s ease;
 }
-.barre-recherche input:focus { 
-    outline: none; 
-    box-shadow: 0 0 20px rgba(200, 170, 110, 0.4) inset, 0 0 10px rgba(200, 170, 110, 0.2); 
-}
-.barre-recherche input::placeholder { color: #5c5b57; }
+.barre-recherche input:focus { outline: none; box-shadow: 0 0 25px var(--hex-gold-glow) inset, 0 0 15px var(--hex-gold-glow); }
 
-/* --- LISTE DES DUELS --- */
-.liste-duels { display: flex; flex-direction: column; gap: 10px; }
-
-.carte-duel { 
-    background: var(--bg-panel); 
-    border: 1px solid var(--border-color); 
-    border-radius: 4px; 
-    overflow: hidden; 
-    transition: transform 0.2s;
-}
+/* --- LISTE DES MATCHS --- */
+.liste-duels { display: flex; flex-direction: column; gap: 12px; }
+.carte-duel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; }
 .carte-duel:hover { border-color: #323c50; }
 
-/* Couleurs selon le résultat */
 .carte-duel.victoire-attaquant .match-indicator { background: var(--win-color); box-shadow: 0 0 10px var(--win-color); }
-.carte-duel.victoire-attaquant .result-text { color: var(--win-color); }
-
 .carte-duel.victoire-defenseur .match-indicator { background: var(--loss-color); box-shadow: 0 0 10px var(--loss-color); }
-.carte-duel.victoire-defenseur .result-text { color: var(--loss-color); }
+.carte-duel.egalite .match-indicator { background: var(--text-main); }
 
-.carte-duel.egalite .match-indicator { background: var(--draw-color); }
-.carte-duel.egalite .result-text { color: var(--draw-color); }
-
-/* --- RESUME DU MATCH (Ligne principale) --- */
-.ligne-resume {
-    display: flex; 
-    align-items: center; 
-    padding: 10px; 
-    cursor: pointer;
-    position: relative;
-    background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, transparent 100%);
-}
+/* Ligne Résumé */
+.ligne-resume { display: flex; align-items: center; padding: 12px; cursor: pointer; position: relative; background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, transparent 100%); }
 .ligne-resume:hover { background: var(--bg-hover); }
+.match-indicator { width: 6px; height: 100%; position: absolute; left: 0; top: 0; }
+.match-time { width: 90px; padding-left: 15px; font-size: 13px; color: var(--text-main); line-height: 1.4; }
 
-.match-indicator {
-    width: 6px;
-    height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-}
-
-.match-time { 
-    width: 80px; 
-    padding-left: 15px;
-    font-size: 12px; 
-    color: var(--text-main);
-    text-align: left;
-}
-
-.match-players {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 30px;
-}
-
-.player {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 150px;
-}
+.match-players { flex: 1; display: flex; align-items: center; justify-content: center; gap: 20px; }
+.player { display: flex; align-items: center; gap: 12px; width: 200px; }
 .player.reverse { flex-direction: row-reverse; text-align: right; }
 
 .player-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 2px solid var(--border-color);
-    background: #000;
+    width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--border-color);
+    background: #000; object-fit: cover;
 }
-.player-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-light);
-}
+.player-name { font-size: 18px; font-weight: 600; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
-.match-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100px;
-}
-.result-text {
-    font-family: var(--font-heading);
-    font-size: 18px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.match-type {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-main);
-    margin-top: 4px;
-}
+.match-center { text-align: center; width: 90px; }
+.match-type { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); margin-top: 4px; }
+.rounds-badge { display: inline-block; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-top: 4px;}
 
-.match-action {
-    width: 50px;
-    text-align: right;
-    padding-right: 15px;
-}
-.chevron {
-    display: inline-block;
-    transition: transform 0.3s;
-    color: var(--hextech-gold);
-}
-.carte-duel.ouvert .chevron { transform: rotate(180deg); }
+.match-action { width: 50px; text-align: right; padding-right: 15px; color: var(--hex-gold); transition: transform 0.3s; }
+.carte-duel.ouvert .match-action { transform: rotate(180deg); }
 
-/* --- DETAILS DU MATCH (Déplié) --- */
-.detail-duel { 
-    display: none; 
-    padding: 20px; 
-    background: #050b14;
-    border-top: 1px solid var(--border-color);
-}
-.carte-duel.ouvert .detail-duel { display: block; animation: fadeIn 0.3s ease; }
+/* --- MENU DÉROULÉ : ÉCRAN DE STATS --- */
+.detail-duel { display: none; padding: 30px 20px; background: #050b14; border-top: 1px solid var(--border-color); }
+.carte-duel.ouvert .detail-duel { display: block; animation: slideDown 0.3s ease; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+/* Header du VS */
+.vs-header { display: flex; justify-content: center; align-items: center; gap: 40px; margin-bottom: 30px; }
+.vs-player { text-align: center; }
+.vs-player img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--border-color); object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+.vs-player.winner img { border-color: var(--hex-gold); box-shadow: 0 0 20px var(--hex-gold-glow); }
+.vs-player h3 { font-family: var(--font-head); color: var(--text-light); font-size: 22px; margin-top: 10px; letter-spacing: 1px;}
+.vs-logo { font-family: var(--font-head); font-size: 40px; font-style: italic; color: var(--hex-gold); text-shadow: 0 0 15px var(--hex-gold-glow); }
 
-/* Grille de stats façon tableau des scores */
-.scoreboard {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    gap: 20px;
-}
-.team-stats {
-    flex: 1;
-    background: rgba(9, 20, 40, 0.5);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 15px;
-}
-.team-title {
-    font-family: var(--font-heading);
-    color: var(--hextech-gold);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-}
+/* Grille de comparaison (Face to Face) */
+.comp-table { width: 100%; max-width: 600px; margin: 0 auto 40px; display: flex; flex-direction: column; gap: 8px; }
+.comp-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 8px 15px; }
+.comp-row:hover { background: rgba(255,255,255,0.05); }
+.comp-label { flex: 1; text-align: center; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); }
+.comp-val { width: 80px; font-size: 18px; font-weight: 700; color: var(--text-light); }
+.comp-val.left { text-align: right; }
+.comp-val.right { text-align: left; }
+.comp-val.win { color: var(--hex-gold); text-shadow: 0 0 8px var(--hex-gold-glow); font-size: 19px;}
+.comp-val.lose { color: #5c5b57; }
 
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-.stat-label { color: var(--text-main); }
-.stat-value { color: var(--text-light); font-weight: 600; }
+/* Zone des Builds (Items) */
+.builds-section { display: flex; justify-content: space-between; gap: 20px; border-top: 1px dashed #2c3545; padding-top: 30px; }
+.build-team { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.build-title { font-family: var(--font-head); font-size: 16px; color: var(--text-main); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px;}
+.items-grid { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 
-/* Builds (Items) */
-.build-container {
-    display: flex;
-    gap: 8px;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px dashed var(--border-color);
+/* Carte Item (Grand format) */
+.big-item {
+    width: 64px; height: 64px; background: #000; border: 2px solid var(--border-color);
+    border-radius: 6px; position: relative; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s; cursor: help;
 }
-.item-slot {
-    width: 40px;
-    height: 40px;
-    background: #111;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    color: var(--text-main);
-    text-align: center;
-    position: relative;
+.big-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+.big-item img { width: 90%; height: 90%; object-fit: contain; }
+.item-badge {
+    position: absolute; bottom: -8px; right: -8px; background: var(--bg-panel); color: var(--text-light);
+    border: 1px solid var(--text-main); border-radius: 50%; width: 22px; height: 22px;
+    font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold;
 }
-.item-slot.has-item { border-color: var(--hextech-gold); background: #1a1a1a; }
-.item-level {
-    position: absolute;
-    bottom: -6px;
-    right: -6px;
-    background: var(--bg-main);
-    color: var(--hextech-gold);
-    border: 1px solid var(--hextech-gold);
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
+/* Couleurs raretés items */
+.big-item.rarity-commun { border-color: var(--rarity-commun); }
+.big-item.rarity-normal { border-color: var(--rarity-normal); box-shadow: 0 0 8px rgba(30, 255, 0, 0.2) inset;}
+.big-item.rarity-rare { border-color: var(--rarity-rare); box-shadow: 0 0 8px rgba(0, 112, 221, 0.2) inset;}
+.big-item.rarity-epic { border-color: var(--rarity-epic); box-shadow: 0 0 8px rgba(163, 53, 238, 0.2) inset;}
 
-/* Boutons */
 .bouton-replay, .bouton-plus {
-    background: transparent;
-    border: 2px solid var(--hextech-gold);
-    color: var(--hextech-gold);
-    font-family: var(--font-heading);
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.2s;
-    display: block;
-    text-align: center;
+    background: transparent; border: 2px solid var(--hex-gold); color: var(--hex-gold);
+    font-family: var(--font-head); font-size: 16px; text-transform: uppercase; letter-spacing: 2px;
+    padding: 12px 25px; cursor: pointer; border-radius: 4px; transition: all 0.2s; display: block; text-align: center;
 }
-.bouton-replay { margin: 20px auto 0; width: 250px; }
+.bouton-replay { margin: 40px auto 0; width: 280px; }
 .bouton-plus { margin: 30px auto 0; width: 100%; max-width: 300px; }
-
-.bouton-replay:hover, .bouton-plus:hover {
-    background: var(--hextech-gold);
-    color: var(--bg-main);
-    box-shadow: 0 0 15px rgba(200, 170, 110, 0.4);
-}
+.bouton-replay:hover, .bouton-plus:hover { background: var(--hex-gold); color: var(--bg-main); box-shadow: 0 0 20px var(--hex-gold-glow); }
 
 /* --- MODALE REPLAY --- */
-.modale-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(1, 10, 19, 0.9); z-index: 100;
-    align-items: center; justify-content: center; padding: 20px;
-    backdrop-filter: blur(5px);
-}
+.modale-overlay { display: none; position: fixed; inset: 0; background: rgba(1, 10, 19, 0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
 .modale-overlay.ouverte { display: flex; }
-.modale-contenu { position: relative; width: 100%; max-width: 960px; border: 2px solid var(--hextech-gold); border-radius: 4px; box-shadow: 0 0 30px rgba(200, 170, 110, 0.2); }
-.modale-fermer {
-    position: absolute; top: -40px; right: 0; background: none; border: none; color: var(--hextech-gold);
-    font-size: 28px; cursor: pointer; transition: transform 0.2s;
-}
-.modale-fermer:hover { transform: scale(1.1); color: var(--hextech-gold-hover); }
+.modale-contenu { position: relative; width: 100%; max-width: 960px; border: 2px solid var(--hex-gold); border-radius: 4px; box-shadow: 0 0 40px var(--hex-gold-glow); }
+.modale-fermer { position: absolute; top: -45px; right: 0; background: none; border: none; color: var(--hex-gold); font-size: 32px; cursor: pointer; transition: transform 0.2s; }
+.modale-fermer:hover { transform: scale(1.1); color: #fff; }
 .iframe-replay { width: 100%; height: min(75vh, 720px); border: none; background: #000; display: block; }
 
-/* Responsive */
 @media (max-width: 768px) {
     .match-players { gap: 10px; }
-    .player-name { display: none; } /* On cache les noms sur mobile pour laisser les avatars */
+    .player-name { display: none; } 
     .player { width: auto; }
-    .scoreboard { flex-direction: column; }
-    .match-time { width: 60px; font-size: 11px; padding-left: 10px; }
+    .vs-header { gap: 15px; }
+    .vs-player img { width: 60px; height: 60px; }
+    .builds-section { flex-direction: column; gap: 40px; }
 }
 </style>
 </head>
@@ -329,16 +176,16 @@ body {
 
 <div class="page">
     <div class="entete">
-        <h1>Historique de l'Arène</h1>
-        <p>Revivez les affrontements en pixel art du stream.</p>
+        <h1>Archives de L'Arène</h1>
+        <p>Revivez l'historique détaillé des combats et analysez les équipements.</p>
     </div>
 
     <div class="barre-recherche">
-        <input type="text" id="rechercheJoueur" placeholder="Rechercher un champion...">
+        <input type="text" id="rechercheJoueur" placeholder="Rechercher le pseudo d'un combattant...">
     </div>
 
     <div id="listeDuels" class="liste-duels"></div>
-    <button id="boutonPlus" class="bouton-plus" style="display:none;">Charger plus de matchs</button>
+    <button id="boutonPlus" class="bouton-plus" style="display:none;">Charger plus de combats</button>
 </div>
 
 <div id="modaleReplay" class="modale-overlay">
@@ -349,26 +196,74 @@ body {
 </div>
 
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const idCible = params.get('id');
-    const joueurInitial = params.get('joueur') || '';
-
-    const PAGE_TAILLE = 20;
+    const PAGE_TAILLE = 15;
     let indexComplet = [];
     let indexFiltre = [];
     let nbAffiches = 0;
+    
+    // Caches pour éviter de re-télécharger les mêmes fichiers
     const detailsCache = {};
+    const joueursCache = {};
+    let catalogueItems = {};
+
+    const defaultAvatar = "https://static-cdn.jtvnw.net/user-default-pictures-uv/41780b5a-def8-11e9-94d9-784f43822e80-profile_image-70x70.png";
+
+    // 1. Initialisation : Charger le catalogue des items PUIS les duels
+    async function initialiser() {
+        try {
+            const resCat = await fetch('catalogue_stats.json?v=' + Date.now());
+            catalogueItems = await resCat.json();
+        } catch(e) {
+            console.warn("Catalogue des items introuvable, affichage dégradé des images.");
+        }
+
+        try {
+            const resIndex = await fetch('duels_index.json?v=' + Date.now());
+            const data = await resIndex.json();
+            indexComplet = data.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+            appliquerRecherche();
+        } catch(e) {
+            document.getElementById('listeDuels').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--loss-color);">Erreur de connexion aux archives de l\'Arène.</div>';
+        }
+    }
+
+    // 2. Récupération asynchrone des avatars depuis joueurs/pseudo.json
+    async function appliquerAvatarReel(pseudo, imgId) {
+        const lowerPseudo = pseudo.toLowerCase();
+        const imgElement = document.getElementById(imgId);
+        if(!imgElement) return;
+
+        // Si déjà en cache
+        if (joueursCache[lowerPseudo]) {
+            imgElement.src = joueursCache[lowerPseudo];
+            return;
+        }
+
+        try {
+            const res = await fetch(`joueurs/${encodeURIComponent(lowerPseudo)}.json`);
+            if (res.ok) {
+                const joueurData = await res.json();
+                const avatar = (joueurData[lowerPseudo] && joueurData[lowerPseudo].avatar) 
+                                ? joueurData[lowerPseudo].avatar 
+                                : defaultAvatar;
+                
+                joueursCache[lowerPseudo] = avatar;
+                imgElement.src = avatar;
+            } else {
+                // Fallback direct sur l'API Twitch via Decapi si le fichier json du joueur manque
+                const fallbackUrl = `https://decapi.me/twitch/avatar/${encodeURIComponent(lowerPseudo)}`;
+                joueursCache[lowerPseudo] = fallbackUrl;
+                imgElement.src = fallbackUrl;
+            }
+        } catch(e) {
+            imgElement.src = defaultAvatar;
+        }
+    }
 
     function formatDate(iso) {
         const d = new Date(iso);
-        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + '<br>' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    const LABELS_TRANCHE = { au_dessus: 'Outsider', dans_tranche: 'Équilibré', en_dessous: 'Favori' };
-
-    // Générateur d'avatar pixel art via DiceBear
-    function getAvatar(name) {
-        return `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(name)}`;
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + '<br>' + 
+               d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
 
     function classeCarte(entree) {
@@ -376,11 +271,15 @@ body {
         return (entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase() ? 'victoire-attaquant' : 'victoire-defenseur';
     }
 
+    // 3. Rendu de la Ligne de Résumé
     function rendreResume(entree) {
+        const idAtk = `img-atk-${entree.id}`;
+        const idDef = `img-def-${entree.id}`;
+
         let resultText = "VS";
         if (entree.egalite) resultText = "ÉGALITÉ";
         else if ((entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase()) resultText = "VICTOIRE";
-        else resultText = "DÉFAITE"; // Du point de vue de l'attaquant
+        else resultText = "DÉFAITE"; 
 
         return `
             <div class="ligne-resume">
@@ -390,108 +289,126 @@ body {
                 
                 <div class="match-players">
                     <div class="player">
-                        <img src="${getAvatar(entree.attaquant)}" class="player-avatar" alt="${entree.attaquant}">
+                        <img id="${idAtk}" src="${defaultAvatar}" class="player-avatar" alt="${entree.attaquant}" onerror="this.src='${defaultAvatar}';">
                         <span class="player-name">${entree.attaquant}</span>
                     </div>
                     
                     <div class="match-center">
-                        <span class="result-text">${resultText}</span>
-                        <span class="match-type">${LABELS_TRANCHE[entree.tranche] || 'Classé'}</span>
+                        <div style="font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--text-light);">${resultText}</div>
+                        <div class="rounds-badge">${entree.rounds} Rounds</div>
                     </div>
                     
                     <div class="player reverse">
-                        <img src="${getAvatar(entree.defenseur)}" class="player-avatar" alt="${entree.defenseur}">
+                        <img id="${idDef}" src="${defaultAvatar}" class="player-avatar" alt="${entree.defenseur}" onerror="this.src='${defaultAvatar}';">
                         <span class="player-name">${entree.defenseur}</span>
                     </div>
                 </div>
 
-                <div class="match-action">
-                    <span class="chevron">▼</span>
-                </div>
+                <div class="match-action">▼</div>
             </div>
-            <div class="detail-duel"><div style="text-align:center; padding: 20px; color: var(--text-main);">Analyse des données en cours...</div></div>
+            <div class="detail-duel"><div style="text-align:center; padding: 20px; color: var(--text-main);">Analyse tactique en cours...</div></div>
         `;
     }
 
-    function rendreSlotItem(item) {
-        if (!item || !item.nom) return `<div class="item-slot" title="Emplacement vide"></div>`;
+    // Fonction d'aide pour générer une ligne de face-à-face
+    function rendreStatFaceAFace(label, valA, valB) {
+        let classeA = "comp-val left";
+        let classeB = "comp-val right";
+
+        // Détermine le gagnant de la stat
+        if (typeof valA === 'number' && typeof valB === 'number') {
+            if (valA > valB) { classeA += " win"; classeB += " lose"; }
+            else if (valB > valA) { classeB += " win"; classeA += " lose"; }
+        }
+
         return `
-            <div class="item-slot has-item" title="${item.nom}">
-                ${item.nom.substring(0, 3).toUpperCase()}
-                ${item.niveau > 0 ? `<div class="item-level">+${item.niveau}</div>` : ''}
+            <div class="comp-row">
+                <div class="${classeA}">${valA}</div>
+                <div class="comp-label">${label}</div>
+                <div class="${classeB}">${valB}</div>
             </div>
         `;
     }
 
+    // Rendu d'un item stylisé (En lisant le catalogue global)
+    function rendreBigItem(itemData) {
+        if (!itemData || !itemData.nom) return `<div class="big-item rarity-commun" title="Emplacement vide"></div>`;
+        
+        // Chercher l'item dans le catalogue par son nom
+        let catItem = Object.values(catalogueItems).find(c => c.nom.toLowerCase() === itemData.nom.toLowerCase());
+        
+        // Valeurs par défaut si non trouvé
+        let imageSrc = catItem && catItem.image ? catItem.image : ''; 
+        let rarete = catItem && catItem.rarete ? catItem.rarete.toLowerCase() : 'commun';
+        let fullTitle = `${itemData.nom} ${catItem && catItem.rarete ? '('+catItem.rarete+')' : ''}`;
+
+        return `
+            <div class="big-item rarity-${rarete}" title="${fullTitle}">
+                ${imageSrc ? `<img src="${imageSrc}" alt="${itemData.nom}" onerror="this.style.display='none'">` : `<span style="font-size:10px;text-align:center;">${itemData.nom.substring(0,4)}</span>`}
+                ${itemData.niveau > 0 ? `<div class="item-badge">+${itemData.niveau}</div>` : ''}
+            </div>
+        `;
+    }
+
+    // 4. Rendu de l'intérieur de la carte (Statistiques + Builds)
     function rendreDetail(entree, detail) {
         const buildA = detail.build_attaquant || {};
         const buildB = detail.build_defenseur || {};
+        
+        const estVictoireA = (entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase();
+        const estVictoireB = (entree.vainqueur || '').toLowerCase() === (entree.defenseur || '').toLowerCase();
 
         return `
-            <div class="scoreboard">
-                <!-- Stats Attaquant -->
-                <div class="team-stats">
-                    <div class="team-title">${entree.attaquant}</div>
-                    <div class="stat-row"><span class="stat-label">PowerLevel</span><span class="stat-value">${Math.round(detail.power_attaquant || 0)}</span></div>
-                    <div class="stat-row"><span class="stat-label">Dégâts infligés</span><span class="stat-value">${detail.degats_infliges_attaquant || 0}</span></div>
-                    <div class="stat-row"><span class="stat-label">Coup Critique Max</span><span class="stat-value" style="color: var(--loss-color);">${detail.plus_gros_coup_attaquant || 0}</span></div>
-                    
-                    <div class="build-container">
-                        ${rendreSlotItem(buildA.arme)}
-                        ${rendreSlotItem(buildA.offhand)}
-                        ${rendreSlotItem(buildA.torso)}
-                        ${rendreSlotItem(buildA.strategeme)}
+            <!-- HEADER VS -->
+            <div class="vs-header">
+                <div class="vs-player ${estVictoireA ? 'winner' : ''}">
+                    <img src="${joueursCache[entree.attaquant.toLowerCase()] || defaultAvatar}" alt="${entree.attaquant}">
+                    <h3>${entree.attaquant}</h3>
+                </div>
+                
+                <div class="vs-logo">VS</div>
+
+                <div class="vs-player ${estVictoireB ? 'winner' : ''}">
+                    <img src="${joueursCache[entree.defenseur.toLowerCase()] || defaultAvatar}" alt="${entree.defenseur}">
+                    <h3>${entree.defenseur}</h3>
+                </div>
+            </div>
+
+            <!-- TABLEAU DES STATS FACE A FACE -->
+            <div class="comp-table">
+                ${rendreStatFaceAFace("Power Level", Math.round(detail.power_attaquant || entree.power_attaquant || 0), Math.round(detail.power_defenseur || entree.power_defenseur || 0))}
+                ${rendreStatFaceAFace("Dégâts Totaux", detail.degats_infliges_attaquant || 0, detail.degats_infliges_defenseur || 0)}
+                ${rendreStatFaceAFace("Coup le plus puissant", detail.plus_gros_coup_attaquant || 0, detail.plus_gros_coup_defenseur || 0)}
+            </div>
+
+            <!-- BUILDS EQUIPES -->
+            <div class="builds-section">
+                <div class="build-team">
+                    <div class="build-title">Équipement Attaquant</div>
+                    <div class="items-grid">
+                        ${rendreBigItem(buildA.arme)}
+                        ${rendreBigItem(buildA.offhand)}
+                        ${rendreBigItem(buildA.torso)}
+                        ${rendreBigItem(buildA.strategeme)}
                     </div>
                 </div>
 
-                <!-- Stats Défenseur -->
-                <div class="team-stats">
-                    <div class="team-title">${entree.defenseur}</div>
-                    <div class="stat-row"><span class="stat-label">PowerLevel</span><span class="stat-value">${Math.round(detail.power_defenseur || 0)}</span></div>
-                    <div class="stat-row"><span class="stat-label">Dégâts infligés</span><span class="stat-value">${detail.degats_infliges_defenseur || 0}</span></div>
-                    <div class="stat-row"><span class="stat-label">Coup Critique Max</span><span class="stat-value" style="color: var(--loss-color);">${detail.plus_gros_coup_defenseur || 0}</span></div>
-                    
-                    <div class="build-container">
-                        ${rendreSlotItem(buildB.arme)}
-                        ${rendreSlotItem(buildB.offhand)}
-                        ${rendreSlotItem(buildB.torso)}
-                        ${rendreSlotItem(buildB.strategeme)}
+                <div class="build-team">
+                    <div class="build-title">Équipement Défenseur</div>
+                    <div class="items-grid">
+                        ${rendreBigItem(buildB.arme)}
+                        ${rendreBigItem(buildB.offhand)}
+                        ${rendreBigItem(buildB.torso)}
+                        ${rendreBigItem(buildB.strategeme)}
                     </div>
                 </div>
             </div>
             
-            <div style="text-align: center; color: var(--text-main); font-size: 12px; margin-bottom: 10px;">
-                Durée du combat : ${entree.rounds || '—'} Rounds
-            </div>
-            
-            <button class="bouton-replay" data-id="${entree.id}">Lancer le Replay</button>
+            <button class="bouton-replay" data-id="${entree.id}">Visionner le Replay</button>
         `;
     }
 
-    // Gestion de la modale
-    const modaleReplay = document.getElementById('modaleReplay');
-    const iframeReplay = document.getElementById('iframeReplay');
-    
-    function ouvrirReplay(id) {
-        iframeReplay.src = `duel_overlay.html?replay=${encodeURIComponent(id)}`;
-        modaleReplay.classList.add('ouverte');
-    }
-    
-    function fermerReplay() {
-        modaleReplay.classList.remove('ouverte');
-        iframeReplay.src = '';
-    }
-    
-    document.getElementById('fermerModaleReplay').addEventListener('click', fermerReplay);
-    modaleReplay.addEventListener('click', (e) => { if (e.target === modaleReplay) fermerReplay(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerReplay(); });
-    
-    document.getElementById('listeDuels').addEventListener('click', (e) => {
-        const bouton = e.target.closest('.bouton-replay');
-        if (bouton) { e.stopPropagation(); ouvrirReplay(bouton.dataset.id); }
-    });
-
-    // Accordéon
+    // Gestion du dépliage
     function basculerDuel(carte, entree) {
         const dejaOuvert = carte.classList.contains('ouvert');
         if (dejaOuvert) { carte.classList.remove('ouvert'); return; }
@@ -511,11 +428,11 @@ body {
                 zoneDetail.innerHTML = rendreDetail(entree, detail);
             })
             .catch(() => {
-                zoneDetail.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--loss-color);">Rapport de combat corrompu.</div>';
+                zoneDetail.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--loss-color);">Rapport de combat introuvable ou corrompu.</div>';
             });
     }
 
-    // Pagination & Affichage
+    // Moteur d'affichage
     function afficherLot() {
         const zone = document.getElementById('listeDuels');
         const lot = indexFiltre.slice(nbAffiches, nbAffiches + PAGE_TAILLE);
@@ -524,9 +441,14 @@ body {
             const carte = document.createElement('div');
             carte.className = `carte-duel ${classeCarte(entree)}`;
             carte.innerHTML = rendreResume(entree);
+            
+            // Événement clic
             carte.querySelector('.ligne-resume').addEventListener('click', () => basculerDuel(carte, entree));
             zone.appendChild(carte);
-            if (idCible && entree.id === idCible) basculerDuel(carte, entree);
+            
+            // Lancer la récupération asynchrone des avatars réels
+            appliquerAvatarReel(entree.attaquant, `img-atk-${entree.id}`);
+            appliquerAvatarReel(entree.defenseur, `img-def-${entree.id}`);
         });
         
         nbAffiches += lot.length;
@@ -549,20 +471,33 @@ body {
         afficherLot();
     }
 
-    // Init
-    document.getElementById('rechercheJoueur').value = joueurInitial;
+    // Modale Replay
+    const modaleReplay = document.getElementById('modaleReplay');
+    const iframeReplay = document.getElementById('iframeReplay');
+    
+    function ouvrirReplay(id) {
+        iframeReplay.src = `duel_overlay.html?replay=${encodeURIComponent(id)}`;
+        modaleReplay.classList.add('ouverte');
+    }
+    function fermerReplay() {
+        modaleReplay.classList.remove('ouverte');
+        iframeReplay.src = '';
+    }
+    
+    document.getElementById('fermerModaleReplay').addEventListener('click', fermerReplay);
+    modaleReplay.addEventListener('click', (e) => { if (e.target === modaleReplay) fermerReplay(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerReplay(); });
+    document.getElementById('listeDuels').addEventListener('click', (e) => {
+        const bouton = e.target.closest('.bouton-replay');
+        if (bouton) { e.stopPropagation(); ouvrirReplay(bouton.dataset.id); }
+    });
+
+    // Lancement
     document.getElementById('rechercheJoueur').addEventListener('input', appliquerRecherche);
     document.getElementById('boutonPlus').addEventListener('click', afficherLot);
+    
+    initialiser();
 
-    fetch('duels_index.json?v=' + Date.now())
-        .then(r => r.json())
-        .then(index => {
-            indexComplet = index.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-            appliquerRecherche();
-        })
-        .catch(() => {
-            document.getElementById('listeDuels').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--loss-color);">Erreur de connexion aux archives de l\'Arène.</div>';
-        });
 </script>
 </body>
 </html>
