@@ -3,564 +3,489 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Codex des objets</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<title>Historique des Duels - L'Arène</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* === THEME HEXTECH / E-SPORT === */
 :root {
-    --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
-    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
-    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
-    /* Code couleur par stat — identique à calculateur.html/stats.html, pour reconnaître une stat
-       d'un coup d'œil sur tout le site. */
-    --atk: #ff5e3a; --def: #3b82f6; --pv: #ca2972; --spd: #FFCC00; --luck: #00ffaa; --esquive: #22d3ee;
-    --negatif: #ff6b6b;
+    --bg-main: #010a13; 
+    --bg-panel: #091428;
+    --bg-hover: #1e283d;
+    --hex-gold: #c8aa6e;
+    --hex-gold-glow: rgba(200, 170, 110, 0.4);
+    --text-main: #a09b8c;
+    --text-light: #f0e6d2;
+    --win-color: #0ac8b9; 
+    --loss-color: #e84057; 
+    --border-color: #1e2328;
+    
+    /* Couleurs de rareté des items */
+    --rarity-commun: #8c92a0;
+    --rarity-normal: #1eff00; 
+    --rarity-rare: #0070dd;   
+    --rarity-epic: #a335ee;   
+
+    --font-head: 'Oswald', sans-serif;
+    --font-body: 'Barlow', sans-serif;
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 30px 20px 60px; }
-h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
-.page { max-width: 1100px; margin: 0 auto; }
 
-.entete { padding-bottom: 18px; border-bottom: 3px solid var(--yellow); margin-bottom: 22px; }
-.entete h1 { font-size: 26px; font-weight: 700; }
-.entete h1 span { color: var(--yellow); }
-.entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 6px; }
-
-/* ============ BARRE DE RECHERCHE ET FILTRES ============ */
-.barre-controles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; align-items: center; }
-.champ-recherche {
-    flex: 1; min-width: 220px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
-    padding: 10px 14px; color: var(--paper); font-size: 14px; font-family: 'Barlow', sans-serif;
+body { 
+    background-color: var(--bg-main); 
+    background-image: radial-gradient(circle at top center, #0d1e3a 0%, var(--bg-main) 70%);
+    color: var(--text-main); 
+    font-family: var(--font-body); 
+    min-height: 100vh; 
+    padding: 40px 20px; 
 }
-.champ-recherche::placeholder { color: var(--paper-dim); }
-.champ-recherche:focus { outline: none; border-color: var(--yellow); }
 
-.filtres-rangee { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-.filtre-pilule {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: 0.5px;
-    text-transform: uppercase; color: var(--paper-dim); background: var(--bg-panel); border: 1px solid var(--line);
-    border-radius: 999px; padding: 7px 14px; cursor: pointer; transition: all 0.15s ease;
+.page { max-width: 950px; margin: 0 auto; }
+
+/* --- EN-TÊTE --- */
+.entete { text-align: center; margin-bottom: 30px; }
+.entete h1 { 
+    font-family: var(--font-head); font-size: 42px; 
+    color: var(--hex-gold); text-transform: uppercase; letter-spacing: 3px;
+    text-shadow: 0 0 15px var(--hex-gold-glow);
 }
-.filtre-pilule:hover { border-color: #444; color: var(--paper); }
-.filtre-pilule.actif { background: var(--yellow); color: #000; border-color: var(--yellow); }
-.filtre-pilule.actif.r-normal { background: var(--normal); border-color: var(--normal); }
-.filtre-pilule.actif.r-rare { background: var(--rare); border-color: var(--rare); }
-.filtre-pilule.actif.r-legendaire { background: var(--legendaire); border-color: var(--legendaire); }
-.filtre-pilule.actif.r-commun { background: var(--commun); border-color: var(--commun); color: #000; }
+.entete p { font-size: 16px; margin-top: 10px; color: var(--text-light); opacity: 0.8; }
 
-.compteur-resultats { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 18px; }
-
-.legende-stats { display: flex; flex-wrap: wrap; gap: 14px 20px; margin-bottom: 20px; font-size: 12px; color: var(--paper-dim); }
-.legende-stats span { display: inline-flex; align-items: center; gap: 6px; }
-.legende-stats .pastille { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-.legende-stats .pastille-malus { width: 14px; height: 10px; border-radius: 3px; border: 1px solid var(--negatif); background: rgba(255,107,107,0.1); display: inline-block; }
-
-/* ============ CATÉGORIES + GRILLE (repris d'inventaire.html) ============ */
-.categorie { margin-bottom: 34px; }
-.categorie-titre { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.categorie-titre h2 { font-size: 18px; font-weight: 600; }
-.categorie-titre .compte { font-size: 12.5px; color: var(--paper-dim); font-weight: 400; text-transform: none; font-family: 'Barlow', sans-serif; }
-.categorie-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-
-.carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 6px; padding: 16px; position: relative; display: flex; flex-direction: column; }
-.carte.normal { border-left-color: var(--normal); }
-.carte.rare { border-left-color: var(--rare); }
-.carte.legendaire { border-left-color: var(--legendaire); }
-
-.carte-numero {
-    position: absolute; top: 10px; right: 10px; font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px; font-weight: 700; color: var(--paper-dim); background: rgba(0,0,0,0.4);
-    border-radius: 4px; padding: 2px 7px;
+/* --- RECHERCHE --- */
+.barre-recherche { display: flex; justify-content: center; margin-bottom: 30px; }
+.barre-recherche input {
+    width: 100%; max-width: 600px;
+    background: rgba(9, 20, 40, 0.8); border: 1px solid var(--hex-gold); 
+    border-radius: 4px; padding: 14px 20px; color: var(--text-light); 
+    font-family: var(--font-body); font-size: 16px;
+    box-shadow: 0 0 15px var(--hex-gold-glow) inset; transition: all 0.3s ease;
 }
-.carte-rarete-tag {
-    position: absolute; top: 10px; left: 10px; font-family: 'Barlow Condensed', sans-serif;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-    border-radius: 4px; padding: 2px 7px;
+.barre-recherche input:focus { outline: none; box-shadow: 0 0 25px var(--hex-gold-glow) inset, 0 0 15px var(--hex-gold-glow); }
+
+/* --- LISTE DES MATCHS --- */
+.liste-duels { display: flex; flex-direction: column; gap: 12px; }
+.carte-duel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; position: relative;}
+.carte-duel:hover { border-color: #323c50; }
+
+.carte-duel.victoire-attaquant .match-indicator { background: var(--win-color); box-shadow: 0 0 10px var(--win-color); }
+.carte-duel.victoire-defenseur .match-indicator { background: var(--loss-color); box-shadow: 0 0 10px var(--loss-color); }
+.carte-duel.egalite .match-indicator { background: var(--text-main); }
+
+/* --- ENCART NON DÉPLOYÉ (RÉSUMÉ) --- */
+.ligne-resume { 
+    display: flex; align-items: center; padding: 25px 15px 15px 15px; 
+    cursor: pointer; position: relative; 
+    background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, transparent 100%); 
 }
-.carte-rarete-tag.commun { background: rgba(141,141,141,0.18); color: var(--commun); }
-.carte-rarete-tag.normal { background: rgba(93,221,122,0.15); color: var(--normal); }
-.carte-rarete-tag.rare { background: rgba(74,159,216,0.15); color: var(--rare); }
-.carte-rarete-tag.legendaire { background: rgba(242,194,48,0.15); color: var(--legendaire); }
+.ligne-resume:hover { background: var(--bg-hover); }
 
-.carte-image-zone { display: flex; justify-content: center; margin: 22px 0 12px; }
-.carte-icon { max-width: 130px; width: 100%; height: auto; max-height: 100px; object-fit: contain; }
-.carte-icon-emoji { font-size: 56px; line-height: 1; }
-
-.carte-nom { font-size: 15.5px; font-weight: 600; text-align: center; margin-bottom: 10px; }
-.carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; text-align: center; margin-top: -6px; margin-bottom: 10px; }
-
-.stat-ligne { font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.stat-ligne .gauche { display: flex; align-items: baseline; gap: 6px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
-.stat-ligne .label { color: var(--paper-dim); font-weight: 600; }
-.stat-ligne .valeur-neutre { color: var(--paper); font-weight: 700; }
-/* Bonus de stat : coloré par la stat elle-même (reconnaissable d'un coup d'œil, cohérent avec le
-   reste du site) — un négatif reste ÉVIDENT grâce au badge à bordure rouge, pas seulement à la
-   teinte, pour rester lisible même en cas de daltonisme. */
-.stat-valeur-badge { font-weight: 700; }
-.stat-valeur-badge.malus {
-    border: 1px solid var(--negatif); border-radius: 4px; padding: 0px 6px;
-    background: rgba(255,107,107,0.1);
+.match-indicator { width: 6px; height: 100%; position: absolute; left: 0; top: 0; }
+.match-time { 
+    position: absolute; top: 8px; left: 15px; 
+    font-size: 11px; color: var(--text-main); opacity: 0.8; letter-spacing: 0.5px;
 }
-/* Progression par niveau : une PASTILLE à part, dans le même style que les badges "niveau" déjà
-   utilisés ailleurs sur le site (inventaire/boutique/calculateur) — pour que l'œil associe
-   immédiatement ce jaune-là à "évolue par doublon possédé", et jamais confondu avec la valeur
-   elle-même. Toujours casée à droite de sa ligne (flex space-between) plutôt que collée en texte
-   après la valeur, pour ne pas alourdir la lecture. */
-.pilule-scaling {
-    flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px;
-    font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 800; letter-spacing: .02em;
-    color: var(--yellow); border: 1.5px solid var(--yellow); border-radius: 5px;
-    padding: 1px 7px; background: rgba(242,194,48,0.12); white-space: nowrap; cursor: help;
-}
-.pilule-scaling .fleche { font-size: 9px; }
-.pilule-scaling .unite { font-weight: 500; opacity: .8; }
-.bloc-passif { display: flex; flex-direction: column; gap: 6px; }
-.passif-ligne { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; }
-.passif-ligne .texte { flex: 1 1 auto; min-width: 0; }
-.passif-ligne b { color: var(--paper); font-weight: 600; }
 
-.bloc-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a2a2a; }
-.bloc-section:first-of-type { border-top: none; margin-top: 6px; padding-top: 0; }
-.section-titre {
-    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
-    color: var(--yellow); opacity: 0.85; margin-bottom: 5px;
-}
-.scaling-grille { display: flex; flex-wrap: wrap; gap: 4px; }
-.scaling-item { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
-.scaling-item .scaling-label { font-size: 9px; color: var(--paper-dim); margin-bottom: 2px; }
-.scaling-item .scaling-lettre { font-size: 15px; font-weight: 800; }
-.scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.scaling-degats b { color: var(--paper); font-weight: 700; }
+.match-players { width: 100%; display: flex; align-items: center; justify-content: center; }
+.player { flex: 1; display: flex; align-items: center; gap: 15px; min-width: 0; }
+.player.left { justify-content: flex-end; }
+.player.right { justify-content: flex-start; }
 
-/* ============ CARTE À CHANGEMENT DE STANCE ============ */
-.carte-stance { position: relative; cursor: pointer; }
-.stance-indicateur {
-    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-    font-family: 'Barlow Condensed', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
-    color: #000; background: var(--yellow); border-radius: 999px; padding: 4px 40px; z-index: 3;
+.player-avatar {
+    width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border-color);
+    background: #000; object-fit: cover; box-shadow: 0 0 8px rgba(0,0,0,0.5); flex-shrink: 0;
 }
-@keyframes stancePulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; transform: translateX(-50%) scale(1.05); } }
-.stance-vue-2 { display: none; }
-.carte-stance:hover .stance-vue-1 { display: none; }
-.carte-stance:hover .stance-vue-2 { display: block; }
-.carte-stance:hover { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow); }
-.carte-stance:hover .stance-indicateur { background: var(--paper); }
-.stance-etiquette {
-    display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
-    letter-spacing: 0.04em; text-transform: uppercase; color: #000; background: var(--rare);
-    border-radius: 4px; padding: 1px 6px; vertical-align: middle; margin-left: 4px;
+.player-name { 
+    font-size: 18px; font-weight: 600; color: var(--text-light); 
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.stance-etiquette-2 { background: var(--legendaire); }
+.player.left .player-name { text-align: right; }
+.player.right .player-name { text-align: left; }
 
-.vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
+.match-center { width: 80px; text-align: center; flex-shrink: 0; display: flex; flex-direction: column; align-items: center;}
+.result-text { font-family: var(--font-head); font-size: 20px; font-weight: 700; color: var(--text-light); line-height: 1;}
+.rounds-badge { background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-top: 4px; border: 1px solid #1e283d;}
 
+.match-action { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: var(--hex-gold); transition: transform 0.3s; }
+.carte-duel.ouvert .match-action { transform: translateY(-50%) rotate(180deg); }
+
+/* --- MENU DÉROULÉ (DÉTAILS & BUILDS FACE À FACE) --- */
+.detail-duel { display: none; padding: 25px 15px; background: #050b14; border-top: 1px solid var(--border-color); }
+.carte-duel.ouvert .detail-duel { display: block; animation: slideDown 0.3s ease; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Layout Arène (Joueur | VS | Joueur) */
+.arena-layout { display: flex; align-items: flex-start; justify-content: center; margin-bottom: 30px; gap: 10px;}
+.arena-player { flex: 1; display: flex; flex-direction: column; align-items: center; width: 45%; }
+.arena-vs { 
+    display: flex; flex-direction: column; justify-content: flex-start; align-items: center; 
+    width: 50px; flex-shrink: 0; padding-top: 25px;
+    font-family: var(--font-head); font-size: 32px; font-style: italic; color: var(--hex-gold); text-shadow: 0 0 15px var(--hex-gold-glow);
+}
+
+.arena-avatar { width: 75px; height: 75px; border-radius: 50%; border: 3px solid var(--border-color); object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+.arena-player.winner .arena-avatar { border-color: var(--hex-gold); box-shadow: 0 0 20px var(--hex-gold-glow); }
+.arena-name { font-family: var(--font-head); font-size: 20px; color: var(--text-light); margin: 12px 0; letter-spacing: 1px; text-align: center; word-break: break-word;}
+
+/* Grille d'items sous le joueur (2x2) */
+.arena-items { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; justify-items: center; }
+
+.big-item {
+    width: 56px; height: 56px; background: #000; border: 2px solid var(--border-color);
+    border-radius: 6px; position: relative; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s; cursor: help;
+}
+.big-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+.big-item img { width: 85%; height: 85%; object-fit: contain; }
+.item-badge {
+    position: absolute; bottom: -6px; right: -6px; background: var(--bg-panel); color: var(--text-light);
+    border: 1px solid var(--text-main); border-radius: 50%; width: 20px; height: 20px;
+    font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold;
+}
+
+.big-item.rarity-commun { border-color: var(--rarity-commun); }
+.big-item.rarity-normal { border-color: var(--rarity-normal); box-shadow: 0 0 8px rgba(30, 255, 0, 0.2) inset;}
+.big-item.rarity-rare { border-color: var(--rarity-rare); box-shadow: 0 0 8px rgba(0, 112, 221, 0.2) inset;}
+.big-item.rarity-epic { border-color: var(--rarity-epic); box-shadow: 0 0 8px rgba(163, 53, 238, 0.2) inset;}
+
+/* Statistiques */
+.comp-table { width: 100%; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed #2c3545; padding-top: 20px;}
+.comp-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 10px 15px; }
+.comp-label { flex: 1; text-align: center; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); }
+.comp-val { width: 70px; font-size: 18px; font-weight: 700; color: var(--text-light); }
+.comp-val.left { text-align: right; }
+.comp-val.right { text-align: left; }
+.comp-val.win { color: var(--hex-gold); text-shadow: 0 0 8px var(--hex-gold-glow); font-size: 19px;}
+.comp-val.lose { color: #5c5b57; }
+
+/* Boutons */
+.bouton-replay, .bouton-plus {
+    background: transparent; border: 2px solid var(--hex-gold); color: var(--hex-gold);
+    font-family: var(--font-head); font-size: 16px; text-transform: uppercase; letter-spacing: 2px;
+    padding: 12px 25px; cursor: pointer; border-radius: 4px; transition: all 0.2s; display: block; text-align: center;
+}
+.bouton-replay { margin: 30px auto 0; width: 100%; max-width: 300px; }
+.bouton-plus { margin: 30px auto 0; width: 100%; max-width: 300px; }
+.bouton-replay:hover, .bouton-plus:hover { background: var(--hex-gold); color: var(--bg-main); box-shadow: 0 0 20px var(--hex-gold-glow); }
+
+/* --- MODALE REPLAY --- */
+.modale-overlay { display: none; position: fixed; inset: 0; background: rgba(1, 10, 19, 0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modale-overlay.ouverte { display: flex; }
+.modale-contenu { position: relative; width: 100%; max-width: 960px; border: 2px solid var(--hex-gold); border-radius: 4px; box-shadow: 0 0 40px var(--hex-gold-glow); }
+.modale-fermer { position: absolute; top: -45px; right: 0; background: none; border: none; color: var(--hex-gold); font-size: 32px; cursor: pointer; transition: transform 0.2s; }
+.iframe-replay { width: 100%; height: min(75vh, 720px); border: none; background: #000; display: block; }
+
+/* --- RESPONSIVE MOBILE EXTRÊME --- */
 @media (max-width: 640px) {
-    body { padding: 20px 12px 50px; }
-    .entete h1 { font-size: 20px; }
-    .grille { grid-template-columns: 1fr; }
-    .categorie-titre h2 { font-size: 15px; }
+    body { padding: 20px 10px; }
+    
+    /* Encart Résumé */
+    .ligne-resume { padding: 30px 10px 15px 10px; }
+    .match-time { top: 6px; left: 10px; font-size: 10px; }
+    .player { flex-direction: column !important; gap: 6px; }
+    .player.left { align-items: center; } /* Évite le texte justifié à droite si empilé */
+    .player.right { align-items: center; }
+    /* On force l'image au-dessus du texte pour les deux côtés */
+    .player .player-name { order: 1; text-align: center !important; font-size: 14px; white-space: normal; line-height: 1.2;}
+    .player-avatar { width: 42px; height: 42px; order: 0; }
+    
+    .match-center { width: 60px; }
+    .result-text { font-size: 16px; }
+    .rounds-badge { font-size: 10px; }
+    .match-action { display: none; } /* On cache la flèche pour gagner de l'espace, la carte reste cliquable */
+
+    /* Détails Dépliés */
+    .arena-avatar { width: 60px; height: 60px; }
+    .arena-name { font-size: 16px; margin: 8px 0; }
+    .arena-vs { font-size: 24px; width: 30px; padding-top: 15px;}
+    .big-item { width: 44px; height: 44px; }
+    .arena-items { gap: 6px; }
+    
+    .comp-row { padding: 8px 10px; }
+    .comp-val { font-size: 15px; width: 45px; }
+    .comp-val.win { font-size: 16px; }
+    .comp-label { font-size: 11px; line-height: 1.2;}
 }
 </style>
 </head>
 <body>
+
 <div class="page">
     <div class="entete">
-        <h1>LE <span>CODEX</span></h1>
-        <p>Tout l'arsenal disponible dans le jeu, armes, protections et Stratagèmes — indépendamment de ce que tu possèdes.</p>
+        <h1>Archives de L'Arène</h1>
+        <p>Revivez l'historique détaillé des combats et analysez les équipements.</p>
     </div>
 
-    <div class="legende-stats">
-        <span><span class="pastille" style="background:var(--atk)"></span>Attaque</span>
-        <span><span class="pastille" style="background:var(--def)"></span>Défense</span>
-        <span><span class="pastille" style="background:var(--pv)"></span>Points de vie</span>
-        <span><span class="pastille" style="background:var(--spd)"></span>Vitesse</span>
-        <span><span class="pastille" style="background:var(--luck)"></span>Chance</span>
-        <span><span class="pastille" style="background:var(--esquive)"></span>Esquive</span>
-        <span><span class="pastille-malus"></span>Valeur négative (malus)</span>
-        <span><span class="pilule-scaling"><span class="fleche">▲</span>+2<span class="unite">/niv.</span></span> = gain à chaque exemplaire supplémentaire possédé</span>
+    <div class="barre-recherche">
+        <input type="text" id="rechercheJoueur" placeholder="Rechercher le pseudo d'un combattant...">
     </div>
 
-    <div class="barre-controles">
-        <input type="text" class="champ-recherche" id="champRecherche" placeholder="Rechercher un objet par son nom...">
-    </div>
-    <div class="filtres-rangee" id="filtresRarete"></div>
-    <div class="compteur-resultats" id="compteurResultats"></div>
+    <div id="listeDuels" class="liste-duels"></div>
+    <button id="boutonPlus" class="bouton-plus" style="display:none;">Charger plus de combats</button>
+</div>
 
-    <div id="grillePrincipale"></div>
+<div id="modaleReplay" class="modale-overlay">
+    <div class="modale-contenu">
+        <button id="fermerModaleReplay" class="modale-fermer" aria-label="Fermer">✕</button>
+        <iframe id="iframeReplay" class="iframe-replay" src="" title="Replay du duel"></iframe>
+    </div>
 </div>
 
 <script>
-    const LABELS_CATEGORIE = {
-        weapon_1h: "Armes à une main", weapon_2h: "Armes à deux mains",
-        offhand: "Off-hand", torso: "Armure", strategeme: "Stratagème",
-    };
-    function categorieAffichage(item) {
-        if (item.slot === "weapon") return item.hand === "two_handed" ? "weapon_2h" : "weapon_1h";
-        return item.slot;
-    }
-    const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PDV", esquive: "Esquive", spd: "Vitesse", luck: "LUCK" };
-    const SUFFIXE_STAT = { esquive: "%" };
-    const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
-    const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", legendaire: "Légendaire" };
-    // Couleur associée à chaque stat pour les lignes de "Bonus" — voir la légende dans l'entête.
-    const COULEUR_STAT = { atk: "var(--atk)", def: "var(--def)", pv: "var(--pv)", spd: "var(--spd)", luck: "var(--luck)", esquive: "var(--esquive)" };
+    const PAGE_TAILLE = 15;
+    let indexComplet = [];
+    let indexFiltre = [];
+    let nbAffiches = 0;
+    
+    const detailsCache = {};
+    let tousLesJoueurs = {};
+    let catalogueItems = {};
 
-    // Formate un nombre en tronquant les décimales inutiles (0.16 reste "0.16", 10.0 devient "10").
-    function formatNombre(v) {
-        return (Math.round(v * 100) / 100).toString();
-    }
-    // Pastille "progression par niveau" — même esprit que les badges "niveau" déjà utilisés
-    // ailleurs sur le site (jaune, contour, coin arrondi), pour que l'œil reconnaisse tout de
-    // suite "ça évolue par doublon" sans avoir à lire du texte entre parenthèses. Absente si le
-    // taux est nul. Le survol (title) rappelle explicitement ce que représente le nombre.
-    function pilluleIncrement(valeurIncrement) {
-        if (!valeurIncrement) return "";
-        const signe = valeurIncrement >= 0 ? "+" : "";
-        return `<span class="pilule-scaling" title="Gagné à chaque exemplaire supplémentaire possédé de cet objet"><span class="fleche">▲</span>${signe}${formatNombre(valeurIncrement)}<span class="unite">/niv.</span></span>`;
-    }
+    const defaultAvatar = "https://static-cdn.jtvnw.net/user-default-pictures-uv/41780b5a-def8-11e9-94d9-784f43822e80-profile_image-70x70.png";
 
-    const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
-    const STATS_SCALABLES = ["atk", "def", "pv", "spd", "crit"];
-    const LABELS_SCALING = { atk: "ATK", def: "DEF", pv: "PV", spd: "SPD", crit: "CRIT" };
+    // Initialisation
+    async function initialiser() {
+        try {
+            const [resCat, resPlayers, resIndex] = await Promise.all([
+                fetch('catalogue_stats.json?v=' + Date.now()).catch(() => null),
+                fetch('players.json?v=' + Date.now()).catch(() => null),
+                fetch('duels_index.json?v=' + Date.now()).catch(() => null)
+            ]);
 
-    const GABARITS_PASSIF = {
-        Lifesteal: (v, s) => `Vol de vie : <b>${v}%</b> des dégâts infligés sont rendus en PV.`,
-        PoisonDegats: (v, s) => `Poison : inflige <b>${v}</b> dégâts au tour suivant, puis <b>${Math.max(0, v - 1)}</b>, <b>${Math.max(0, v - 2)}</b>... jusqu'à 0 (s'additionne si réappliqué).`,
-        EtourdissementChance: (v, s) => `<b>${v}%</b> de chance d'étourdir la cible (saute son tour suivant).`,
-        ExecutionBonus: (v, s) => `Sous <b>${s.executionSeuil}%</b> de PV, inflige <b>+${v}%</b> de dégâts.`,
-        Precision: (v, s) => `<b>+${v}</b> précision — réduit l'esquive adverse.`,
-        Blocage: (v, s) => `<b>${v}%</b> de chance de bloquer, réduit alors les dégâts de <b>${s.blocageReduction}%</b>.`,
-        Reflection: (v, s) => `Renvoie <b>${v}%</b> des dégâts subis à l'attaquant.`,
-        ResistancePoison: (v, s) => `<b>${v}%</b> de résistance au poison.`,
-        ResistanceFeu: (v, s) => `Réduit de <b>${v}%</b> les dégâts subis de type feu (Brûlure).`,
-        Regeneration: (v, s) => `Régénère <b>${v}%</b> des PV max à chaque tour.`,
-        ResistanceCrit: (v, s) => `<b>-${v}</b>% de chance d'être touché par un critique.`,
-        ReductionDegatsTir: (v, s) => `Réduit de -<b>${v}%</b> les dégâts subis d'une arme de tir à une ou deux mains.`,
-        SoinDirect: (v, s) => `Soigne <b>${v} PV</b>, <b>${s.usagesParCombat}</b> usages/combat (recharge ${s.cooldownTours} tours), si des PV manquent.`,
-        SaignementDegats: (v, s) => `Saignement : <b>${v}</b> dégâts/stack par tour (perd 1 stack/tour).`,
-        BrulureDegats: (v, s) => `Brûlure : inflige <b>${v}</b> dégâts par tour pendant <b>${s.brulureDuree}</b> tours, ignore l'armure adverse.`,
-        AntiHealPourcentage: (v, s) => `Réduit les soins reçus par la cible de <b>${v}%</b> pendant <b>${s.antiHealDuree}</b> tours.`,
-        ShieldMontant: (v, s) => `Accorde un bouclier de <b>${v} PV</b> en début de combat.`,
-        RageBonusMax: (v, s) => `Dégâts jusqu'à <b>+${v}%</b> quand tes PV descendent vers <b>${s.rageSeuilMin}%</b>.`,
-        MarqueDegatsPourcentage: (v, s) => `Marque la cible touchée : <b>+${v}%</b> dégâts reçus pendant <b>${s.marqueDuree}</b> tours.`,
-        ParadeChance: (v, s) => `<b>${v}%</b> de chance d'annuler un coup reçu et de riposter immédiatement.`,
-        TenaciteChance: (v, s) => `<b>${v}%</b> de chance de résister à un étourdissement.`,
-        Penetration: (v, s) => `Pénétration : Ignore <b>${v}%</b> de l'armure adverse.`,
-        DernierSouffleActif: () => `Une fois par combat, survit à <b>1 PV</b> au lieu de mourir.`,
-        FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
-    };
-    const CHAMP_PAR_STAT_PRINCIPALE = {
-        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance", Penetration: "penetration",
-        ExecutionBonus: "executionBonus", Precision: "precision", Blocage: "blocage", Reflection: "reflection",
-        ResistancePoison: "resistancePoison", ResistanceFeu: "resistanceFeu", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit", ReductionDegatsTir: "reductionDegatsTir",
-        SoinDirect: "soinDirect", SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats",
-        AntiHealPourcentage: "antiHealPourcentage", ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax",
-        MarqueDegatsPourcentage: "marqueDegatsPourcentage", ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance",
-        DernierSouffleActif: "dernierSouffleActif", FrenesieBonusSpd: "frenesieBonusSpd",
-    };
-
-    const iconeOuImage = (ref, classeImg) => ref.image
-        ? `<img src="${ref.image}" alt="" class="${classeImg}">`
-        : `<span class="${classeImg}-emoji">${ref.icone}</span>`;
-
-    // Ces fonctions de construction de carte sont dérivées de inventaire.html — le Codex affiche
-    // les valeurs à l'état de BASE (niveau 0, puisqu'il ne s'agit pas d'un inventaire personnel),
-    // mais rend désormais PUBLIC le taux de progression par doublon de chaque valeur qui évolue
-    // (voir pilluleIncrement/formatNombre plus haut) : dégâts de base, stats de "Bonus", et passifs
-    // spéciaux pilotés par StatPrincipale. Ce taux est purement informatif ici, jamais appliqué à
-    // un niveau réellement possédé — pour ça, voir calculateur.html/inventaire.html.
-    // ⚠️ EXTENSION : cherche si "nomStat" est le champ ciblé par une entrée de passifsExtra (2e,
-    // 3e passif...), symétrique à statPrincipale/incrementPassif ci-dessus mais répétable.
-    function trouverIncrementPassifExtra(s, nomStat) {
-        if (!s.passifsExtra) return 0;
-        const entree = s.passifsExtra.find(p => p.champ === nomStat);
-        return entree ? entree.incrementPassif : 0;
-    }
-
-    function construirePassifs(s, exclureChamp, exclusionsSupplementaires) {
-        const passifs = [];
-        const exclusions = new Set([exclureChamp, ...(exclusionsSupplementaires || [])]);
-        for (const nomStat in CHAMP_PAR_STAT_PRINCIPALE) {
-            if (exclusions.has(nomStat)) continue;
-            const champ = CHAMP_PAR_STAT_PRINCIPALE[nomStat];
-            const valeur = s[champ];
-            const estActif = typeof valeur === 'boolean' ? valeur : valeur > 0;
-            if (!estActif) continue;
-            const texte = GABARITS_PASSIF[nomStat](valeur, s);
-            // Ce passif est-il CELUI que fait progresser statPrincipale OU une entrée de
-            // passifsExtra sur cet objet ? Si oui, rend public son taux de progression par
-            // doublon dans sa propre pastille à droite plutôt que noyé dans la phrase.
-            const incrementPrincipal = (s.statPrincipale === nomStat && s.incrementPassif > 0) ? s.incrementPassif : 0;
-            const incrementExtra = trouverIncrementPassifExtra(s, nomStat);
-            const incrementTotal = incrementPrincipal || incrementExtra;
-            const pilule = incrementTotal > 0 ? pilluleIncrement(incrementTotal) : '';
-            passifs.push(`<div class="passif-ligne"><span class="texte">${texte}</span>${pilule}</div>`);
+            if (resCat && resCat.ok) catalogueItems = await resCat.json();
+            if (resPlayers && resPlayers.ok) tousLesJoueurs = await resPlayers.json();
+            
+            if (resIndex && resIndex.ok) {
+                const data = await resIndex.json();
+                indexComplet = data.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+                appliquerRecherche();
+            } else {
+                throw new Error("Index manquant");
+            }
+        } catch(e) {
+            console.error(e);
+            document.getElementById('listeDuels').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--loss-color);">Erreur de connexion aux archives de l\'Arène.</div>';
         }
-        return passifs;
     }
 
-    // incrementDegats : rendue publique ici — c'est le rythme auquel la fourchette de dégâts de
-    // base progresse par doublon possédé (IncrementBaseDegats côté moteur), affichée même sans
-    // aucun objet en inventaire puisque le Codex décrit l'objet indépendamment de qui le possède.
-    // Ne s'affiche que si un scaling est renseigné (mêmes conditions que AppliquerAmelioration).
-    function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, degatsMin, degatsMax, incrementDegats) {
-        const badges = STATS_SCALABLES.map(stat => {
-            let lettre = null;
-            if (scaling1Stat === stat) lettre = scaling1Lettre;
-            else if (scaling2Stat === stat) lettre = scaling2Lettre;
-            const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
-            return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
-        }).join("");
-        const pilule = scaling1Stat ? pilluleIncrement(incrementDegats) : "";
-        const ligneDegats = `<div class="scaling-degats"><span class="gauche">Dégâts : <b>${Math.round(degatsMin)} - ${Math.round(degatsMax)}</b></span>${pilule}</div>`;
-        return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
-    }
-
-    function construireScaling(s) {
-        if (!s.scaling1Stat) return null;
-        return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats);
-    }
-
-    function construireDetails(s, estStrategeme) {
-        if (s.soinDirect > 0) {
-            // SoinDirect ne progresse que via StatPrincipale (pas de champ increment dédié).
-            const piluleSoin = s.statPrincipale === "SoinDirect" ? pilluleIncrement(s.incrementPassif) : "";
-            const lignesStat = [{ label: "Montant soigné", valeur: s.soinDirect, pilule: piluleSoin, colorer: false }];
-            if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
-            if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
-            return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, "SoinDirect").join("") };
+    // Récupération Avatar
+    function obtenirAvatar(pseudo) {
+        if (!pseudo) return defaultAvatar;
+        const lowerPseudo = pseudo.toLowerCase();
+        const cleJ = Object.keys(tousLesJoueurs).find(k => k.toLowerCase() === lowerPseudo);
+        
+        if (cleJ && tousLesJoueurs[cleJ].avatar && tousLesJoueurs[cleJ].avatar.trim() !== "") {
+            return tousLesJoueurs[cleJ].avatar;
         }
-
-        if (estStrategeme) {
-            const lignesStat = [];
-            if (s.degatsDirects > 0) {
-                const coups = s.coupsParUsage > 1 ? ` x ${s.coupsParUsage}` : "";
-                // Cas particulier : DegatsDirects peut progresser par DEUX voies indépendantes et
-                // cumulables (voir duel.cs) — IncrementDegatsDirects (dédié) ET/OU StatPrincipale =
-                // "DegatsDirects" (IncrementPassif). On additionne les deux s'ils coexistent.
-                const tauxDegatsDirects = (s.incrementDegatsDirects || 0) + (s.statPrincipale === "DegatsDirects" ? (s.incrementPassif || 0) : 0);
-                lignesStat.push({ label: "Dégâts", valeur: s.degatsDirects + coups, pilule: pilluleIncrement(tauxDegatsDirects), colorer: false });
-            }
-            if (s.poisonDegats > 0) {
-                const pilulePoison = s.statPrincipale === "PoisonDegats" ? pilluleIncrement(s.incrementPassif) : "";
-                lignesStat.push({ label: "Poison", valeur: s.poisonDegats + " stacks", pilule: pilulePoison, colorer: false });
-            }
-            if (s.brulureDegats > 0) {
-                const piluleBrulure = s.statPrincipale === "BrulureDegats" ? pilluleIncrement(s.incrementPassif) : "";
-                lignesStat.push({ label: "Brûlure", valeur: s.brulureDegats + "/tour", pilule: piluleBrulure, colorer: false });
-            }
-            if (s.shieldMontant > 0) {
-                const piluleBouclier = s.statPrincipale === "ShieldMontant" ? pilluleIncrement(s.incrementPassif) : "";
-                lignesStat.push({ label: "Bouclier", valeur: s.shieldMontant, pilule: piluleBouclier, colorer: false });
-            }
-            if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
-            if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
-
-            const passifs = construirePassifs(s, "DegatsDirects", ["ShieldMontant"]);
-            if (s.delaiTours > 0) passifs.push(`<div class="passif-ligne"><span class="texte">Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.</span></div>`);
-            return { scalingHtml: null, lignesStat, passifTexte: passifs.join("") };
-        }
-
-        const lignesStat = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, s.statsExtra);
-        const passifTexte = construirePassifs(s, "Bonus").join("");
-        return { scalingHtml: construireScaling(s), lignesStat, passifTexte };
+        return `https://decapi.me/twitch/avatar/${encodeURIComponent(lowerPseudo)}`;
     }
 
-    // colorer=true -> ligne de "Bonus" de stat (ATK/DEF/PV/SPD/LUCK/Esquive) : teintée de la
-    // couleur propre à cette stat, avec un badge à bordure rouge pour les valeurs négatives — le
-    // badge reste visible même en cas de daltonisme, la teinte seule ne suffirait pas. La pastille
-    // de progression (si présente) est toujours casée à droite, jamais mélangée à la valeur.
-    function rendreLigneStat({ label, valeur, colorer, stat, negatif, pilule }) {
-        const piluleHtml = pilule || '';
-        if (!colorer) return `<div class="stat-ligne"><span class="gauche"><span class="label">${label}</span><span class="valeur-neutre">${valeur}</span></span>${piluleHtml}</div>`;
-        const couleur = COULEUR_STAT[stat] || 'var(--paper)';
-        const classeBadge = negatif ? 'stat-valeur-badge malus' : 'stat-valeur-badge';
-        return `<div class="stat-ligne"><span class="gauche"><span class="label">${label}</span><span class="${classeBadge}" style="color:${couleur}">${valeur}</span></span>${piluleHtml}</div>`;
+    function formatDate(iso) {
+        const d = new Date(iso);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' - ' + 
+               d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
 
-    // incrementN : rendu public ici — le taux de progression par doublon de chaque stat de bonus
-    // (Increment/Increment2/Increment3 côté moteur), affiché dans sa propre pastille à droite.
-    function construireLignesStatGenerique(stat, bonus, increment, stat2, bonus2, increment2, stat3, bonus3, increment3, statsExtra) {
-        const lignes = [];
-        const ligne = (st, b, inc) => {
-            if (!st) return;
-            const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(st);
-            lignes.push({ label: LABELS_STAT[st] || st, valeur: formatteur(b), pilule: pilluleIncrement(inc), colorer: true, stat: st, negatif: b < 0 });
-        };
-        ligne(stat, bonus, increment);
-        ligne(stat2, bonus2, increment2);
-        ligne(stat3, bonus3, increment3);
-        // ⚠️ EXTENSION : 4e stat, 5e stat... -- statsExtra absent (tous les objets existants) ne
-        // change rien à l'affichage par rapport à l'ancien comportement.
-        (statsExtra || []).forEach(slot => ligne(slot.nom, slot.bonus, slot.increment));
-        return lignes;
+    function classeCarte(entree) {
+        if (entree.egalite) return 'egalite';
+        return (entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase() ? 'victoire-attaquant' : 'victoire-defenseur';
     }
 
-    // Carte dédiée aux armes à changement de stance : affiche la stance 1 par défaut, bascule
-    // vers la stance 2 (image, scaling ET bonus différents) au survol — pur CSS, voir .carte-stance
-    // dans le <style>. Le passif générique décrit le mécanisme lui-même, indépendant de la stance.
-    function construireCarteStance(numero, item) {
-        const rarete = item.rarete || 'commun';
-        const imageStance1 = iconeOuImage(item, 'carte-icon');
-        const imageStance2 = iconeOuImage({ image: item.stance2ImageUrl || item.image, icone: item.icone }, 'carte-icon');
-        const scaling1 = blocScalingUnique(item.scaling1Stat, item.scaling1Lettre, item.scaling2Stat, item.scaling2Lettre, item.baseDegatsMin, item.baseDegatsMax, item.incrementBaseDegats);
-        const scaling2 = blocScalingUnique(item.stance2Scaling1Stat, item.stance2Scaling1Lettre, item.stance2Scaling2Stat, item.stance2Scaling2Lettre, item.stance2BaseDegatsMin, item.stance2BaseDegatsMax, item.stance2IncrementBaseDegats);
-        const stats1 = construireLignesStatGenerique(item.stat, item.bonus, item.increment, item.stat2, item.bonus2, item.increment2, item.stat3, item.bonus3, item.increment3, item.statsExtra).map(rendreLigneStat).join('');
-        const stats2 = construireLignesStatGenerique(item.stance2Stat, item.stance2Bonus, item.stance2IncrementBonus, item.stance2Stat2, item.stance2Bonus2, item.stance2IncrementBonus2, item.stance2Stat3, item.stance2Bonus3, item.stance2IncrementBonus3).map(rendreLigneStat).join('');
+    // Ligne Résumée
+    function rendreResume(entree) {
+        let resultText = "VS";
+        if (entree.egalite) resultText = "ÉGALITÉ";
+        else if ((entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase()) resultText = "VICTOIRE";
+        else resultText = "DÉFAITE"; 
 
         return `
-            <div class="carte ${rarete} carte-stance" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
-                <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
-                <span class="carte-numero">N°${numero}</span>
-                <div class="stance-indicateur">⇄</div>
-
-                <div class="stance-vue stance-vue-1">
-                    <div class="carte-image-zone">${imageStance1}</div>
-                    <div class="carte-nom">${item.nom} <span class="stance-etiquette">Stance 1</span></div>
-                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                    <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling1}</div>
-                    ${stats1 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
-                </div>
-                <div class="stance-vue stance-vue-2">
-                    <div class="carte-image-zone">${imageStance2}</div>
-                    <div class="carte-nom">${item.nom} <span class="stance-etiquette stance-etiquette-2">Stance 2</span></div>
-                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                    <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling2}</div>
-                    ${stats2 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats2}</div>` : ''}
-                </div>
-
-                <div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">
-                    Alterne de stance toutes les <b>${item.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge le poison et la brûlure sur le porteur lui-même.
-                </div></div>
-            </div>
-        `;
-    }
-
-    function construireCarte(numero, item) {
-        if (item.dureeStance > 0) return construireCarteStance(numero, item);
-
-        const rarete = item.rarete || 'commun';
-        const estStrategeme = item.slot === 'strategeme';
-        const { scalingHtml, lignesStat, passifTexte } = construireDetails(item, estStrategeme);
-        return `
-            <div class="carte ${rarete}" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
-                <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
-                <span class="carte-numero">N°${numero}</span>
-                <div class="carte-image-zone">${iconeOuImage(item, 'carte-icon')}</div>
-                <div class="carte-nom">${item.nom}</div>
-                ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
-                ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
-                ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
-            </div>
-        `;
-    }
-
-    let STATS = {};
-    let raretesDisponibles = [];
-    let raretesActives = new Set();
-    let texteRecherche = '';
-
-    function appliquerFiltres() {
-        document.querySelectorAll('.carte').forEach(carte => {
-            const correspondNom = carte.dataset.nom.includes(texteRecherche);
-            const correspondRarete = raretesActives.size === 0 || raretesActives.has(carte.dataset.rarete);
-            carte.style.display = (correspondNom && correspondRarete) ? '' : 'none';
-        });
-        document.querySelectorAll('.categorie').forEach(cat => {
-            const aUneCarteVisible = Array.from(cat.querySelectorAll('.carte')).some(c => c.style.display !== 'none');
-            cat.style.display = aUneCarteVisible ? '' : 'none';
-        });
-        const totalVisible = Array.from(document.querySelectorAll('.carte')).filter(c => c.style.display !== 'none').length;
-        const totalGeneral = document.querySelectorAll('.carte').length;
-        document.getElementById('compteurResultats').textContent = `${totalVisible} / ${totalGeneral} objet(s) affiché(s)`;
-    }
-
-    function construirePage() {
-        const parCategorie = { weapon_1h: [], weapon_2h: [], offhand: [], torso: [], strategeme: [] };
-        raretesDisponibles = [];
-        for (const numero in STATS) {
-            const item = STATS[numero];
-            const cat = categorieAffichage(item);
-            if (!parCategorie[cat]) continue;
-            parCategorie[cat].push({ numero, item });
-            const rarete = item.rarete || 'commun';
-            if (!raretesDisponibles.includes(rarete)) raretesDisponibles.push(rarete);
-        }
-
-        const ordreRarete = ['commun', 'normal', 'rare', 'legendaire'];
-        raretesDisponibles.sort((a, b) => ordreRarete.indexOf(a) - ordreRarete.indexOf(b));
-
-        const filtresEl = document.getElementById('filtresRarete');
-        filtresEl.innerHTML = `<div class="filtre-pilule actif" data-rarete="tous">Toutes les raretés</div>`
-            + raretesDisponibles.map(r => `<div class="filtre-pilule r-${r}" data-rarete="${r}">${LABELS_RARETE[r] || r}</div>`).join('');
-
-        filtresEl.querySelectorAll('.filtre-pilule').forEach(pilule => {
-            pilule.addEventListener('click', () => {
-                const rarete = pilule.dataset.rarete;
-                if (rarete === 'tous') {
-                    raretesActives.clear();
-                    filtresEl.querySelectorAll('.filtre-pilule').forEach(p => p.classList.remove('actif'));
-                    pilule.classList.add('actif');
-                } else {
-                    filtresEl.querySelector('[data-rarete="tous"]').classList.remove('actif');
-                    if (raretesActives.has(rarete)) { raretesActives.delete(rarete); pilule.classList.remove('actif'); }
-                    else { raretesActives.add(rarete); pilule.classList.add('actif'); }
-                    if (raretesActives.size === 0) filtresEl.querySelector('[data-rarete="tous"]').classList.add('actif');
-                }
-                appliquerFiltres();
-            });
-        });
-
-        const conteneur = document.getElementById('grillePrincipale');
-        let html = '';
-        Object.keys(LABELS_CATEGORIE).forEach(cat => {
-            const items = parCategorie[cat];
-            if (items.length === 0) return;
-            const ordreRarete = ['commun', 'normal', 'rare', 'legendaire'];
-            items.sort((a, b) => {
-                const indexA = ordreRarete.indexOf(a.item.rarete || 'commun');
-                const indexB = ordreRarete.indexOf(b.item.rarete || 'commun');
+            <div class="ligne-resume">
+                <div class="match-indicator"></div>
+                <div class="match-time">${formatDate(entree.date)}</div>
                 
-                if (indexA !== indexB) {
-                    return indexA - indexB;
-                }
-                return parseInt(a.numero) - parseInt(b.numero);
-            });
-            html += `
-                <div class="categorie">
-                    <div class="categorie-titre"><h2>${LABELS_CATEGORIE[cat]}</h2><span class="compte">${items.length}</span></div>
-                    <div class="grille">${items.map(({ numero, item }) => construireCarte(numero, item)).join('')}</div>
+                <div class="match-players">
+                    <div class="player left">
+                        <span class="player-name">${entree.attaquant}</span>
+                        <img src="${obtenirAvatar(entree.attaquant)}" class="player-avatar" alt="${entree.attaquant}" onerror="this.src='${defaultAvatar}';">
+                    </div>
+                    
+                    <div class="match-center">
+                        <div class="result-text">${resultText}</div>
+                        <div class="rounds-badge">${entree.rounds} Rounds</div>
+                    </div>
+                    
+                    <div class="player right">
+                        <img src="${obtenirAvatar(entree.defenseur)}" class="player-avatar" alt="${entree.defenseur}" onerror="this.src='${defaultAvatar}';">
+                        <span class="player-name">${entree.defenseur}</span>
+                    </div>
                 </div>
-            `;
-        });
-        conteneur.innerHTML = html || '<div class="vide-message">Aucun objet dans le catalogue pour le moment.</div>';
-        appliquerFiltres();
+
+                <div class="match-action">▼</div>
+            </div>
+            <div class="detail-duel"><div style="text-align:center; padding: 20px; color: var(--text-main);">Analyse tactique en cours...</div></div>
+        `;
     }
 
-    document.getElementById('champRecherche').addEventListener('input', (e) => {
-        texteRecherche = e.target.value.trim().toLowerCase();
-        appliquerFiltres();
+    function rendreStatFaceAFace(label, valA, valB) {
+        let classeA = "comp-val left";
+        let classeB = "comp-val right";
+
+        if (typeof valA === 'number' && typeof valB === 'number') {
+            if (valA > valB) { classeA += " win"; classeB += " lose"; }
+            else if (valB > valA) { classeB += " win"; classeA += " lose"; }
+        }
+
+        return `
+            <div class="comp-row">
+                <div class="${classeA}">${valA}</div>
+                <div class="comp-label">${label}</div>
+                <div class="${classeB}">${valB}</div>
+            </div>
+        `;
+    }
+
+    function rendreBigItem(itemData) {
+        if (!itemData || !itemData.nom) return `<div class="big-item rarity-commun" title="Vide"></div>`;
+        let catItem = Object.values(catalogueItems).find(c => c.nom.toLowerCase() === itemData.nom.toLowerCase());
+        
+        let imageSrc = catItem && catItem.image ? catItem.image : ''; 
+        let rarete = catItem && catItem.rarete ? catItem.rarete.toLowerCase() : 'commun';
+        let fullTitle = `${itemData.nom} ${catItem && catItem.rarete ? '('+catItem.rarete+')' : ''}`;
+
+        return `
+            <div class="big-item rarity-${rarete}" title="${fullTitle}">
+                ${imageSrc ? `<img src="${imageSrc}" alt="${itemData.nom}" onerror="this.style.display='none'">` : `<span style="font-size:10px;text-align:center;">${itemData.nom.substring(0,4)}</span>`}
+                ${itemData.niveau > 0 ? `<div class="item-badge">+${itemData.niveau}</div>` : ''}
+            </div>
+        `;
+    }
+
+    // Intérieur carte (Arena face-à-face)
+    function rendreDetail(entree, detail) {
+        const buildA = detail.build_attaquant || {};
+        const buildB = detail.build_defenseur || {};
+        const estVictoireA = (entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase();
+        const estVictoireB = (entree.vainqueur || '').toLowerCase() === (entree.defenseur || '').toLowerCase();
+
+        return `
+            <!-- FACE A FACE BUILDS -->
+            <div class="arena-layout">
+                <div class="arena-player ${estVictoireA ? 'winner' : ''}">
+                    <img src="${obtenirAvatar(entree.attaquant)}" class="arena-avatar" onerror="this.src='${defaultAvatar}';">
+                    <h3 class="arena-name">${entree.attaquant}</h3>
+                    <div class="arena-items">
+                        ${rendreBigItem(buildA.arme)}
+                        ${rendreBigItem(buildA.offhand)}
+                        ${rendreBigItem(buildA.torso)}
+                        ${rendreBigItem(buildA.strategeme)}
+                    </div>
+                </div>
+                
+                <div class="arena-vs">VS</div>
+
+                <div class="arena-player ${estVictoireB ? 'winner' : ''}">
+                    <img src="${obtenirAvatar(entree.defenseur)}" class="arena-avatar" onerror="this.src='${defaultAvatar}';">
+                    <h3 class="arena-name">${entree.defenseur}</h3>
+                    <div class="arena-items">
+                        ${rendreBigItem(buildB.arme)}
+                        ${rendreBigItem(buildB.offhand)}
+                        ${rendreBigItem(buildB.torso)}
+                        ${rendreBigItem(buildB.strategeme)}
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATS -->
+            <div class="comp-table">
+                ${rendreStatFaceAFace("Power Level", Math.round(detail.power_attaquant || entree.power_attaquant || 0), Math.round(detail.power_defenseur || entree.power_defenseur || 0))}
+                ${rendreStatFaceAFace("Dégâts Infligés", detail.degats_infliges_attaquant || 0, detail.degats_infliges_defenseur || 0)}
+                ${rendreStatFaceAFace("Plus gros coup", detail.plus_gros_coup_attaquant || 0, detail.plus_gros_coup_defenseur || 0)}
+            </div>
+            
+            <button class="bouton-replay" data-id="${entree.id}">Visionner le Replay</button>
+        `;
+    }
+
+    // Mécanique de dépliage
+    function basculerDuel(carte, entree) {
+        const dejaOuvert = carte.classList.contains('ouvert');
+        if (dejaOuvert) { carte.classList.remove('ouvert'); return; }
+        
+        carte.classList.add('ouvert');
+        const zoneDetail = carte.querySelector('.detail-duel');
+        
+        if (detailsCache[entree.id]) {
+            zoneDetail.innerHTML = rendreDetail(entree, detailsCache[entree.id]);
+            return;
+        }
+        
+        fetch(`duels/${encodeURIComponent(entree.id)}.json?v=${Date.now()}`)
+            .then(r => r.json())
+            .then(detail => {
+                detailsCache[entree.id] = detail;
+                zoneDetail.innerHTML = rendreDetail(entree, detail);
+            })
+            .catch(() => {
+                zoneDetail.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--loss-color);">Rapport de combat introuvable ou corrompu.</div>';
+            });
+    }
+
+    // Affichage
+    function afficherLot() {
+        const zone = document.getElementById('listeDuels');
+        const lot = indexFiltre.slice(nbAffiches, nbAffiches + PAGE_TAILLE);
+        
+        lot.forEach(entree => {
+            const carte = document.createElement('div');
+            carte.className = `carte-duel ${classeCarte(entree)}`;
+            carte.innerHTML = rendreResume(entree);
+            carte.querySelector('.ligne-resume').addEventListener('click', () => basculerDuel(carte, entree));
+            zone.appendChild(carte);
+        });
+        
+        nbAffiches += lot.length;
+        document.getElementById('boutonPlus').style.display = nbAffiches < indexFiltre.length ? 'block' : 'none';
+    }
+
+    function appliquerRecherche() {
+        const terme = document.getElementById('rechercheJoueur').value.trim().toLowerCase();
+        indexFiltre = terme
+            ? indexComplet.filter(e => (e.attaquant || '').toLowerCase().includes(terme) || (e.defenseur || '').toLowerCase().includes(terme))
+            : indexComplet;
+        nbAffiches = 0;
+        document.getElementById('listeDuels').innerHTML = '';
+        
+        if (indexFiltre.length === 0) {
+            document.getElementById('listeDuels').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--text-main);">Aucun affrontement trouvé dans les archives.</div>';
+            document.getElementById('boutonPlus').style.display = 'none';
+            return;
+        }
+        afficherLot();
+    }
+
+    // Modale Replay
+    const modaleReplay = document.getElementById('modaleReplay');
+    const iframeReplay = document.getElementById('iframeReplay');
+    function ouvrirReplay(id) {
+        iframeReplay.src = `duel_overlay.html?replay=${encodeURIComponent(id)}`;
+        modaleReplay.classList.add('ouverte');
+    }
+    function fermerReplay() {
+        modaleReplay.classList.remove('ouverte');
+        iframeReplay.src = '';
+    }
+    document.getElementById('fermerModaleReplay').addEventListener('click', fermerReplay);
+    modaleReplay.addEventListener('click', (e) => { if (e.target === modaleReplay) fermerReplay(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerReplay(); });
+    document.getElementById('listeDuels').addEventListener('click', (e) => {
+        const bouton = e.target.closest('.bouton-replay');
+        if (bouton) { e.stopPropagation(); ouvrirReplay(bouton.dataset.id); }
     });
 
-    fetch('catalogue_stats.json?v=' + Date.now())
-        .then(r => r.json())
-        .then(data => {
-            STATS = data;
-            try {
-                construirePage();
-            } catch (erreur) {
-                console.error('Erreur pendant la construction du codex :', erreur);
-                document.getElementById('grillePrincipale').innerHTML =
-                    '<div class="vide-message">catalogue_stats.json a bien été chargé, mais une erreur est survenue pendant l\'affichage : ' + erreur.message + ' (détail dans la console, F12).</div>';
-            }
-        })
-        .catch((erreur) => {
-            console.error('Erreur de chargement de catalogue_stats.json :', erreur);
-            document.getElementById('grillePrincipale').innerHTML =
-                '<div class="vide-message">Impossible de charger catalogue_stats.json — vérifie qu\'il est bien présent à côté de cette page.</div>';
-        });
+    document.getElementById('rechercheJoueur').addEventListener('input', appliquerRecherche);
+    document.getElementById('boutonPlus').addEventListener('click', afficherLot);
+    
+    initialiser();
+
 </script>
-<script src="nav.js" defer></script>
 </body>
 </html>
