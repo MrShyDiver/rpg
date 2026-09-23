@@ -6,9 +6,7 @@
 <title>Historique des Duels - L'Arène</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* 
-  === THEME HEXTECH / E-SPORT ===
-*/
+/* === THEME HEXTECH / E-SPORT === */
 :root {
     --bg-main: #010a13; 
     --bg-panel: #091428;
@@ -23,9 +21,9 @@
     
     /* Couleurs de rareté des items */
     --rarity-commun: #8c92a0;
-    --rarity-normal: #1eff00; /* Vert */
-    --rarity-rare: #0070dd;   /* Bleu */
-    --rarity-epic: #a335ee;   /* Violet */
+    --rarity-normal: #1eff00; 
+    --rarity-rare: #0070dd;   
+    --rarity-epic: #a335ee;   
 
     --font-head: 'Oswald', sans-serif;
     --font-body: 'Barlow', sans-serif;
@@ -45,7 +43,7 @@ body {
 .page { max-width: 950px; margin: 0 auto; }
 
 /* --- EN-TÊTE --- */
-.entete { text-align: center; margin-bottom: 40px; }
+.entete { text-align: center; margin-bottom: 30px; }
 .entete h1 { 
     font-family: var(--font-head); font-size: 42px; 
     color: var(--hex-gold); text-transform: uppercase; letter-spacing: 3px;
@@ -66,92 +64,106 @@ body {
 
 /* --- LISTE DES MATCHS --- */
 .liste-duels { display: flex; flex-direction: column; gap: 12px; }
-.carte-duel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; }
+.carte-duel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; position: relative;}
 .carte-duel:hover { border-color: #323c50; }
 
 .carte-duel.victoire-attaquant .match-indicator { background: var(--win-color); box-shadow: 0 0 10px var(--win-color); }
 .carte-duel.victoire-defenseur .match-indicator { background: var(--loss-color); box-shadow: 0 0 10px var(--loss-color); }
 .carte-duel.egalite .match-indicator { background: var(--text-main); }
 
-/* Ligne Résumé (Encart non déployé) */
-.ligne-resume { display: flex; align-items: center; padding: 12px; cursor: pointer; position: relative; background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, transparent 100%); }
-.ligne-resume:hover { background: var(--bg-hover); }
-.match-indicator { width: 6px; height: 100%; position: absolute; left: 0; top: 0; }
-.match-time { width: 90px; padding-left: 15px; font-size: 13px; color: var(--text-main); line-height: 1.4; }
-
-.match-players { flex: 1; display: flex; align-items: center; justify-content: center; gap: 20px; }
-.player { display: flex; align-items: center; gap: 12px; width: 200px; }
-.player.reverse { flex-direction: row-reverse; text-align: right; }
-
-/* Image de profil dans l'encart non déployé */
-.player-avatar {
-    width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--border-color);
-    background: #000; object-fit: cover; box-shadow: 0 0 8px rgba(0,0,0,0.5);
+/* --- ENCART NON DÉPLOYÉ (RÉSUMÉ) --- */
+.ligne-resume { 
+    display: flex; align-items: center; padding: 25px 15px 15px 15px; 
+    cursor: pointer; position: relative; 
+    background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, transparent 100%); 
 }
-.player-name { font-size: 18px; font-weight: 600; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.ligne-resume:hover { background: var(--bg-hover); }
 
-.match-center { text-align: center; width: 90px; }
-.match-type { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); margin-top: 4px; }
-.rounds-badge { display: inline-block; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-top: 4px;}
+.match-indicator { width: 6px; height: 100%; position: absolute; left: 0; top: 0; }
+.match-time { 
+    position: absolute; top: 8px; left: 15px; 
+    font-size: 11px; color: var(--text-main); opacity: 0.8; letter-spacing: 0.5px;
+}
 
-.match-action { width: 50px; text-align: right; padding-right: 15px; color: var(--hex-gold); transition: transform 0.3s; }
-.carte-duel.ouvert .match-action { transform: rotate(180deg); }
+.match-players { width: 100%; display: flex; align-items: center; justify-content: center; }
+.player { flex: 1; display: flex; align-items: center; gap: 15px; min-width: 0; }
+.player.left { justify-content: flex-end; }
+.player.right { justify-content: flex-start; }
 
-/* --- MENU DÉROULÉ : ÉCRAN DE STATS --- */
-.detail-duel { display: none; padding: 30px 20px; background: #050b14; border-top: 1px solid var(--border-color); }
+.player-avatar {
+    width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border-color);
+    background: #000; object-fit: cover; box-shadow: 0 0 8px rgba(0,0,0,0.5); flex-shrink: 0;
+}
+.player-name { 
+    font-size: 18px; font-weight: 600; color: var(--text-light); 
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.player.left .player-name { text-align: right; }
+.player.right .player-name { text-align: left; }
+
+.match-center { width: 80px; text-align: center; flex-shrink: 0; display: flex; flex-direction: column; align-items: center;}
+.result-text { font-family: var(--font-head); font-size: 20px; font-weight: 700; color: var(--text-light); line-height: 1;}
+.rounds-badge { background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-top: 4px; border: 1px solid #1e283d;}
+
+.match-action { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: var(--hex-gold); transition: transform 0.3s; }
+.carte-duel.ouvert .match-action { transform: translateY(-50%) rotate(180deg); }
+
+/* --- MENU DÉROULÉ (DÉTAILS & BUILDS FACE À FACE) --- */
+.detail-duel { display: none; padding: 25px 15px; background: #050b14; border-top: 1px solid var(--border-color); }
 .carte-duel.ouvert .detail-duel { display: block; animation: slideDown 0.3s ease; }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Header du VS */
-.vs-header { display: flex; justify-content: center; align-items: center; gap: 40px; margin-bottom: 30px; }
-.vs-player { text-align: center; }
-.vs-player img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--border-color); object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-.vs-player.winner img { border-color: var(--hex-gold); box-shadow: 0 0 20px var(--hex-gold-glow); }
-.vs-player h3 { font-family: var(--font-head); color: var(--text-light); font-size: 22px; margin-top: 10px; letter-spacing: 1px;}
-.vs-logo { font-family: var(--font-head); font-size: 40px; font-style: italic; color: var(--hex-gold); text-shadow: 0 0 15px var(--hex-gold-glow); }
+/* Layout Arène (Joueur | VS | Joueur) */
+.arena-layout { display: flex; align-items: flex-start; justify-content: center; margin-bottom: 30px; gap: 10px;}
+.arena-player { flex: 1; display: flex; flex-direction: column; align-items: center; width: 45%; }
+.arena-vs { 
+    display: flex; flex-direction: column; justify-content: flex-start; align-items: center; 
+    width: 50px; flex-shrink: 0; padding-top: 25px;
+    font-family: var(--font-head); font-size: 32px; font-style: italic; color: var(--hex-gold); text-shadow: 0 0 15px var(--hex-gold-glow);
+}
 
-/* Grille de comparaison (Face to Face) */
-.comp-table { width: 100%; max-width: 600px; margin: 0 auto 40px; display: flex; flex-direction: column; gap: 8px; }
-.comp-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 8px 15px; }
-.comp-row:hover { background: rgba(255,255,255,0.05); }
-.comp-label { flex: 1; text-align: center; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); }
-.comp-val { width: 80px; font-size: 18px; font-weight: 700; color: var(--text-light); }
-.comp-val.left { text-align: right; }
-.comp-val.right { text-align: left; }
-.comp-val.win { color: var(--hex-gold); text-shadow: 0 0 8px var(--hex-gold-glow); font-size: 19px;}
-.comp-val.lose { color: #5c5b57; }
+.arena-avatar { width: 75px; height: 75px; border-radius: 50%; border: 3px solid var(--border-color); object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+.arena-player.winner .arena-avatar { border-color: var(--hex-gold); box-shadow: 0 0 20px var(--hex-gold-glow); }
+.arena-name { font-family: var(--font-head); font-size: 20px; color: var(--text-light); margin: 12px 0; letter-spacing: 1px; text-align: center; word-break: break-word;}
 
-/* Zone des Builds (Items) */
-.builds-section { display: flex; justify-content: space-between; gap: 20px; border-top: 1px dashed #2c3545; padding-top: 30px; }
-.build-team { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.build-title { font-family: var(--font-head); font-size: 16px; color: var(--text-main); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px;}
-.items-grid { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+/* Grille d'items sous le joueur (2x2) */
+.arena-items { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; justify-items: center; }
 
-/* Carte Item (Grand format) */
 .big-item {
-    width: 64px; height: 64px; background: #000; border: 2px solid var(--border-color);
+    width: 56px; height: 56px; background: #000; border: 2px solid var(--border-color);
     border-radius: 6px; position: relative; display: flex; align-items: center; justify-content: center;
     transition: transform 0.2s; cursor: help;
 }
 .big-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-.big-item img { width: 90%; height: 90%; object-fit: contain; }
+.big-item img { width: 85%; height: 85%; object-fit: contain; }
 .item-badge {
-    position: absolute; bottom: -8px; right: -8px; background: var(--bg-panel); color: var(--text-light);
-    border: 1px solid var(--text-main); border-radius: 50%; width: 22px; height: 22px;
-    font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold;
+    position: absolute; bottom: -6px; right: -6px; background: var(--bg-panel); color: var(--text-light);
+    border: 1px solid var(--text-main); border-radius: 50%; width: 20px; height: 20px;
+    font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold;
 }
-/* Couleurs raretés items */
+
 .big-item.rarity-commun { border-color: var(--rarity-commun); }
 .big-item.rarity-normal { border-color: var(--rarity-normal); box-shadow: 0 0 8px rgba(30, 255, 0, 0.2) inset;}
 .big-item.rarity-rare { border-color: var(--rarity-rare); box-shadow: 0 0 8px rgba(0, 112, 221, 0.2) inset;}
 .big-item.rarity-epic { border-color: var(--rarity-epic); box-shadow: 0 0 8px rgba(163, 53, 238, 0.2) inset;}
 
+/* Statistiques */
+.comp-table { width: 100%; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed #2c3545; padding-top: 20px;}
+.comp-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 10px 15px; }
+.comp-label { flex: 1; text-align: center; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); }
+.comp-val { width: 70px; font-size: 18px; font-weight: 700; color: var(--text-light); }
+.comp-val.left { text-align: right; }
+.comp-val.right { text-align: left; }
+.comp-val.win { color: var(--hex-gold); text-shadow: 0 0 8px var(--hex-gold-glow); font-size: 19px;}
+.comp-val.lose { color: #5c5b57; }
+
+/* Boutons */
 .bouton-replay, .bouton-plus {
     background: transparent; border: 2px solid var(--hex-gold); color: var(--hex-gold);
     font-family: var(--font-head); font-size: 16px; text-transform: uppercase; letter-spacing: 2px;
     padding: 12px 25px; cursor: pointer; border-radius: 4px; transition: all 0.2s; display: block; text-align: center;
 }
-.bouton-replay { margin: 40px auto 0; width: 280px; }
+.bouton-replay { margin: 30px auto 0; width: 100%; max-width: 300px; }
 .bouton-plus { margin: 30px auto 0; width: 100%; max-width: 300px; }
 .bouton-replay:hover, .bouton-plus:hover { background: var(--hex-gold); color: var(--bg-main); box-shadow: 0 0 20px var(--hex-gold-glow); }
 
@@ -160,16 +172,38 @@ body {
 .modale-overlay.ouverte { display: flex; }
 .modale-contenu { position: relative; width: 100%; max-width: 960px; border: 2px solid var(--hex-gold); border-radius: 4px; box-shadow: 0 0 40px var(--hex-gold-glow); }
 .modale-fermer { position: absolute; top: -45px; right: 0; background: none; border: none; color: var(--hex-gold); font-size: 32px; cursor: pointer; transition: transform 0.2s; }
-.modale-fermer:hover { transform: scale(1.1); color: #fff; }
 .iframe-replay { width: 100%; height: min(75vh, 720px); border: none; background: #000; display: block; }
 
-@media (max-width: 768px) {
-    .match-players { gap: 10px; }
-    .player-name { display: none; } 
-    .player { width: auto; }
-    .vs-header { gap: 15px; }
-    .vs-player img { width: 60px; height: 60px; }
-    .builds-section { flex-direction: column; gap: 40px; }
+/* --- RESPONSIVE MOBILE EXTRÊME --- */
+@media (max-width: 640px) {
+    body { padding: 20px 10px; }
+    
+    /* Encart Résumé */
+    .ligne-resume { padding: 30px 10px 15px 10px; }
+    .match-time { top: 6px; left: 10px; font-size: 10px; }
+    .player { flex-direction: column !important; gap: 6px; }
+    .player.left { align-items: center; } /* Évite le texte justifié à droite si empilé */
+    .player.right { align-items: center; }
+    /* On force l'image au-dessus du texte pour les deux côtés */
+    .player .player-name { order: 1; text-align: center !important; font-size: 14px; white-space: normal; line-height: 1.2;}
+    .player-avatar { width: 42px; height: 42px; order: 0; }
+    
+    .match-center { width: 60px; }
+    .result-text { font-size: 16px; }
+    .rounds-badge { font-size: 10px; }
+    .match-action { display: none; } /* On cache la flèche pour gagner de l'espace, la carte reste cliquable */
+
+    /* Détails Dépliés */
+    .arena-avatar { width: 60px; height: 60px; }
+    .arena-name { font-size: 16px; margin: 8px 0; }
+    .arena-vs { font-size: 24px; width: 30px; padding-top: 15px;}
+    .big-item { width: 44px; height: 44px; }
+    .arena-items { gap: 6px; }
+    
+    .comp-row { padding: 8px 10px; }
+    .comp-val { font-size: 15px; width: 45px; }
+    .comp-val.win { font-size: 16px; }
+    .comp-label { font-size: 11px; line-height: 1.2;}
 }
 </style>
 </head>
@@ -202,17 +236,15 @@ body {
     let indexFiltre = [];
     let nbAffiches = 0;
     
-    // Caches de données
     const detailsCache = {};
     let tousLesJoueurs = {};
     let catalogueItems = {};
 
     const defaultAvatar = "https://static-cdn.jtvnw.net/user-default-pictures-uv/41780b5a-def8-11e9-94d9-784f43822e80-profile_image-70x70.png";
 
-    // 1. Initialisation asynchrone groupée pour plus de rapidité
+    // Initialisation
     async function initialiser() {
         try {
-            // Charge les 3 fichiers capitaux en même temps
             const [resCat, resPlayers, resIndex] = await Promise.all([
                 fetch('catalogue_stats.json?v=' + Date.now()).catch(() => null),
                 fetch('players.json?v=' + Date.now()).catch(() => null),
@@ -231,29 +263,25 @@ body {
             }
         } catch(e) {
             console.error(e);
-            document.getElementById('listeDuels').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--loss-color);">Erreur de connexion aux archives de l\'Arène. Assurez-vous que les fichiers JSON sont présents.</div>';
+            document.getElementById('listeDuels').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--loss-color);">Erreur de connexion aux archives de l\'Arène.</div>';
         }
     }
 
-    // Récupération instantanée de l'avatar depuis la variable tousLesJoueurs en cache
+    // Récupération Avatar
     function obtenirAvatar(pseudo) {
         if (!pseudo) return defaultAvatar;
-        
         const lowerPseudo = pseudo.toLowerCase();
-        // Le pseudo dans la DB est parfois sensible à la casse, on cherche par clé en minuscule
         const cleJ = Object.keys(tousLesJoueurs).find(k => k.toLowerCase() === lowerPseudo);
         
         if (cleJ && tousLesJoueurs[cleJ].avatar && tousLesJoueurs[cleJ].avatar.trim() !== "") {
             return tousLesJoueurs[cleJ].avatar;
         }
-        
-        // S'il n'y a pas d'avatar dans le fichier (ex: champ vide), API de secours Twitch
         return `https://decapi.me/twitch/avatar/${encodeURIComponent(lowerPseudo)}`;
     }
 
     function formatDate(iso) {
         const d = new Date(iso);
-        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + '<br>' + 
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' - ' + 
                d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
 
@@ -262,7 +290,7 @@ body {
         return (entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase() ? 'victoire-attaquant' : 'victoire-defenseur';
     }
 
-    // 2. Rendu de la Ligne de Résumé (Encart non déployé)
+    // Ligne Résumée
     function rendreResume(entree) {
         let resultText = "VS";
         if (entree.egalite) resultText = "ÉGALITÉ";
@@ -272,23 +300,20 @@ body {
         return `
             <div class="ligne-resume">
                 <div class="match-indicator"></div>
-                
                 <div class="match-time">${formatDate(entree.date)}</div>
                 
                 <div class="match-players">
-                    <div class="player">
-                        <!-- L'image de l'attaquant s'affiche désormais directement -->
-                        <img src="${obtenirAvatar(entree.attaquant)}" class="player-avatar" alt="${entree.attaquant}" onerror="this.src='${defaultAvatar}';">
+                    <div class="player left">
                         <span class="player-name">${entree.attaquant}</span>
+                        <img src="${obtenirAvatar(entree.attaquant)}" class="player-avatar" alt="${entree.attaquant}" onerror="this.src='${defaultAvatar}';">
                     </div>
                     
                     <div class="match-center">
-                        <div style="font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--text-light);">${resultText}</div>
+                        <div class="result-text">${resultText}</div>
                         <div class="rounds-badge">${entree.rounds} Rounds</div>
                     </div>
                     
-                    <div class="player reverse">
-                        <!-- L'image du défenseur s'affiche désormais directement -->
+                    <div class="player right">
                         <img src="${obtenirAvatar(entree.defenseur)}" class="player-avatar" alt="${entree.defenseur}" onerror="this.src='${defaultAvatar}';">
                         <span class="player-name">${entree.defenseur}</span>
                     </div>
@@ -300,12 +325,10 @@ body {
         `;
     }
 
-    // Fonction d'aide pour générer une ligne de face-à-face
     function rendreStatFaceAFace(label, valA, valB) {
         let classeA = "comp-val left";
         let classeB = "comp-val right";
 
-        // Détermine le gagnant de la stat
         if (typeof valA === 'number' && typeof valB === 'number') {
             if (valA > valB) { classeA += " win"; classeB += " lose"; }
             else if (valB > valA) { classeB += " win"; classeA += " lose"; }
@@ -320,14 +343,10 @@ body {
         `;
     }
 
-    // Rendu d'un item stylisé (En lisant le catalogue global)
     function rendreBigItem(itemData) {
-        if (!itemData || !itemData.nom) return `<div class="big-item rarity-commun" title="Emplacement vide"></div>`;
-        
-        // Chercher l'item dans le catalogue par son nom
+        if (!itemData || !itemData.nom) return `<div class="big-item rarity-commun" title="Vide"></div>`;
         let catItem = Object.values(catalogueItems).find(c => c.nom.toLowerCase() === itemData.nom.toLowerCase());
         
-        // Valeurs par défaut si non trouvé
         let imageSrc = catItem && catItem.image ? catItem.image : ''; 
         let rarete = catItem && catItem.rarete ? catItem.rarete.toLowerCase() : 'commun';
         let fullTitle = `${itemData.nom} ${catItem && catItem.rarete ? '('+catItem.rarete+')' : ''}`;
@@ -340,52 +359,33 @@ body {
         `;
     }
 
-    // 3. Rendu de l'intérieur de la carte (Statistiques + Builds)
+    // Intérieur carte (Arena face-à-face)
     function rendreDetail(entree, detail) {
         const buildA = detail.build_attaquant || {};
         const buildB = detail.build_defenseur || {};
-        
         const estVictoireA = (entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase();
         const estVictoireB = (entree.vainqueur || '').toLowerCase() === (entree.defenseur || '').toLowerCase();
 
         return `
-            <!-- HEADER VS -->
-            <div class="vs-header">
-                <div class="vs-player ${estVictoireA ? 'winner' : ''}">
-                    <img src="${obtenirAvatar(entree.attaquant)}" alt="${entree.attaquant}" onerror="this.src='${defaultAvatar}';">
-                    <h3>${entree.attaquant}</h3>
-                </div>
-                
-                <div class="vs-logo">VS</div>
-
-                <div class="vs-player ${estVictoireB ? 'winner' : ''}">
-                    <img src="${obtenirAvatar(entree.defenseur)}" alt="${entree.defenseur}" onerror="this.src='${defaultAvatar}';">
-                    <h3>${entree.defenseur}</h3>
-                </div>
-            </div>
-
-            <!-- TABLEAU DES STATS FACE A FACE -->
-            <div class="comp-table">
-                ${rendreStatFaceAFace("Power Level", Math.round(detail.power_attaquant || entree.power_attaquant || 0), Math.round(detail.power_defenseur || entree.power_defenseur || 0))}
-                ${rendreStatFaceAFace("Dégâts Totaux", detail.degats_infliges_attaquant || 0, detail.degats_infliges_defenseur || 0)}
-                ${rendreStatFaceAFace("Coup le plus puissant", detail.plus_gros_coup_attaquant || 0, detail.plus_gros_coup_defenseur || 0)}
-            </div>
-
-            <!-- BUILDS EQUIPES -->
-            <div class="builds-section">
-                <div class="build-team">
-                    <div class="build-title">Équipement Attaquant</div>
-                    <div class="items-grid">
+            <!-- FACE A FACE BUILDS -->
+            <div class="arena-layout">
+                <div class="arena-player ${estVictoireA ? 'winner' : ''}">
+                    <img src="${obtenirAvatar(entree.attaquant)}" class="arena-avatar" onerror="this.src='${defaultAvatar}';">
+                    <h3 class="arena-name">${entree.attaquant}</h3>
+                    <div class="arena-items">
                         ${rendreBigItem(buildA.arme)}
                         ${rendreBigItem(buildA.offhand)}
                         ${rendreBigItem(buildA.torso)}
                         ${rendreBigItem(buildA.strategeme)}
                     </div>
                 </div>
+                
+                <div class="arena-vs">VS</div>
 
-                <div class="build-team">
-                    <div class="build-title">Équipement Défenseur</div>
-                    <div class="items-grid">
+                <div class="arena-player ${estVictoireB ? 'winner' : ''}">
+                    <img src="${obtenirAvatar(entree.defenseur)}" class="arena-avatar" onerror="this.src='${defaultAvatar}';">
+                    <h3 class="arena-name">${entree.defenseur}</h3>
+                    <div class="arena-items">
                         ${rendreBigItem(buildB.arme)}
                         ${rendreBigItem(buildB.offhand)}
                         ${rendreBigItem(buildB.torso)}
@@ -393,12 +393,19 @@ body {
                     </div>
                 </div>
             </div>
+
+            <!-- STATS -->
+            <div class="comp-table">
+                ${rendreStatFaceAFace("Power Level", Math.round(detail.power_attaquant || entree.power_attaquant || 0), Math.round(detail.power_defenseur || entree.power_defenseur || 0))}
+                ${rendreStatFaceAFace("Dégâts Infligés", detail.degats_infliges_attaquant || 0, detail.degats_infliges_defenseur || 0)}
+                ${rendreStatFaceAFace("Plus gros coup", detail.plus_gros_coup_attaquant || 0, detail.plus_gros_coup_defenseur || 0)}
+            </div>
             
             <button class="bouton-replay" data-id="${entree.id}">Visionner le Replay</button>
         `;
     }
 
-    // Gestion du dépliage
+    // Mécanique de dépliage
     function basculerDuel(carte, entree) {
         const dejaOuvert = carte.classList.contains('ouvert');
         if (dejaOuvert) { carte.classList.remove('ouvert'); return; }
@@ -422,7 +429,7 @@ body {
             });
     }
 
-    // Moteur d'affichage
+    // Affichage
     function afficherLot() {
         const zone = document.getElementById('listeDuels');
         const lot = indexFiltre.slice(nbAffiches, nbAffiches + PAGE_TAILLE);
@@ -431,7 +438,6 @@ body {
             const carte = document.createElement('div');
             carte.className = `carte-duel ${classeCarte(entree)}`;
             carte.innerHTML = rendreResume(entree);
-            
             carte.querySelector('.ligne-resume').addEventListener('click', () => basculerDuel(carte, entree));
             zone.appendChild(carte);
         });
@@ -459,7 +465,6 @@ body {
     // Modale Replay
     const modaleReplay = document.getElementById('modaleReplay');
     const iframeReplay = document.getElementById('iframeReplay');
-    
     function ouvrirReplay(id) {
         iframeReplay.src = `duel_overlay.html?replay=${encodeURIComponent(id)}`;
         modaleReplay.classList.add('ouverte');
@@ -468,7 +473,6 @@ body {
         modaleReplay.classList.remove('ouverte');
         iframeReplay.src = '';
     }
-    
     document.getElementById('fermerModaleReplay').addEventListener('click', fermerReplay);
     modaleReplay.addEventListener('click', (e) => { if (e.target === modaleReplay) fermerReplay(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerReplay(); });
@@ -477,7 +481,6 @@ body {
         if (bouton) { e.stopPropagation(); ouvrirReplay(bouton.dataset.id); }
     });
 
-    // Lancement
     document.getElementById('rechercheJoueur').addEventListener('input', appliquerRecherche);
     document.getElementById('boutonPlus').addEventListener('click', afficherLot);
     
