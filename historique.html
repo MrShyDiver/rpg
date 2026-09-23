@@ -25,7 +25,7 @@
     --rarity-commun: #8c92a0;
     --rarity-normal: #1eff00; /* Vert */
     --rarity-rare: #0070dd;   /* Bleu */
-    --rarity-epic: #a335ee;   /* Violet (au cas où) */
+    --rarity-epic: #a335ee;   /* Violet */
 
     --font-head: 'Oswald', sans-serif;
     --font-body: 'Barlow', sans-serif;
@@ -73,7 +73,7 @@ body {
 .carte-duel.victoire-defenseur .match-indicator { background: var(--loss-color); box-shadow: 0 0 10px var(--loss-color); }
 .carte-duel.egalite .match-indicator { background: var(--text-main); }
 
-/* Ligne Résumé */
+/* Ligne Résumé (Encart non déployé) */
 .ligne-resume { display: flex; align-items: center; padding: 12px; cursor: pointer; position: relative; background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, transparent 100%); }
 .ligne-resume:hover { background: var(--bg-hover); }
 .match-indicator { width: 6px; height: 100%; position: absolute; left: 0; top: 0; }
@@ -83,9 +83,10 @@ body {
 .player { display: flex; align-items: center; gap: 12px; width: 200px; }
 .player.reverse { flex-direction: row-reverse; text-align: right; }
 
+/* Image de profil dans l'encart non déployé */
 .player-avatar {
     width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--border-color);
-    background: #000; object-fit: cover;
+    background: #000; object-fit: cover; box-shadow: 0 0 8px rgba(0,0,0,0.5);
 }
 .player-name { font-size: 18px; font-weight: 600; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
@@ -201,63 +202,53 @@ body {
     let indexFiltre = [];
     let nbAffiches = 0;
     
-    // Caches pour éviter de re-télécharger les mêmes fichiers
+    // Caches de données
     const detailsCache = {};
-    const joueursCache = {};
+    let tousLesJoueurs = {};
     let catalogueItems = {};
 
     const defaultAvatar = "https://static-cdn.jtvnw.net/user-default-pictures-uv/41780b5a-def8-11e9-94d9-784f43822e80-profile_image-70x70.png";
 
-    // 1. Initialisation : Charger le catalogue des items PUIS les duels
+    // 1. Initialisation asynchrone groupée pour plus de rapidité
     async function initialiser() {
         try {
-            const resCat = await fetch('catalogue_stats.json?v=' + Date.now());
-            catalogueItems = await resCat.json();
-        } catch(e) {
-            console.warn("Catalogue des items introuvable, affichage dégradé des images.");
-        }
+            // Charge les 3 fichiers capitaux en même temps
+            const [resCat, resPlayers, resIndex] = await Promise.all([
+                fetch('catalogue_stats.json?v=' + Date.now()).catch(() => null),
+                fetch('players.json?v=' + Date.now()).catch(() => null),
+                fetch('duels_index.json?v=' + Date.now()).catch(() => null)
+            ]);
 
-        try {
-            const resIndex = await fetch('duels_index.json?v=' + Date.now());
-            const data = await resIndex.json();
-            indexComplet = data.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-            appliquerRecherche();
+            if (resCat && resCat.ok) catalogueItems = await resCat.json();
+            if (resPlayers && resPlayers.ok) tousLesJoueurs = await resPlayers.json();
+            
+            if (resIndex && resIndex.ok) {
+                const data = await resIndex.json();
+                indexComplet = data.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+                appliquerRecherche();
+            } else {
+                throw new Error("Index manquant");
+            }
         } catch(e) {
-            document.getElementById('listeDuels').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--loss-color);">Erreur de connexion aux archives de l\'Arène.</div>';
+            console.error(e);
+            document.getElementById('listeDuels').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--loss-color);">Erreur de connexion aux archives de l\'Arène. Assurez-vous que les fichiers JSON sont présents.</div>';
         }
     }
 
-    // 2. Récupération asynchrone des avatars depuis joueurs/pseudo.json
-    async function appliquerAvatarReel(pseudo, imgId) {
+    // Récupération instantanée de l'avatar depuis la variable tousLesJoueurs en cache
+    function obtenirAvatar(pseudo) {
+        if (!pseudo) return defaultAvatar;
+        
         const lowerPseudo = pseudo.toLowerCase();
-        const imgElement = document.getElementById(imgId);
-        if(!imgElement) return;
-
-        // Si déjà en cache
-        if (joueursCache[lowerPseudo]) {
-            imgElement.src = joueursCache[lowerPseudo];
-            return;
+        // Le pseudo dans la DB est parfois sensible à la casse, on cherche par clé en minuscule
+        const cleJ = Object.keys(tousLesJoueurs).find(k => k.toLowerCase() === lowerPseudo);
+        
+        if (cleJ && tousLesJoueurs[cleJ].avatar && tousLesJoueurs[cleJ].avatar.trim() !== "") {
+            return tousLesJoueurs[cleJ].avatar;
         }
-
-        try {
-            const res = await fetch(`joueurs/${encodeURIComponent(lowerPseudo)}.json`);
-            if (res.ok) {
-                const joueurData = await res.json();
-                const avatar = (joueurData[lowerPseudo] && joueurData[lowerPseudo].avatar) 
-                                ? joueurData[lowerPseudo].avatar 
-                                : defaultAvatar;
-                
-                joueursCache[lowerPseudo] = avatar;
-                imgElement.src = avatar;
-            } else {
-                // Fallback direct sur l'API Twitch via Decapi si le fichier json du joueur manque
-                const fallbackUrl = `https://decapi.me/twitch/avatar/${encodeURIComponent(lowerPseudo)}`;
-                joueursCache[lowerPseudo] = fallbackUrl;
-                imgElement.src = fallbackUrl;
-            }
-        } catch(e) {
-            imgElement.src = defaultAvatar;
-        }
+        
+        // S'il n'y a pas d'avatar dans le fichier (ex: champ vide), API de secours Twitch
+        return `https://decapi.me/twitch/avatar/${encodeURIComponent(lowerPseudo)}`;
     }
 
     function formatDate(iso) {
@@ -271,11 +262,8 @@ body {
         return (entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase() ? 'victoire-attaquant' : 'victoire-defenseur';
     }
 
-    // 3. Rendu de la Ligne de Résumé
+    // 2. Rendu de la Ligne de Résumé (Encart non déployé)
     function rendreResume(entree) {
-        const idAtk = `img-atk-${entree.id}`;
-        const idDef = `img-def-${entree.id}`;
-
         let resultText = "VS";
         if (entree.egalite) resultText = "ÉGALITÉ";
         else if ((entree.vainqueur || '').toLowerCase() === (entree.attaquant || '').toLowerCase()) resultText = "VICTOIRE";
@@ -289,7 +277,8 @@ body {
                 
                 <div class="match-players">
                     <div class="player">
-                        <img id="${idAtk}" src="${defaultAvatar}" class="player-avatar" alt="${entree.attaquant}" onerror="this.src='${defaultAvatar}';">
+                        <!-- L'image de l'attaquant s'affiche désormais directement -->
+                        <img src="${obtenirAvatar(entree.attaquant)}" class="player-avatar" alt="${entree.attaquant}" onerror="this.src='${defaultAvatar}';">
                         <span class="player-name">${entree.attaquant}</span>
                     </div>
                     
@@ -299,7 +288,8 @@ body {
                     </div>
                     
                     <div class="player reverse">
-                        <img id="${idDef}" src="${defaultAvatar}" class="player-avatar" alt="${entree.defenseur}" onerror="this.src='${defaultAvatar}';">
+                        <!-- L'image du défenseur s'affiche désormais directement -->
+                        <img src="${obtenirAvatar(entree.defenseur)}" class="player-avatar" alt="${entree.defenseur}" onerror="this.src='${defaultAvatar}';">
                         <span class="player-name">${entree.defenseur}</span>
                     </div>
                 </div>
@@ -350,7 +340,7 @@ body {
         `;
     }
 
-    // 4. Rendu de l'intérieur de la carte (Statistiques + Builds)
+    // 3. Rendu de l'intérieur de la carte (Statistiques + Builds)
     function rendreDetail(entree, detail) {
         const buildA = detail.build_attaquant || {};
         const buildB = detail.build_defenseur || {};
@@ -362,14 +352,14 @@ body {
             <!-- HEADER VS -->
             <div class="vs-header">
                 <div class="vs-player ${estVictoireA ? 'winner' : ''}">
-                    <img src="${joueursCache[entree.attaquant.toLowerCase()] || defaultAvatar}" alt="${entree.attaquant}">
+                    <img src="${obtenirAvatar(entree.attaquant)}" alt="${entree.attaquant}" onerror="this.src='${defaultAvatar}';">
                     <h3>${entree.attaquant}</h3>
                 </div>
                 
                 <div class="vs-logo">VS</div>
 
                 <div class="vs-player ${estVictoireB ? 'winner' : ''}">
-                    <img src="${joueursCache[entree.defenseur.toLowerCase()] || defaultAvatar}" alt="${entree.defenseur}">
+                    <img src="${obtenirAvatar(entree.defenseur)}" alt="${entree.defenseur}" onerror="this.src='${defaultAvatar}';">
                     <h3>${entree.defenseur}</h3>
                 </div>
             </div>
@@ -442,13 +432,8 @@ body {
             carte.className = `carte-duel ${classeCarte(entree)}`;
             carte.innerHTML = rendreResume(entree);
             
-            // Événement clic
             carte.querySelector('.ligne-resume').addEventListener('click', () => basculerDuel(carte, entree));
             zone.appendChild(carte);
-            
-            // Lancer la récupération asynchrone des avatars réels
-            appliquerAvatarReel(entree.attaquant, `img-atk-${entree.id}`);
-            appliquerAvatarReel(entree.defenseur, `img-def-${entree.id}`);
         });
         
         nbAffiches += lot.length;
