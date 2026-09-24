@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Bebas+Neue&display=swap');
+
+    :root {
+        --or: #f0a020; --or-clair: #ffd23f;
+        --fond: #08090c; --panneau: #14171e; --panneau-clair: #1c2028;
+        --texte: #e8e6e0; --texte-att: #9aa0ac;
+        --commun: #9aa0a8; --normal: #7fbf6a; --rare: #4a9fd8; --epique: #a855f7; --legendaire: #f0a020;
+        --rouge: #d63a3a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { overflow-x: hidden; }
+    body {
+        max-width: 1200px; width: 100%; margin: 0 auto;
+        background: linear-gradient(180deg, #0d0b10 0%, var(--fond) 8%, var(--fond) 100%);
+        color: var(--texte); font-family: 'Oswald', sans-serif;
+        overflow-x: hidden;
+    }
+    img, svg { max-width: 100%; }
+    .titre-affiche { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+
+    /* ============ TEASER / HERO ============ */
+    .teaser {
+        position: relative; height: 400px; overflow: hidden;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; border-bottom: 3px solid var(--or);
+        /* Repli visuel tant qu'aucune vraie image n'est fournie -- disparaît sous la vraie photo */
+        background: radial-gradient(ellipse at 50% 30%, #3a1414 0%, #08090c 65%);
+    }
+    /* ⚠️ IMAGE DU BOSS : remplace src par ta vraie image. Le filtre ci-dessous s'occupe de ne
+       laisser deviner que la silhouette (assombrissement + contraste + léger flou) -- pas besoin
+       de flouter l'image toi-même en amont. */
+    .teaser-img {
+        position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+        filter: brightness(0.32) contrast(1.35) saturate(0.6) blur(2px);
+    }
+    .teaser::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(8,9,12,0.05) 0%, rgba(8,9,12,0.95) 90%);
+    }
+    .teaser-contenu { position: relative; z-index: 1; }
+    .teaser-eyebrow {
+        display: inline-block; padding: 6px 20px; border-radius: 20px; margin-bottom: 16px;
+        background: rgba(214,58,58,0.18); border: 1px solid var(--rouge); color: #ff9a9a;
+        font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+    }
+    .teaser-titre { font-size: 68px; color: var(--or-clair); text-shadow: 0 0 50px rgba(240,160,32,0.55); line-height: 1; }
+    .teaser-sous-titre { font-size: 16px; color: var(--texte-att); margin-top: 10px; max-width: 660px; margin-left: auto; margin-right: auto; }
+
+    /* ============ DATE (remontée en haut, juste sous le teaser) ============ */
+    .date-bar {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        padding: 16px; background: var(--or); color: #1a1108; font-weight: 700; font-size: 16px;
+        letter-spacing: 0.5px;
+    }
+
+
+
+.boss-bloc { text-align: center; padding-top: 20px; }
+.boss-image-zone {
+    width: 150px; height: 150px; margin: 0 auto 24px; border-radius: 14px; background: #050505;
+    border: 1px solid rgba(168,39,31,0.5); display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 60px rgba(168,39,31,0.25) inset;
+    position: relative; overflow: hidden;
+}
+.boss-image-zone img {filter: drop-shadow(0 0 18px rgba(224,57,44,0.7)); }
+.boss-image-zone::after {
+    content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.35) 3px, rgba(0,0,0,0.35) 4px);
+}
+.boss-titre { font-size: 30px; letter-spacing: 2px; color: var(--red-bright); text-shadow: 0 0 22px rgba(224,57,44,0.6); }
+.boss-sub { color: var(--paper-dim); font-size: 15px; margin-top: 10px; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+    .date-bar strong { font-size: 19px; }
+
+    /* ============ TL;DR ============ */
+    .tldr { padding: 28px 60px; background: var(--panneau); border-bottom: 1px solid #2a2e38; }
+    .tldr-titre {
+        font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px;
+        color: var(--texte-att); margin-bottom: 12px; text-align: center;
+    }
+    .tldr-liste { list-style: none; max-width: 780px; margin: 0 auto; font-size: 14px; line-height: 2; color: var(--texte); }
+    .tldr-liste li::before { content: '●  '; }
+    .tldr-liste strong { color: var(--or-clair); }
+
+    /* ============ VS SECTION ============ */
+    .vs-section { padding: 46px 60px; background: var(--panneau); border-bottom: 1px solid #2a2e38; }
+    .vs-titre { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--texte); margin-bottom: 6px; letter-spacing: 1px; }
+    .vs-sous { text-align: center; font-size: 14px; color: var(--texte-att); margin-bottom: 30px; }
+    .vs-grille { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 24px; }
+    .vs-carte {
+        background: var(--panneau-clair); border-radius: 12px; padding: 28px 26px; text-align: center;
+        border: 1px solid #2a2e38; position: relative; overflow: hidden;
+    }
+    .vs-carte.moi { border-color: var(--rouge); box-shadow: 0 0 30px rgba(214,58,58,0.15) inset; }
+    .vs-carte.commu { border-color: var(--or); box-shadow: 0 0 30px rgba(240,160,32,0.15) inset; }
+    .vs-icone { font-size: 44px; margin-bottom: 10px; }
+    .vs-carte-titre { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 1px; margin-bottom: 8px; }
+    .vs-carte.moi .vs-carte-titre { color: #ff9a9a; }
+    .vs-carte.commu .vs-carte-titre { color: var(--or-clair); }
+    .vs-carte-texte { font-size: 13px; color: var(--texte-att); line-height: 1.6; }
+    .vs-lettres { font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--texte); opacity: 0.6; }
+    .vs-question {
+        text-align: center; margin-top: 26px; font-size: 19px; font-weight: 600;
+        color: var(--or-clair); font-style: italic;
+    }
+
+    /* ============ CORPS GENERIQUE ============ */
+    .corps { padding: 44px 60px 50px; }
+    .section-titre {
+        font-family: 'Bebas Neue', sans-serif; font-size: 27px; letter-spacing: 1px;
+        margin-bottom: 16px; display: flex; align-items: center; gap: 10px; color: var(--texte);
+    }
+    .section-titre::before { content: ''; width: 5px; height: 22px; background: var(--or); display: inline-block; }
+    /* Icône de section : emoji (texte) OU image, au choix -- même boîte dans les deux cas pour un
+       alignement identique. Pour une image : <span class="section-icone"><img src="..."></span> */
+    .section-icone {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px; font-size: 22px; line-height: 1; flex-shrink: 0;
+    }
+    .section-icone img { width: 100%; height: 100%; object-fit: contain; }
+    .section { margin-bottom: 40px; }
+
+    .grille-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .carte { background: var(--panneau); border: 1px solid #2a2e38; border-radius: 10px; padding: 20px 22px; }
+    .carte-titre { font-size: 15px; font-weight: 600; color: var(--or-clair); margin-bottom: 8px; }
+    .carte-texte { font-size: 14px; color: var(--texte-att); line-height: 1.6; }
+    .carte-texte strong { color: var(--texte); }
+
+    /* ---- Bandeau boost live / promo ---- */
+    .bandeau-boost {
+        background: linear-gradient(90deg, rgba(214,58,58,0.14), rgba(240,160,32,0.14));
+        border: 1px solid var(--or); border-radius: 10px; padding: 22px 26px; margin-bottom: 18px;
+    }
+    .bandeau-boost-titre { font-size: 16px; font-weight: 700; color: var(--or-clair); margin-bottom: 6px; }
+    .bandeau-boost-texte { font-size: 14px; color: var(--texte); line-height: 1.6; }
+    .bandeau-boost-texte strong { color: var(--or-clair); }
+
+    .bandeau-promo {
+        background: linear-gradient(90deg, rgba(211, 166, 255,0.14), rgba(211, 166, 255,0.14));
+        border: 1px solid #d3a6ff; border-radius: 10px; padding: 22px 26px;
+    }
+    .bandeau-promo-titre { font-size: 16px; font-weight: 700; color: #d3a6ff; margin-bottom: 6px; }
+    .bandeau-promo-texte { font-size: 14px; color: var(--texte); line-height: 1.6; }
+    .bandeau-promo-texte strong { color: #d3a6ff; }
+
+    /* ---- Cartes d'objets façon Codex ---- */
+    .grille-items { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 16px; }
+    .item-carte {
+        background: var(--panneau-clair); border: 1px solid #2a2e38; border-top: 3px solid var(--epique);
+        border-radius: 8px; overflow: hidden; text-align: center;
+    }
+    .item-carte-image {
+        height: 78px; display: flex; align-items: center; justify-content: center; font-size: 36px; margin:20px;
+        background-color: transparent; background-size: contain; background-repeat: no-repeat; background-position: center;
+        background-image: radial-gradient(circle at 50% 30%, rgba(168,85,247,0.15), transparent 70%);
+    }
+    .item-carte-nom { font-size: 12.5px; font-weight: 600; padding: 10px 8px 2px; color: var(--texte); }
+    .item-carte-rarete {
+        display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+        color: var(--epique); background: rgba(168,85,247,0.15); border-radius: 10px; padding: 2px 10px; margin: 6px 0 10px;
+    }
+    .items-footer { text-align: center; font-size: 13px; color: var(--texte-att); margin-top: 14px; font-style: italic; }
+    .items-footer strong { color: var(--or-clair); font-style: normal; }
+
+    /* ---- Tables de taux ---- */
+    .grille-taux { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .taux-carte { background: var(--panneau); border: 1px solid #2a2e38; border-radius: 10px; padding: 22px; }
+    .taux-carte.avant { border-color: #3a3e48; }
+    .taux-carte.apres { border-color: var(--legendaire); box-shadow: 0 0 24px rgba(240,160,32,0.12); }
+    .taux-carte-titre { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .taux-carte.avant .taux-carte-titre { color: var(--texte-att); }
+    .taux-carte.apres .taux-carte-titre { color: var(--or-clair); }
+    .taux-carte-sub { font-size: 11.5px; color: var(--texte-att); margin-bottom: 16px; }
+    .barre-taux { display: flex; height: 26px; border-radius: 5px; overflow: hidden; margin-bottom: 14px; }
+    .barre-seg { display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; color: #08090c; }
+    .legende-taux { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 12px; color: var(--texte-att); }
+    .legende-taux span.pastille { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; }
+    .legende-taux .val { color: var(--texte); font-weight: 600; }
+
+    /* ---- Boites de victoire ---- */
+    .victoire-bandeau { background: var(--panneau-clair); border: 1px solid var(--or); border-radius: 10px; padding: 24px 26px; }
+    .victoire-titre { font-size: 16px; font-weight: 700; color: var(--or-clair); margin-bottom: 10px; }
+    .victoire-texte { font-size: 14px; color: var(--texte-att); margin-bottom: 16px; line-height: 1.6; }
+    .victoire-texte strong { color: var(--texte); }
+
+    /* ---- Tease legendaires ---- */
+    .grille-legendaires { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .legendaire-carte {
+        background: radial-gradient(circle at 50% 30%, rgba(240,160,32,0.12), var(--panneau) 70%);
+        border: 1px solid var(--legendaire); border-radius: 12px; padding: 20px 14px; text-align: center;
+        position: relative; overflow: hidden;
+    }
+    /* ⚠️ Mets ton image en background-image inline (voir le HTML) -- le filtre s'occupe de ne
+       laisser deviner que la forme, jamais le détail. Sans image : reste un joli fond doré uni. */
+    .legendaire-img-wrap {
+        width: 90px; height: 90px; margin: 0 auto 12px; border-radius: 10px; overflow: hidden;
+        background-color: #1a1410; background-size: cover; background-position: center;
+        filter: blur(9px) brightness(0.65) saturate(1.3);
+    }
+    .legendaire-nom {
+        font-size: 15px; font-weight: 700; color: var(--or-clair); letter-spacing: 4px;
+        font-family: 'Bebas Neue', sans-serif;
+    }
+    .legendaire-mystere { font-size: 20px; color: var(--texte-att); margin-top: 4px; }
+
+    /* ---- Classements ---- */
+    .grille-classements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .classement-carte { background: var(--panneau-clair); border: 1px solid #2a2e38; border-radius: 10px; padding: 20px 14px; text-align: center; }
+    .classement-icone { font-size: 28px; margin-bottom: 8px; }
+    .classement-nom { font-weight: 700; font-size: 15px; color: var(--or-clair); margin-bottom: 6px; }
+    .classement-desc { font-size: 11.5px; color: var(--texte-att); line-height: 1.5; margin-bottom: 14px;}
+    .classement-podium { display: flex; justify-content: center; align-items: flex-end; gap: 12px; }
+    .podium-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .podium-item img { display: block; }
+    .podium-item span { font-size: 11px; font-weight: 700; color: var(--or-clair); }
+
+    .items-footer, .footer-bas { }
+
+    /* ==========================================================
+       RESPONSIVE — 2 paliers : tablette (<=900px) puis mobile (<=600px).
+       ========================================================== */
+    @media (max-width: 900px) {
+        .teaser { height: auto; padding: 70px 24px; }
+        .teaser-titre { font-size: 48px; }
+        .teaser-sous-titre { font-size: 14px; }
+
+        .tldr, .vs-section { padding: 30px 24px; }
+        .vs-grille { grid-template-columns: 1fr; }
+        .vs-lettres { padding: 4px 0; }
+
+        .corps { padding: 36px 24px 40px; }
+        .grille-2, .grille-taux { grid-template-columns: 1fr; }
+        .grille-legendaires, .grille-classements, .grille-items { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+        .teaser { padding: 50px 18px; }
+        .teaser-eyebrow { font-size: 11px; padding: 5px 14px; letter-spacing: 2px; }
+        .teaser-titre { font-size: 34px; }
+        .teaser-sous-titre { font-size: 13px; }
+
+        .date-bar { padding: 12px; font-size: 13px; flex-direction: column; gap: 2px; }
+        .date-bar strong { font-size: 16px; }
+
+        .tldr, .vs-section { padding: 24px 16px; }
+        .vs-titre { font-size: 22px; }
+        .vs-carte { padding: 22px 16px; }
+        .vs-question { font-size: 16px; }
+
+        .corps { padding: 28px 16px 34px; }
+        .section-titre { font-size: 22px; }
+        .grille-legendaires, .grille-classements, .grille-items { grid-template-columns: 1fr; }
+
+        .barre-taux { font-size: 9px; }
+        .barre-seg { padding: 2px 0; }
+    }
+</style>
+</head>
+<body>
+
+<div class="teaser">
+    <img class="teaser-img" src="assets/boss/teaser.png" alt="">
+    <div class="teaser-contenu">
+        <div class="boss-image-zone"><img src="assets/boss/teaser.png" alt=""></div>
+        <div class="teaser-titre">UN STREAM, DEUX COMBATS</div>
+        <div class="teaser-sous-titre">Une présence inconnue rôde sur le stream. Personne n'a encore osé l'affronter seul — il va falloir toute une communauté pour espérer le faire tomber.</div>
+    </div>
+</div>
+
+<div class="date-bar">📅 <strong>EVENEMENT LE 27/09/2026 à 17h</strong></div>
+
+<div class="tldr">
+    <ul class="tldr-liste">
+        <li><strong>250 points de chaîne</strong> (ou un ticket de duel) par attaque contre le boss</li>
+        <li>Lootbox et tickets de duel <strong>en promo</strong> pendant tout le live</li>
+        <li><strong>13 nouveaux objets Sekiro</strong> dès le lancement, chances de drop boostées toute la soirée</li>
+        <li>Boss vaincu → <strong>10 lootbox améliorées offertes à tous</strong> + <strong>4 légendaires débloqués pour toujours</strong></li>
+        <li>Top 3 de <strong>chacun des 4 classements</strong> repart avec encore plus de lootbox</li>
+        <li>En parallèle : je tente <strong>Shura Charmless</strong> sur Sekiro — vous ou moi, qui tombe le premier ?</li>
+    </ul>
+</div>
+
+<div class="vs-section">
+    <div class="vs-titre">DOUBLE DÉFI</div>
+    <div class="vs-sous">Pendant que j'affronte le défi de force Sekiro, vous affrontez votre propre boss.</div>
+    <div class="vs-grille">
+        <div class="vs-carte moi">
+            <div class="vs-carte-titre">MRSHYDIVER</div>
+            <div class="vs-carte-texte">Défi de force <strong style="color:#e8e6e0">SHURA</strong>, supplément <strong style="color:#e8e6e0">CHARMLESS</strong>.</div>
+        </div>
+        <div class="vs-carte commu">
+            <div class="vs-carte-titre">VOUS</div>
+            <div class="vs-carte-texte">Un <strong style="color:#e8e6e0">boss collaboratif</strong> à battre pour <strong style="color:#e8e6e0">débloquer du contenu</strong>.</div>
+        </div>
+    </div>
+    <div class="vs-question">Qui l'emportera en premier ?</div>
+</div>
+
+<div class="corps">
+
+    <div class="section">
+        <div class="section-titre"><span class="section-icone">⚔️</span> Comment participer</div>
+        <div class="grille-2">
+            <div class="carte">
+                <div class="carte-titre">Super Crédits (Points de chaîne)</div>
+                <div class="carte-texte"><strong>250 points de chaîne</strong> seront nécessaires pour tenter une attaque contre le boss.</div>
+            </div>
+            <div class="carte">
+                <div class="carte-titre">Tickets de duel</div>
+                <div class="carte-texte">Les <strong>tickets de duel</strong> pourront également être utilisés pour affronter le boss.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-titre"><img src="assets/logos/bits.png" width="20">Réduction des coûts en BITS</div>
+        <div class="bandeau-promo">
+            <div class="bandeau-promo-titre">Lootbox et tickets de duel à prix réduit</div>
+            <div class="bandeau-promo-texte">Pendant toute la durée du live Sekiro, la <strong>lootbox</strong> et le <strong>ticket de duel</strong> passent à prix réduit — l'occasion parfaite pour profiter du boost sur le set Sekiro, ou de mettre tes lootbox de côté.</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-titre"><span class="section-icone">⛩️</span> Pendant toute la durée du live Sekiro</div>
+        <div class="bandeau-boost">
+            <div class="bandeau-boost-titre">🔥 Chances de loot améliorées sur tous les items issues de Sekiro</div>
+            <div class="bandeau-boost-texte">Pendant toute la durée du live, <strong>tous les objets liés à Sekiro</strong> verront leur chance de tomber améliorée dans la roulette d'équipement et les lootbox. Dès le début du stream, <strong>13 nouveaux objets</strong> issues de Sekiro avec des mécaniques inédites feront leur apparition, incluant le niveau de rareté <span style="color:var(--epique)">EPIQUE</span>.</div>
+        </div>
+        <div class="grille-items">
+            <div class="item-carte">
+                <div class="item-carte-image" style="background-image:url('gear/kusabimaru.png')"></div>
+                <div class="item-carte-nom">Lame Kusabimaru</div>
+                <div class="item-carte-rarete">Épique</div>
+            </div>
+            <div class="item-carte">
+                <div class="item-carte-image" style="background-image:url('gear/armure-robert.png')"></div>
+                <div class="item-carte-nom">Armure de Robert</div>
+                <div class="item-carte-rarete">Épique</div>
+            </div>
+            <div class="item-carte">
+                <div class="item-carte-image" style="background-image:url('gear/odachi-de-la-chouette.png')"></div>
+                <div class="item-carte-nom">Odachi de la Chouette</div>
+                <div class="item-carte-rarete">Épique</div>
+            </div>
+            <div class="item-carte">
+                <div class="item-carte-image" style="background-image:url('gear/gourde-medicinale.png')"></div>
+                <div class="item-carte-nom">Gourde Médicinale</div>
+                <div class="item-carte-rarete">Épique</div>
+            </div>
+        </div>
+        <div class="items-footer">...et <strong>d'autres à découvrir dimanche</strong></div>
+    </div>
+
+    <div class="section">
+        <div class="section-titre"><img src="assets/logos/legendary.png" width="30"> 4 légendaires à débloquer</div>
+        <div class="grille-legendaires">
+            <div class="legendaire-carte">
+                <div class="legendaire-img-wrap" style="background-image:url('assets/legendaires/item1.png')"></div>
+                <div class="legendaire-nom">_R_ D_ __N____R_</div>
+                <div class="legendaire-mystere">🔒</div>
+            </div>
+            <div class="legendaire-carte">
+                <div class="legendaire-img-wrap" style="background-image:url('assets/legendaires/item2.png')"></div>
+                <div class="legendaire-nom">_C____ _E __M__</div>
+                <div class="legendaire-mystere">🔒</div>
+            </div>
+            <div class="legendaire-carte">
+                <div class="legendaire-img-wrap" style="background-image:url('assets/legendaires/item3.png')"></div>
+                <div class="legendaire-nom">_A__ D_ _A __R_</div>
+                <div class="legendaire-mystere">🔒</div>
+            </div>
+            <div class="legendaire-carte">
+                <div class="legendaire-img-wrap" style="background-image:url('assets/legendaires/item4.png')"></div>
+                <div class="legendaire-nom">___T__U _U ___P</div>
+                <div class="legendaire-mystere">🔒</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-titre"><span class="section-icone">📊</span> Nouveaux taux de drop ajustés</div>
+        <div class="grille-taux">
+            <div class="taux-carte avant">
+                <div class="taux-carte-titre">AVANT d'avoir tombé le boss</div>
+                <div class="barre-taux">
+                    <div class="barre-seg" style="width:45.9%;background:var(--commun)">46%</div>
+                    <div class="barre-seg" style="width:30.6%;background:var(--normal)">31%</div>
+                    <div class="barre-seg" style="width:15.3%;background:var(--rare)">15%</div>
+                    <div class="barre-seg" style="width:8.2%;background:var(--epique);color:#fff">8%</div>
+                </div>
+                <div class="legende-taux">
+                    <div><span class="pastille" style="background:var(--commun)"></span>Commun</div>
+                    <div><span class="pastille" style="background:var(--normal)"></span>Normal</div>
+                    <div><span class="pastille" style="background:var(--rare)"></span>Rare</div>
+                    <div><span class="pastille" style="background:var(--epique)"></span>Épique</div>
+                </div>
+            </div>
+            <div class="taux-carte apres">
+                <div class="taux-carte-titre">APRÈS avoir tombé le boss</div>
+                <div class="barre-taux">
+                    <div class="barre-seg" style="width:45%;background:var(--commun)">45%</div>
+                    <div class="barre-seg" style="width:30%;background:var(--normal)">30%</div>
+                    <div class="barre-seg" style="width:15%;background:var(--rare)">15%</div>
+                    <div class="barre-seg" style="width:8%;background:var(--epique);color:#fff">8%</div>
+                    <div class="barre-seg" style="width:2%;background:var(--legendaire)"></div>
+                </div>
+                <div class="legende-taux">
+                    <div><span class="pastille" style="background:var(--commun)"></span>Commun</div>
+                    <div><span class="pastille" style="background:var(--normal)"></span>Normal</div>
+                    <div><span class="pastille" style="background:var(--rare)"></span>Rare</div>
+                    <div><span class="pastille" style="background:var(--epique)"></span>Épique</div>
+                    <div><span class="pastille" style="background:var(--legendaire)"></span><span class="val">Légendaire (2%)</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-titre"><img src="assets/logos/coffre-au-tresor.png" width="30"> Remportez des lootbox améliorées</div>
+        <div class="victoire-bandeau">
+            <div class="victoire-titre">10 lootbox améliorées offertes à TOUS ceux qui ont attaqué au moins une fois</div>
+            <div class="victoire-texte">Fini le commun : ces boîtes ne tirent plus que du <strong>Normal</strong> ou mieux, avec un taux de légendaire largement supérieur à la normale — <strong>~8% par boîte</strong>, contre 2% pour les lootbox / roues classiques.</div>
+            <div class="barre-taux">
+                <div class="barre-seg" style="width:45.9%;background:var(--normal)">46%</div>
+                <div class="barre-seg" style="width:30.6%;background:var(--rare)">31%</div>
+                <div class="barre-seg" style="width:15.3%;background:var(--epique);color:#fff">15%</div>
+                <div class="barre-seg" style="width:8.2%;background:var(--legendaire)">8%</div>
+            </div>
+            <div class="legende-taux">
+                <div><span class="pastille" style="background:var(--normal)"></span>Normal</div>
+                <div><span class="pastille" style="background:var(--rare)"></span>Rare</div>
+                <div><span class="pastille" style="background:var(--epique)"></span>Épique</div>
+                <div><span class="pastille" style="background:var(--legendaire)"></span><span class="val">Légendaire 8%</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" style="margin-bottom:0">
+        <div class="section-titre"><span class="section-icone">🏆</span> 4 classements, plus de récompenses</div>
+        <div class="grille-classements">
+            <div class="classement-carte">
+                <div class="classement-icone">🎯</div>
+                <div class="classement-nom">Efficacité</div>
+                <div class="classement-desc">Meilleur ratio dégâts/puissance</div>
+                <div class="classement-podium">
+                    <div class="podium-item"><img src="assets/logos/lootbox_or.png" width="34" alt="Lootbox or"><span>+5</span></div>
+                    <div class="podium-item"><img src="assets/logos/lootbox_argent.png" width="28" alt="Lootbox argent"><span>+3</span></div>
+                    <div class="podium-item"><img src="assets/logos/lootbox_bronze.png" width="24" alt="Lootbox bronze"><span>+1</span></div>
+                </div>
+            </div>
+            <div class="classement-carte">
+                <div class="classement-icone">⚔️</div>
+                <div class="classement-nom">Attaques</div>
+                <div class="classement-desc">Nombre total de combats contre le boss</div>
+                <div class="classement-podium">
+                    <div class="podium-item"><img src="assets/logos/lootbox_or.png" width="34" alt="Lootbox or"><span>+5</span></div>
+                    <div class="podium-item"><img src="assets/logos/lootbox_argent.png" width="28" alt="Lootbox argent"><span>+3</span></div>
+                    <div class="podium-item"><img src="assets/logos/lootbox_bronze.png" width="24" alt="Lootbox bronze"><span>+1</span></div>
+                </div>
+            </div>
+            <div class="classement-carte">
+                <div class="classement-icone">⏱️</div>
+                <div class="classement-nom">Rounds effectués</div>
+                <div class="classement-desc">Nombre total de rounds effectués</div>
+                <div class="classement-podium">
+                    <div class="podium-item"><img src="assets/logos/lootbox_or.png" width="34" alt="Lootbox or"><span>+5</span></div>
+                    <div class="podium-item"><img src="assets/logos/lootbox_argent.png" width="28" alt="Lootbox argent"><span>+3</span></div>
+                    <div class="podium-item"><img src="assets/logos/lootbox_bronze.png" width="24" alt="Lootbox bronze"><span>+1</span></div>
+                </div>
+            </div>
+            <div class="classement-carte">
+                <div class="classement-icone">💥</div>
+                <div class="classement-nom">Dégâts totaux</div>
+                <div class="classement-desc">Total de dégats infligés au boss</div>
+                <div class="classement-podium">
+                    <div class="podium-item"><img src="assets/logos/lootbox_or.png" width="34" alt="Lootbox or"><span>+5</span></div>
+                    <div class="podium-item"><img src="assets/logos/lootbox_argent.png" width="28" alt="Lootbox argent"><span>+3</span></div>
+                    <div class="podium-item"><img src="assets/logos/lootbox_bronze.png" width="24" alt="Lootbox bronze"><span>+1</span></div>
+                </div>
+            </div>
+        </div>
+        <div style="text-align:center;font-size:11.5px;color:#9aa0ac;margin-top:14px">Le premier gagne 5 lootbox supplémentaires, le deuxième 3, et le troisième 1.</div>
+    </div>
+
+</div>
+
+</body>
+</html>
