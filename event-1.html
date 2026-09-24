@@ -114,15 +114,19 @@
     .section-titre {
         font-family: 'Bebas Neue', sans-serif; font-size: 27px; letter-spacing: 1px;
         margin-bottom: 16px; display: flex; align-items: center; gap: 10px; color: var(--texte);
+        flex-wrap: wrap;
     }
-    .section-titre::before { content: ''; width: 5px; height: 22px; background: var(--or); display: inline-block; }
+    .section-titre::before { content: ''; width: 5px; height: 22px; background: var(--or); display: inline-block; flex-shrink: 0; }
     /* Icône de section : emoji (texte) OU image, au choix -- même boîte dans les deux cas pour un
-       alignement identique. Pour une image : <span class="section-icone"><img src="..."></span> */
+       alignement identique. Pour une image : <span class="section-icone"><img src="..."></span>
+       (fonctionne aussi avec un <img> déposé directement, sans le span -- flex-shrink:0 ci-dessous
+       l'empêche juste de se faire écraser par le texte du titre sur petit écran). */
     .section-icone {
         display: inline-flex; align-items: center; justify-content: center;
         width: 28px; height: 28px; font-size: 22px; line-height: 1; flex-shrink: 0;
     }
     .section-icone img { width: 100%; height: 100%; object-fit: contain; }
+    .section-titre > img { flex-shrink: 0; }
     .section { margin-bottom: 40px; }
 
     .grille-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -228,6 +232,7 @@
         .teaser { height: auto; padding: 70px 24px; }
         .teaser-titre { font-size: 48px; }
         .teaser-sous-titre { font-size: 14px; }
+        .boss-image-zone { width: 120px; height: 120px; }
 
         .tldr, .vs-section { padding: 30px 24px; }
         .vs-grille { grid-template-columns: 1fr; }
@@ -243,6 +248,7 @@
         .teaser-eyebrow { font-size: 11px; padding: 5px 14px; letter-spacing: 2px; }
         .teaser-titre { font-size: 34px; }
         .teaser-sous-titre { font-size: 13px; }
+        .boss-image-zone { width: 90px; height: 90px; margin-bottom: 16px; }
 
         .date-bar { padding: 12px; font-size: 13px; flex-direction: column; gap: 2px; }
         .date-bar strong { font-size: 16px; }
@@ -253,11 +259,14 @@
         .vs-question { font-size: 16px; }
 
         .corps { padding: 28px 16px 34px; }
-        .section-titre { font-size: 22px; }
+        .section-titre { font-size: 20px; }
         .grille-legendaires, .grille-classements, .grille-items { grid-template-columns: 1fr; }
 
         .barre-taux { font-size: 9px; }
         .barre-seg { padding: 2px 0; }
+
+        .classement-podium { gap: 8px; }
+        .podium-item img { transform: scale(0.85); }
     }
 </style>
 </head>
