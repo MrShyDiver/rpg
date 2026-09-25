@@ -8,8 +8,12 @@
 <style>
 :root {
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
-    --paper: #e9e3d2; --paper-dim: #b8b2a0;
-    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230; --line: #2c2c2e;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --epique: #a855f7; --legendaire: #f2c230;
+    /* Code couleur par stat — identique à codex.html/calculateur.html/stats.html, pour reconnaître
+       une stat d'un coup d'œil sur tout le site. */
+    --atk: #ff5e3a; --def: #3b82f6; --pv: #ca2972; --spd: #FFCC00; --luck: #00ffaa; --esquive: #22d3ee;
+    --negatif: #ff6b6b;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 40px 20px; }
@@ -94,55 +98,126 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .emplacement .nom { font-size: 12.5px; font-weight: 600; }
 .emplacement.vide .nom { color: var(--paper-dim); font-style: italic; }
 
-.categorie { margin-bottom: 30px; }
+.categorie { margin-bottom: 34px; }
 .categorie-titre { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .categorie-titre h2 { font-size: 17px; font-weight: 600; }
 .categorie-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+/* Grille : même technique d'alignement inter-cartes que codex.html — chaque carte réserve
+   TOUJOURS 6 pistes de ligne (portrait, en-tête, scaling, bonus, passif, commande) via CSS
+   subgrid, alignant Scaling/Bonus/Passif au même niveau d'une carte à l'autre. */
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: minmax(0, min-content); gap: 16px; align-items: start; }
 
-.carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 4px; padding: 14px; position: relative; display: flex; flex-direction: column; height: 100%; }
-.carte.normal { border-left-color: var(--normal); }
-.carte.rare { border-left-color: var(--rare); }
-.carte.legendaire { border-left-color: var(--legendaire); }
+.carte {
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative;
+    display: grid; grid-template-rows: subgrid; grid-row: span 6; row-gap: 0; cursor: pointer;
+}
+.carte:hover { filter: brightness(1.05); }
+.carte.normal { border-color: rgba(93,221,122,0.35); }
+.carte.rare { border-color: rgba(74,159,216,0.35); }
+.carte.epique { border-color: rgba(168,85,247,0.4); }
+.carte.legendaire { border-color: rgba(242,194,48,0.45); }
 .carte.equipe { background: rgba(242,194,48,0.08); }
-
-.carte-select { position: absolute; top: 10px; right: 10px; cursor: pointer; z-index: 2; }
-.carte-select input { accent-color: var(--yellow); width: 18px; height: 18px; cursor: pointer; }
 .carte.dans-loadout { outline: 2px solid var(--yellow); outline-offset: -1px; }
 
-.carte-image-zone { display: flex; justify-content: center; margin-bottom: 10px; }
-.carte-icon { max-width: 150px; width: 100%; height: auto; max-height: 120px; object-fit: contain; }
-.carte-icon-emoji { font-size: 64px; line-height: 1; }
-
-.carte-nom-ligne { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-.carte-nom { font-size: 15px; font-weight: 600; }
-.carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; margin: -4px 0 8px; }
-.carte-niveau {
-    position: absolute; top: 10px; left: 10px; z-index: 2;
-    font-size: 12px; font-weight: 900; color: var(--yellow);
-    border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 6px;
-    background: rgba(242,194,48,0.12);
+/* ============ PORTRAIT (haut de carte façon "carte à collectionner", repris de codex.html) ============ */
+.carte-portrait {
+    position: relative; height: 132px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+}
+.carte.commun .carte-portrait { background: color-mix(in srgb, var(--commun) 55%, #101012); }
+.carte.normal .carte-portrait { background: color-mix(in srgb, var(--normal) 45%, #101012); }
+.carte.rare .carte-portrait { background: color-mix(in srgb, var(--rare) 48%, #101012); }
+.carte.epique .carte-portrait { background: color-mix(in srgb, var(--epique) 50%, #101012); }
+.carte.legendaire .carte-portrait { background: color-mix(in srgb, var(--legendaire) 55%, #101012); }
+/* Effet "holo" façon Pokémon, réservé aux légendaires — identique à codex.html. */
+.carte.legendaire::after {
+    content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
+    background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.09) 47%, rgba(242,194,48,0.15) 50%, rgba(255,255,255,0.09) 53%, transparent 62%);
+    background-size: 260% 260%;
+    animation: carteHoloVague 7s ease-in-out infinite;
+}
+@keyframes carteHoloVague {
+    0%, 100% { background-position: 15% 0%; }
+    50% { background-position: 85% 100%; }
 }
 
-.carte-bloc-stats { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 8px; line-height: 1.5; }
-.carte-bloc-stats .titre-bloc { color: var(--yellow); font-weight: 700; }
-.carte-bloc-stats b { color: var(--paper); font-weight: 600; }
-.carte-bloc-stats .malus { color: #ff8080; font-weight: 600; }
+.carte-badge-rarete {
+    position: absolute; top: 8px; left: 8px; z-index: 3; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: #000; border-radius: 4px; padding: 2px 8px; border: 1px solid rgba(0,0,0,0.35);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.carte.commun .carte-badge-rarete { background: var(--commun); }
+.carte.normal .carte-badge-rarete { background: var(--normal); }
+.carte.rare .carte-badge-rarete { background: var(--rare); color: #fff; }
+.carte.epique .carte-badge-rarete { background: var(--epique); color: #fff; }
+.carte.legendaire .carte-badge-rarete { background: var(--legendaire); }
 
-.stat-ligne { font-size: 13px; margin-bottom: 4px; }
-.stat-ligne .label { color: var(--paper-dim); font-weight: 600; margin-right: 5px; }
-.stat-ligne .valeur-positive { color: #5ddd7a; font-weight: 700; }
-.stat-ligne .valeur-negative { color: #ff6b6b; font-weight: 700; }
+/* Niveau réellement possédé (doublons appliqués) — "+N" tant que la stat peut encore monter,
+   "MAX ×N" une fois le plafond de rareté atteint (NIVEAU_MAX_PAR_RARETE) : les doublons au-delà
+   ne font plus rien progresser, le badge le dit explicitement plutôt que de laisser croire que
+   chaque nouvel exemplaire compte encore. Même famille visuelle que codex.html (etat-max = même
+   traitement doré/mis en valeur que son badge Base/MAX). */
+.carte-etat-niveau {
+    position: absolute; top: 8px; right: 8px; z-index: 3; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--paper-dim); background: rgba(0,0,0,0.4); border-radius: 4px; padding: 2px 8px;
+}
+.carte-etat-niveau.etat-max {
+    color: #000; background: var(--yellow); font-weight: 800; font-size: 11px;
+    box-shadow: 0 1px 6px rgba(242,194,48,0.55);
+}
+
+.carte-icone-zone { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.carte-icone-zone .carte-icon { max-width: 78%; max-height: 84%; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
+.carte-icone-zone .carte-icon-emoji { font-size: 54px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
+
+/* .carte-corps aplati (display:contents) : voir codex.html — évite un résidu de ~16px sur une
+   piste de sous-grille pourtant vide dans Chromium quand il y a un niveau de subgrid imbriqué. */
+.carte-corps { display: contents; }
+.fila-header { grid-row: 2; grid-column: 1; min-height: 0; padding: 10px 14px 0; }
+.fila-scaling { grid-row: 3; grid-column: 1; min-height: 0; padding-left: 14px; padding-right: 14px; }
+.fila-bonus { grid-row: 4; grid-column: 1; min-height: 0; padding-left: 14px; padding-right: 14px; }
+.fila-passif { grid-row: 5; grid-column: 1; min-height: 0; padding-left: 14px; padding-right: 14px; }
+.fila-footer { grid-row: 6; grid-column: 1; min-height: 0; padding: 10px 14px 14px; }
+
+/* En-tête : nom à gauche, case de sélection loadout à droite sur la même ligne (contrairement à
+   codex.html, qui centre le nom — ici la case doit rester un contrôle facilement repérable). */
+.carte-nom-ligne { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.carte-nom { font-size: 15px; font-weight: 600; }
+/* Nom coloré dans la teinte PURE de la rareté (comme les section-titre) — cohérent avec codex.html. */
+.carte.commun .carte-nom, .carte.commun .section-titre { color: var(--commun); }
+.carte.normal .carte-nom, .carte.normal .section-titre { color: var(--normal); }
+.carte.rare .carte-nom, .carte.rare .section-titre { color: var(--rare); }
+.carte.epique .carte-nom, .carte.epique .section-titre { color: var(--epique); }
+.carte.legendaire .carte-nom, .carte.legendaire .section-titre { color: var(--legendaire); }
+.carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; margin-top: 2px; }
+
+.carte-select { cursor: pointer; z-index: 2; flex: 0 0 auto; }
+.carte-select input { accent-color: var(--yellow); width: 18px; height: 18px; cursor: pointer; display: block; }
+
+.stat-ligne { font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.stat-ligne .gauche { display: flex; align-items: baseline; gap: 6px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+.stat-ligne .label { color: var(--paper-dim); font-weight: 600; }
 .stat-ligne .valeur-neutre { color: var(--paper); font-weight: 700; }
-.bloc-passif { font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; }
-.bloc-passif b { color: var(--paper); font-weight: 600; }
+/* Bonus de stat coloré par la stat elle-même — cohérent avec codex.html. Un malus reste évident
+   grâce au badge à bordure rouge, pas seulement à la teinte (lisible même en cas de daltonisme). */
+.stat-valeur-badge { font-weight: 700; }
+.stat-valeur-badge.malus {
+    border: 1px solid var(--negatif); border-radius: 4px; padding: 0px 6px;
+    background: rgba(255,107,107,0.1);
+}
+.bloc-passif { display: flex; flex-direction: column; gap: 4px; }
+.passif-ligne { font-size: 12.5px; color: var(--paper-dim); line-height: 1.4; }
+.passif-ligne b { color: var(--paper); font-weight: 600; }
 
-/* Sections de carte clairement séparées : Scaling / Bonus (ou Statistiques) / Passif */
-.bloc-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a2a2a; }
-.bloc-section:first-of-type { border-top: none; margin-top: 6px; padding-top: 0; }
+/* :empty = piste réservée par la sous-grille mais sans contenu pour CET objet — voir codex.html
+   pour l'explication du height:0 (résidu Chromium sur une piste de subgrid vide). */
+.bloc-section { margin-top: 6px; padding-top: 6px; border-top: 1px solid #2a2a2a; }
+.bloc-section:empty { margin-top: 0; padding-top: 0; border-top: none; height: 0; }
 .section-titre {
-    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
-    color: var(--yellow); opacity: 0.85; margin-bottom: 5px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+    color: var(--yellow); opacity: 0.85; margin-bottom: 3px;
 }
 .scaling-grille { display: flex; flex-wrap: wrap; gap: 4px; }
 .scaling-item { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
@@ -151,17 +226,20 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; }
 .scaling-degats b { color: var(--paper); font-weight: 700; }
 
-/* ============ CARTE À CHANGEMENT DE STANCE ============ */
+/* ============ CARTE À CHANGEMENT DE STANCE (reprend la technique de codex.html) ============ */
 .carte-stance { position: relative; }
 .stance-indicateur {
     position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
     font-family: 'Barlow Condensed', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
     color: #000; background: var(--yellow); border-radius: 999px; padding: 4px 40px; z-index: 3;
 }
-@keyframes stancePulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; transform: translateX(-50%) scale(1.05); } }
 .stance-vue-2 { display: none; }
 .carte-stance:hover .stance-vue-1 { display: none; }
 .carte-stance:hover .stance-vue-2 { display: block; }
+.carte-icone-zone .stance-vue { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.carte-icone-zone .stance-vue-2 { display: none; }
+.carte-stance:hover .carte-icone-zone .stance-vue-1 { display: none; }
+.carte-stance:hover .carte-icone-zone .stance-vue-2 { display: flex; }
 .carte-stance:hover { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow); }
 .carte-stance:hover .stance-indicateur { background: var(--paper); }
 .stance-etiquette {
@@ -171,14 +249,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 }
 .stance-etiquette-2 { background: var(--legendaire); }
 
-.carte { cursor: pointer; }
-.carte:hover { border-color: #444; }
-
-.carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: auto; align-self: flex-start; }
+.carte-cmd { font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; color: var(--paper-dim); background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 3px; display: inline-block; }
 .carte.equipe .carte-cmd { color: var(--yellow); }
-.carte-cmd.cliquable { cursor: pointer; border: 1px solid var(--line); transition: all 0.15s ease; }
-.carte-cmd.cliquable:hover { border-color: var(--yellow); color: var(--yellow); }
-.carte-cmd.copie { color: var(--yellow); border-color: var(--yellow); }
 
 .barre-loadout {
     position: sticky; bottom: 16px; margin-top: 30px;
@@ -211,10 +283,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     .entete-texte p { font-size: 12px; }
     .emplacements { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .emplacement { padding: 10px; }
-    .grille { grid-template-columns: 1fr; gap: 10px; }
+    .grille { grid-template-columns: 1fr; }
     .categorie-titre h2 { font-size: 15px; }
-    .carte-cmd.cliquable { padding: 8px 12px; }
-    .carte-icon { max-height: 110px; }
 }
 </style>
 </head>
@@ -247,6 +317,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // Suffixe à ajouter après la valeur d'une stat — seule l'esquive est un pourcentage.
     const SUFFIXE_STAT = { esquive: "%" };
     const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
+    // Rareté en toutes lettres (même table que codex.html) — l'info existait déjà (couleur de la
+    // carte), simplement rendue lisible explicitement plutôt que par un code couleur seul.
+    const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", epique: "Épique", legendaire: "Légendaire" };
+    // Couleur associée à chaque stat pour les lignes de "Bonus" — mêmes teintes que codex.html.
+    const COULEUR_STAT = { atk: "var(--atk)", def: "var(--def)", pv: "var(--pv)", spd: "var(--spd)", luck: "var(--luck)", esquive: "var(--esquive)" };
 
     // Affiche "base" si l'objet n'a pas encore de niveau (ou que cette stat ne grossit pas du
     // tout), ou "base → actuel" sinon — pour visualiser d'un coup d'œil le gain déjà obtenu
@@ -257,12 +332,28 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return `${formatteur(base)} → <b>${formatteur(actuel)}</b>`;
     }
 
-
-    // Dégradé cohérent du meilleur (S, or) au plus faible (E, gris) — chaud vers froid.
-    const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
-    const STATS_SCALABLES = ["atk", "def", "pv", "spd", "crit"];
-    const LABELS_SCALING = { atk: "ATK", def: "DEF", pv: "PV", spd: "SPD", crit: "CRIT" };
-
+    // ==========================================================
+    // PLAFOND DE NIVEAU PAR RARETÉ (NIVEAU_MAX_PAR_RARETE, moteur-combat.cs) — même mirror JS que
+    // codex.html. Le niveau BRUT stocké dans players.json n'est JAMAIS plafonné (le compteur de
+    // doublons continue de monter indéfiniment), seul le calcul des stats doit être plafonné :
+    // au-delà, un doublon supplémentaire ne fait plus rien progresser (voir AppliquerAmelioration
+    // côté moteur). D'où niveauEffectif = min(niveau brut, plafond) utilisé pour TOUT calcul de
+    // stat ci-dessous, tandis que le niveau brut reste affiché tel quel dans le badge "×N".
+    // ⚠️ Garder synchronisé si la formule change côté moteur.
+    const NIVEAU_MAX_PAR_RARETE = { commun: 25, normal: 20, rare: 15, epique: 10, legendaire: 5 };
+    function niveauMaxPourRarete(rarete) {
+        return NIVEAU_MAX_PAR_RARETE[rarete] !== undefined ? NIVEAU_MAX_PAR_RARETE[rarete] : NIVEAU_MAX_PAR_RARETE.commun;
+    }
+    // Badge "état du niveau" d'un objet possédé : "+N" tant qu'il reste de la marge avant le
+    // plafond de sa rareté, "MAX ×N" une fois atteint — N = nombre total d'exemplaires possédés
+    // (niveau + 1), pour que les doublons excédentaires restent visibles même s'ils ne font plus
+    // progresser aucune stat. Rien du tout à niveau 0 (un premier exemplaire tout juste obtenu).
+    function texteBadgeNiveau(niveauBrut, rarete) {
+        const plafond = niveauMaxPourRarete(rarete);
+        if (niveauBrut >= plafond) return { texte: `MAX ×${niveauBrut + 1}`, max: true };
+        if (niveauBrut > 0) return { texte: `+${niveauBrut}`, max: false };
+        return null;
+    }
 
     const GABARITS_PASSIF = {
         Lifesteal: (v, s) => `Vol de vie : <b>${v}%</b> des dégâts infligés sont rendus en PV.`,
@@ -325,6 +416,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return entree ? entree.incrementPassif : 0;
     }
 
+    // `niveau` reçu ici doit déjà être le niveau EFFECTIF (plafonné) — voir texteBadgeNiveau /
+    // niveauMaxPourRarete plus haut : les appelants passent Math.min(niveau brut, plafond).
     function construirePassifs(s, niveau, exclureChamp, exclusionsSupplementaires) {
         const passifs = [];
         const exclusions = new Set([exclureChamp, ...(exclusionsSupplementaires || [])]);
@@ -338,10 +431,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const scaleAvecNiveau = s.statPrincipale === nomStat || incrementDepuisExtra > 0;
             const incrementEffectif = s.statPrincipale === nomStat ? s.incrementPassif : incrementDepuisExtra;
             const actuel = typeof base === 'boolean' ? base : (scaleAvecNiveau ? base + niveau * incrementEffectif : base);
-            passifs.push(GABARITS_PASSIF[nomStat](actuel, s));
+            passifs.push(`<div class="passif-ligne">${GABARITS_PASSIF[nomStat](actuel, s)}</div>`);
         }
         return passifs;
     }
+
+    // Dégradé cohérent du meilleur (S, or) au plus faible (E, gris) — chaud vers froid.
+    const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
+    const STATS_SCALABLES = ["atk", "def", "pv", "spd", "crit"];
+    const LABELS_SCALING = { atk: "ATK", def: "DEF", pv: "PV", spd: "SPD", crit: "CRIT" };
 
     // Rangée de badges de scaling (ATK/DEF/PV/SPD/CRIT) — seulement pour une arme qui en définit.
     // Un tiret long remplace la lettre pour toute stat sur laquelle l'arme ne scale pas.
@@ -370,6 +468,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
     }
 
+    // colorer=true -> ligne de "Bonus" de stat (ATK/DEF/PV/SPD/LUCK/Esquive) : teintée de la
+    // couleur propre à cette stat (voir COULEUR_STAT), avec un badge à bordure rouge pour les
+    // valeurs négatives — le badge reste visible même en cas de daltonisme.
+    function rendreLigneStat({ label, valeur, colorer, stat, negatif }) {
+        if (!colorer) return `<div class="stat-ligne"><span class="gauche"><span class="label">${label}</span><span class="valeur-neutre">${valeur}</span></span></div>`;
+        const couleur = COULEUR_STAT[stat] || 'var(--paper)';
+        const classeBadge = negatif ? 'stat-valeur-badge malus' : 'stat-valeur-badge';
+        return `<div class="stat-ligne"><span class="gauche"><span class="label">${label}</span><span class="${classeBadge}" style="color:${couleur}">${valeur}</span></span></div>`;
+    }
+
     // Lignes de stat génériques niveau-ajustées, pour n'importe quel triplet stat/bonus/increment
     // — réutilisée pour la stance 1 (stat/bonus/increment) ET la stance 2 (stance2Stat/...).
     function construireLignesStatGenerique(stat, bonus, increment, stat2, bonus2, increment2, stat3, bonus3, increment3, niveau, statsExtra) {
@@ -377,31 +485,31 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         if (stat) {
             const actuel = bonus + niveau * increment;
             const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(stat);
-            lignes.push({ label: LABELS_STAT[stat] || stat, valeur: formatEvolution(bonus, actuel, formatteur), colorer: true });
+            lignes.push({ label: LABELS_STAT[stat] || stat, valeur: formatEvolution(bonus, actuel, formatteur), colorer: true, stat, negatif: actuel < 0 });
         }
         if (stat2) {
             const actuel2 = bonus2 + niveau * increment2;
             const formatteur2 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(stat2);
-            lignes.push({ label: LABELS_STAT[stat2] || stat2, valeur: formatEvolution(bonus2, actuel2, formatteur2), colorer: true });
+            lignes.push({ label: LABELS_STAT[stat2] || stat2, valeur: formatEvolution(bonus2, actuel2, formatteur2), colorer: true, stat: stat2, negatif: actuel2 < 0 });
         }
         if (stat3) {
             const actuel3 = bonus3 + niveau * increment3;
             const formatteur3 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(stat3);
-            lignes.push({ label: LABELS_STAT[stat3] || stat3, valeur: formatEvolution(bonus3, actuel3, formatteur3), colorer: true });
+            lignes.push({ label: LABELS_STAT[stat3] || stat3, valeur: formatEvolution(bonus3, actuel3, formatteur3), colorer: true, stat: stat3, negatif: actuel3 < 0 });
         }
         // ⚠️ EXTENSION : 4e stat, 5e stat... -- statsExtra absent (tous les objets existants) ne
         // change rien à l'affichage par rapport à l'ancien comportement.
         (statsExtra || []).forEach(slot => {
             const actuel = slot.bonus + niveau * slot.increment;
             const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(slot.nom);
-            lignes.push({ label: LABELS_STAT[slot.nom] || slot.nom, valeur: formatEvolution(slot.bonus, actuel, formatteur), colorer: true });
+            lignes.push({ label: LABELS_STAT[slot.nom] || slot.nom, valeur: formatEvolution(slot.bonus, actuel, formatteur), colorer: true, stat: slot.nom, negatif: actuel < 0 });
         });
         return lignes;
     }
 
     // Carte dédiée aux armes à changement de stance (même principe que codex.html) : la partie
     // "état de l'objet" (checkbox, niveau, équipé) reste COMMUNE aux deux stances, seule la vue
-    // image+scaling+bonus bascule au survol.
+    // image+scaling+bonus bascule au survol. `niveau` reçu = déjà plafonné (voir call site).
     function construireCorpsCarteStance(item, niveau) {
         const s = item;
         const imageStance1 = iconeOuImage(s, 'carte-icon');
@@ -411,28 +519,34 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const stats1 = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, niveau, s.statsExtra).map(rendreLigneStat).join('');
         const stats2 = construireLignesStatGenerique(s.stance2Stat, s.stance2Bonus, s.stance2IncrementBonus, s.stance2Stat2, s.stance2Bonus2, s.stance2IncrementBonus2, s.stance2Stat3, s.stance2Bonus3, s.stance2IncrementBonus3, niveau).map(rendreLigneStat).join('');
 
-        return `
-            <div class="stance-indicateur">⇄</div>
-            <div class="stance-vue stance-vue-1">
-                <div class="carte-image-zone">${imageStance1}</div>
-                <div class="carte-nom-ligne"><span class="carte-nom">${s.nom}</span><span class="stance-etiquette">Stance 1</span></div>
-                ${s.contributeur ? `<div class="carte-contributeur">Objet forgé par ${s.contributeur}</div>` : ''}
-                <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling1}</div>
-                ${stats1 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
-            </div>
-            <div class="stance-vue stance-vue-2">
-                <div class="carte-image-zone">${imageStance2}</div>
-                <div class="carte-nom-ligne"><span class="carte-nom">${s.nom}</span><span class="stance-etiquette stance-etiquette-2">Stance 2</span></div>
-                ${s.contributeur ? `<div class="carte-contributeur">Objet forgé par ${s.contributeur}</div>` : ''}
-                <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling2}</div>
-                ${stats2 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats2}</div>` : ''}
-            </div>
-            <div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">
-                Alterne de stance toutes les <b>${s.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge le poison et la brûlure sur le porteur lui-même.
-            </div></div>
-        `;
+        return {
+            portraitExtra: `
+                <div class="stance-indicateur">⇄</div>
+                <div class="stance-vue stance-vue-1">${imageStance1}</div>
+                <div class="stance-vue stance-vue-2">${imageStance2}</div>
+            `,
+            header: `
+                <div class="carte-nom-ligne stance-vue stance-vue-1">
+                    <span class="carte-nom">${s.nom}<span class="stance-etiquette">Stance 1</span></span>
+                </div>
+                <div class="carte-nom-ligne stance-vue stance-vue-2">
+                    <span class="carte-nom">${s.nom}<span class="stance-etiquette stance-etiquette-2">Stance 2</span></span>
+                </div>
+                ${s.contributeur ? `<div class="carte-contributeur">— ${s.contributeur}</div>` : ''}
+            `,
+            scaling: `
+                <div class="stance-vue stance-vue-1"><div class="section-titre">Scaling</div>${scaling1}</div>
+                <div class="stance-vue stance-vue-2"><div class="section-titre">Scaling</div>${scaling2}</div>
+            `,
+            bonus: `
+                ${stats1 ? `<div class="stance-vue stance-vue-1"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
+                ${stats2 ? `<div class="stance-vue stance-vue-2"><div class="section-titre">Bonus</div>${stats2}</div>` : ''}
+            `,
+            passif: `<div class="section-titre">Passif</div><div class="bloc-passif"><div class="passif-ligne">Alterne de stance toutes les <b>${s.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge le poison et la brûlure sur le porteur lui-même.</div></div>`,
+        };
     }
 
+    // `niveau` reçu ici doit déjà être le niveau EFFECTIF (plafonné) — voir call site (afficherTout).
     function construireDetails(numero, niveau, estStrategeme) {
         const s = STATS[numero];
         if (!s) return { scalingHtml: null, lignesStat: [], passifTexte: "" };
@@ -444,7 +558,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const lignesStat = [{ label: "Montant soigné", valeur: formatEvolution(s.soinDirect, actuel, (v) => v), colorer: false }];
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
-            return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, niveau, "SoinDirect").join(" ") };
+            return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, niveau, "SoinDirect").join("") };
         }
 
         if (estStrategeme) {
@@ -486,51 +600,17 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const passifs = construirePassifs(s, niveau, "DegatsDirects", ["ShieldMontant"]);
             // Déclenchement différé (Solo Silo) : explique le principe directement, la personne
             // adapte le libellé exact de ses objets comme elle le souhaite par la suite.
-            if (s.delaiTours > 0) passifs.push(`Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.`);
-            return { scalingHtml: null, lignesStat, passifTexte: passifs.join(" ") };
+            if (s.delaiTours > 0) passifs.push(`<div class="passif-ligne">Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.</div>`);
+            return { scalingHtml: null, lignesStat, passifTexte: passifs.join("") };
         }
 
         // Bonus (Stat/Stat2/Stat3) : les 3 emplacements montent TOUJOURS avec leur PROPRE
         // incrément, indépendamment de StatPrincipale (voir 11_Duel.cs) — la valeur "actuelle"
         // doit donc toujours appliquer niveau × increment, jamais seulement pour StatPrincipale.
-        const lignesStat = [];
-        if (s.stat) {
-            const label = LABELS_STAT[s.stat] || s.stat;
-            const actuel = s.bonus + niveau * s.increment;
-            const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat);
-            lignesStat.push({ label, valeur: formatEvolution(s.bonus, actuel, formatteur), colorer: true });
-        }
-        if (s.stat2) {
-            const label2 = LABELS_STAT[s.stat2] || s.stat2;
-            const actuel2 = s.bonus2 + niveau * s.increment2;
-            const formatteur2 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat2);
-            lignesStat.push({ label: label2, valeur: formatEvolution(s.bonus2, actuel2, formatteur2), colorer: true });
-        }
-        if (s.stat3) {
-            const label3 = LABELS_STAT[s.stat3] || s.stat3;
-            const actuel3 = s.bonus3 + niveau * s.increment3;
-            const formatteur3 = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(s.stat3);
-            lignesStat.push({ label: label3, valeur: formatEvolution(s.bonus3, actuel3, formatteur3), colorer: true });
-        }
-        // ⚠️ EXTENSION : 4e stat, 5e stat... -- statsExtra absent (tous les objets existants) ne
-        // change rien à l'affichage par rapport à l'ancien comportement.
-        (s.statsExtra || []).forEach(slot => {
-            const label = LABELS_STAT[slot.nom] || slot.nom;
-            const actuel = slot.bonus + niveau * slot.increment;
-            const formatteur = (v) => (v >= 0 ? "+" : "") + v + suffixeStat(slot.nom);
-            lignesStat.push({ label, valeur: formatEvolution(slot.bonus, actuel, formatteur), colorer: true });
-        });
-
-        const passifTexte = construirePassifs(s, niveau, "Bonus").join(" ");
+        const lignesStat = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, niveau, s.statsExtra);
+        const passifTexte = construirePassifs(s, niveau, "Bonus").join("");
 
         return { scalingHtml: construireScaling(s, niveau), lignesStat, passifTexte };
-    }
-
-
-    function rendreLigneStat({ label, valeur, colorer }) {
-        let classe = 'valeur-neutre';
-        if (colorer) classe = parseFloat(valeur) < 0 ? 'valeur-negative' : 'valeur-positive';
-        return `<div class="stat-ligne"><span class="label">${label}</span><span class="${classe}">${valeur}</span></div>`;
     }
 
     function afficherTout() {
@@ -546,9 +626,10 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const ref = numero > 0 ? STATS[numero] : null;
             const possede = ref ? possedesParam.find(p => p.numero === numero) : null;
             const niveau = possede ? possede.niveau : 0;
+            const badge = ref ? texteBadgeNiveau(niveau, ref.rarete || 'commun') : null;
             const div = document.createElement('div');
             div.className = 'emplacement' + (ref ? '' : ' vide');
-            div.innerHTML = `${niveau > 0 ? `<span class="emplacement-niveau">+${niveau}</span>` : ''}
+            div.innerHTML = `${badge ? `<span class="emplacement-niveau">${badge.texte}</span>` : ''}
                               <div class="label">${LABELS_SLOT[slot]}</div>
                               <div class="icone">${ref ? iconeOuImage(ref, 'icone-img') : '—'}</div>
                               <div class="nom">${ref ? ref.nom : 'Aucun'}</div>`;
@@ -585,33 +666,65 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 const estEquipe = equipeParSlot[item.slot] === item.numero;
                 const estStrategeme = item.slot === 'strategeme';
                 const rarete = item.rarete || 'commun';
+                // Niveau EFFECTIF (plafonné à NIVEAU_MAX_PAR_RARETE) : c'est celui qui pilote tout
+                // calcul de stat affiché (formatEvolution etc.), fidèle à ce que fait réellement
+                // le moteur de combat au-delà du plafond. item.niveau (brut) reste utilisé
+                // uniquement pour le badge "+N"/"MAX ×N" ci-dessous.
+                const plafond = niveauMaxPourRarete(rarete);
+                const niveauEffectif = Math.min(item.niveau, plafond);
+                const badge = texteBadgeNiveau(item.niveau, rarete);
+
                 const carte = document.createElement('div');
                 carte.className = 'carte ' + rarete + (estEquipe ? ' equipe' : '') + (item.dureeStance > 0 ? ' carte-stance' : '');
 
-                const corpsCarte = item.dureeStance > 0
-                    ? construireCorpsCarteStance(item, item.niveau)
-                    : (() => {
-                        const { scalingHtml, lignesStat, passifTexte } = construireDetails(item.numero, item.niveau, estStrategeme);
-                        return `
-                            <div class="carte-image-zone">${iconeOuImage(item, 'carte-icon')}</div>
-                            <div class="carte-nom-ligne">
-                                <span class="carte-nom">${item.nom}</span>
-                            </div>
-                            ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                            ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
-                            ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
-                            ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
-                        `;
-                    })();
+                let portraitExtra = '', headerHtml, scalingHtml, bonusHtml, passifHtml;
+                if (item.dureeStance > 0) {
+                    const c = construireCorpsCarteStance(item, niveauEffectif);
+                    portraitExtra = c.portraitExtra;
+                    headerHtml = c.header;
+                    scalingHtml = c.scaling;
+                    bonusHtml = c.bonus;
+                    passifHtml = c.passif;
+                } else {
+                    const { scalingHtml: sc, lignesStat, passifTexte } = construireDetails(item.numero, niveauEffectif, estStrategeme);
+                    headerHtml = `
+                        <div class="carte-nom-ligne">
+                            <span class="carte-nom">${item.nom}</span>
+                            <label class="carte-select"><input type="checkbox" data-numero="${item.numero}" data-slot="${item.slot}" data-hand="${item.hand || ''}"></label>
+                        </div>
+                        ${item.contributeur ? `<div class="carte-contributeur">— ${item.contributeur}</div>` : ''}
+                    `;
+                    scalingHtml = sc ? `<div class="section-titre">Scaling</div>${sc}` : '';
+                    bonusHtml = lignesStat.length > 0 ? `<div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}` : '';
+                    passifHtml = passifTexte ? `<div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div>` : '';
+                }
 
                 carte.innerHTML = `
-                    ${item.niveau > 0 ? `<span class="carte-niveau">+${item.niveau}</span>` : ''}
-                    <label class="carte-select">
-                        <input type="checkbox" data-numero="${item.numero}" data-slot="${item.slot}" data-hand="${item.hand || ''}">
-                    </label>
-                    ${corpsCarte}
-                    ${estEquipe ? `<span class="carte-cmd">✓ Équipé</span>` : `<span class="carte-cmd">!equip ${item.numero}</span>`}
+                    <div class="carte-portrait">
+                        <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LABELS_RARETE[rarete] || rarete}</span>
+                        ${badge ? `<span class="carte-etat-niveau${badge.max ? ' etat-max' : ''}">${badge.texte}</span>` : ''}
+                        <div class="carte-icone-zone">${item.dureeStance > 0 ? portraitExtra : iconeOuImage(item, 'carte-icon')}</div>
+                    </div>
+                    <div class="carte-corps">
+                        <div class="carte-cabecera fila-header">${headerHtml}</div>
+                        <div class="bloc-section fila-scaling">${scalingHtml}</div>
+                        <div class="bloc-section fila-bonus">${bonusHtml}</div>
+                        <div class="bloc-section fila-passif">${passifHtml}</div>
+                        <div class="fila-footer">${estEquipe ? `<span class="carte-cmd">✓ Équipé</span>` : `<span class="carte-cmd">!equip ${item.numero}</span>`}</div>
+                    </div>
                 `;
+                // Case de sélection absente sur une carte à stance (portrait dédoublé au survol) —
+                // pas de checkbox ici dans construireCorpsCarteStance, on l'ajoute ci-dessous pour
+                // rester cohérent avec les cartes classiques (même contrôle, même comportement).
+                if (item.dureeStance > 0) {
+                    const headerEl = carte.querySelector('.fila-header .carte-nom-ligne.stance-vue-1');
+                    if (headerEl) {
+                        const label = document.createElement('label');
+                        label.className = 'carte-select';
+                        label.innerHTML = `<input type="checkbox" data-numero="${item.numero}" data-slot="${item.slot}" data-hand="${item.hand || ''}">`;
+                        headerEl.appendChild(label);
+                    }
+                }
                 grilleInterne.appendChild(carte);
             });
 
@@ -624,6 +737,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             carte.addEventListener('click', (e) => {
                 if (e.target.tagName === 'INPUT') return;
                 const input = carte.querySelector('.carte-select input');
+                if (!input) return;
                 input.checked = !input.checked;
                 input.dispatchEvent(new Event('change'));
             });
