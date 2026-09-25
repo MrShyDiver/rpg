@@ -10,7 +10,7 @@
 :root {
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
     --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
-    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --epique: #a855f7; --legendaire: #f2c230;
     --special: #c9a7e8; --vente: #5ddd7a;
 }
 * { box-sizing: border-box; }
@@ -150,15 +150,22 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     border: 1.5px solid var(--yellow); border-radius: 4px; padding: 1px 6px;
     background: rgba(242,194,48,0.12);
 }
+/* Pilule de rareté pleine (fond = couleur de la rareté), même famille visuelle que le badge de
+   codex.html/inventaire.html — remplace l'ancien badge à fond translucide + texte coloré. */
 .card-puce-rarete {
-    position: absolute; top: 8px; right: 8px;
+    position: absolute; top: 8px; right: 8px; z-index: 2;
     font-family: 'Barlow Condensed', sans-serif; font-size: 9.5px; font-weight: 700;
-    letter-spacing: .8px; text-transform: uppercase; color: var(--accent);
-    background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 3px; z-index: 2;
+    letter-spacing: .8px; text-transform: uppercase; color: #000;
+    background: var(--accent); padding: 2px 7px; border-radius: 4px;
+    border: 1px solid rgba(0,0,0,.3); box-shadow: 0 1px 4px rgba(0,0,0,.35);
 }
 .card-puce-rarete.a-gauche { left: 8px; right: auto; }
+/* Rare/Épique : texte blanc plutôt que noir, même contraste que sur les deux autres pages. */
+.card-puce-rarete.clair { color: #fff; }
 
-.card-image { width: 100%; height: 74px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+/* Zone d'image teintée dans la couleur de la rareté (--accent), même esprit que le portrait
+   plein-fond de codex.html/inventaire.html — juste condensé pour une carte compacte. */
+.card-image { width: 100%; height: 74px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; background: color-mix(in srgb, var(--accent) 30%, #101012); border-radius: 8px; }
 .card-image img { max-width: 100%; max-height: 74px; object-fit: contain; }
 .card-image .emoji { font-size: 42px; line-height: 1; }
 .card-nom {
@@ -402,15 +409,25 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 /* =====================================================================
    ÉCONOMIE 
    ===================================================================== */
-var PRIX_ACHAT  = { commun: 25, normal: 120, rare: 450, legendaire: 900 };
-var PRIX_VENTE  = { commun: 1,  normal: 6,   rare: 30,  legendaire: 90  };
+// ⚠️ Prix "épique" ajoutés le 25/09 pour combler un vrai trou de l'économie (l'épique existe côté
+// catalogue/combat depuis un moment mais n'avait jamais reçu de prix ici — un objet épique en
+// inventaire aurait affiché un prix de vente "NaN"). Interpolés entre rare et légendaire (achat :
+// moyenne géométrique de 450/900 ≈ 636, arrondi à 650 ; vente : 30/90 ≈ 52, arrondi à 50) — à
+// ajuster si ce n'est pas l'équilibre voulu, ce sont des valeurs provisoires, pas une décision de
+// balance mûrie.
+var PRIX_ACHAT  = { commun: 25, normal: 120, rare: 450, epique: 650, legendaire: 900 };
+var PRIX_VENTE  = { commun: 1,  normal: 6,   rare: 30,  epique: 50,  legendaire: 90  };
 var PRIX_RESET  = 60;
 var PRIX_LOOTBOX = 12;
+// Troc inchangé (pas de palier rare→épique demandé) : seuls commun→normal et normal→rare existent.
 var TROC = { normal: { cout: 10, versRarete: 'rare' }, commun: { cout: 10, versRarete: 'normal' } };
 var STOCK = { commun: 4, normal: 3, rare: 2 };
 
-var LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
-var ORDRE_RARETE = { legendaire: 0, rare: 1, normal: 2, commun: 3 };
+var LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire' };
+var ORDRE_RARETE = { legendaire: 0, epique: 1, rare: 2, normal: 3, commun: 4 };
+// Rare/Épique : la pilule de rareté pleine (fond coloré) a besoin d'un texte blanc pour rester
+// lisible — mêmes deux raretés que sur codex.html/inventaire.html.
+var RARETE_TEXTE_CLAIR = { rare: true, epique: true };
 var LABEL_SLOT = { weapon: 'Arme', offhand: 'Main gauche', torso: 'Armure', strategeme: 'Stratagème' };
 
 function heureCourante() { return Math.floor(Date.now() / 3600000); }
@@ -579,7 +596,7 @@ function carteProduit(cfg) {
     var accent = cfg.accent || 'var(--commun)';
     
     var puceRarete = cfg.rarete
-        ? '<div class="card-puce-rarete a-gauche">' + LABEL_RARETE[cfg.rarete] + '</div>'
+        ? '<div class="card-puce-rarete a-gauche' + (RARETE_TEXTE_CLAIR[cfg.rarete] ? ' clair' : '') + '">' + LABEL_RARETE[cfg.rarete] + '</div>'
         : '';
     var badgeQuantite = cfg.badgeQuantite !== undefined ? '<div class="card-niveau">×' + cfg.badgeQuantite + '</div>' : '';
     var verrou = cfg.verrou ? '<div class="card-verrou">🔒</div>' : '';
