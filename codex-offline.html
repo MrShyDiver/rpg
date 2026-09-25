@@ -62,9 +62,17 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .categorie-titre h2 { font-size: 18px; font-weight: 600; }
 .categorie-titre .compte { font-size: 12.5px; color: var(--paper-dim); font-weight: 400; text-transform: none; font-family: 'Barlow', sans-serif; }
 .categorie-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+/* Grille : chaque carte réserve TOUJOURS 6 pistes de ligne (portrait, en-tête, scaling, modes de
+   tir, bonus, passif) via CSS subgrid — même vide pour un objet donné, la piste existe quand même
+   et prend la hauteur imposée par ses voisines de la même rangée visuelle. C'est ce qui aligne
+   "Scaling"/"Bonus"/"Passif" au même niveau d'une carte à l'autre, peu importe la longueur du
+   contenu de chacune (alignement demandé sur la carte la plus grande de la rangée). */
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: min-content; gap: 16px; align-items: start; }
 
-.carte { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+.carte {
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative;
+    display: grid; grid-template-rows: subgrid; grid-row: span 6;
+}
 .carte.normal { border-color: rgba(93,221,122,0.35); }
 .carte.rare { border-color: rgba(74,159,216,0.35); }
 .carte.epique { border-color: rgba(168,85,247,0.4); }
@@ -108,17 +116,34 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.epique .carte-badge-rarete { background: var(--epique); color: #fff; }
 .carte.legendaire .carte-badge-rarete { background: var(--legendaire); }
 
-.carte-numero {
+/* Le numéro de catalogue n'a aucun intérêt pour les viewers — remplacé par un indicateur d'état
+   "Base" (valeurs de départ) / "MAX" (bascule "Voir au niveau max"), ce dernier mis en valeur pour
+   qu'il saute aux yeux quand on parcourt le catalogue en mode "niveau max". */
+.carte-etat-niveau {
     position: absolute; top: 8px; right: 8px; z-index: 3; font-family: 'Barlow Condensed', sans-serif;
-    font-size: 10.5px; font-weight: 700; color: var(--paper-dim); background: rgba(0,0,0,0.4);
-    border-radius: 4px; padding: 2px 7px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--paper-dim); background: rgba(0,0,0,0.4); border-radius: 4px; padding: 2px 8px;
+}
+.carte-etat-niveau.etat-max {
+    color: #000; background: var(--yellow); font-weight: 800; font-size: 11px;
+    box-shadow: 0 1px 6px rgba(242,194,48,0.55);
 }
 
 .carte-icone-zone { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .carte-icone-zone .carte-icon { max-width: 78%; max-height: 84%; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
 .carte-icone-zone .carte-icon-emoji { font-size: 54px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
 
-.carte-corps { padding: 10px 14px 14px; display: flex; flex-direction: column; flex: 1; position: relative; }
+/* Sous-grille des 5 pistes du corps (en-tête, scaling, modes de tir, bonus, passif) — hérite les
+   hauteurs de ligne de .carte ci-dessus, donc de toute la rangée visuelle de cartes. */
+.carte-corps { padding: 10px 14px 14px; display: grid; grid-template-rows: subgrid; grid-row: 2 / span 5; row-gap: 0; position: relative; }
+/* grid-column explicite : sur les cartes à stance, deux éléments (stance 1 / stance 2) partagent
+   la même piste — sans ça, le placement automatique leur trouverait chacun leur propre colonne au
+   lieu de les superposer (le CSS de survol .stance-vue-1/2 s'occupe déjà de n'en montrer qu'un). */
+.fila-header { grid-row: 1; grid-column: 1; }
+.fila-scaling { grid-row: 2; grid-column: 1; }
+.fila-modes { grid-row: 3; grid-column: 1; }
+.fila-bonus { grid-row: 4; grid-column: 1; }
+.fila-passif { grid-row: 5; grid-column: 1; }
 .carte-nom { font-size: 15px; font-weight: 600; text-align: center; margin-bottom: 6px; }
 .carte-nom .carte-contributeur { font-size: 10px; font-weight: 400; color: var(--paper-dim); font-style: italic; }
 /* Nom de l'objet + titres de section ("Bonus"/"Passif") dans la couleur PURE de la rareté (pas la
@@ -180,8 +205,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .passif-ligne .texte { flex: 1 1 auto; min-width: 0; }
 .passif-ligne b { color: var(--paper); font-weight: 600; }
 
-.bloc-section { margin-top: 5px; padding-top: 5px; border-top: 1px solid #2a2a2a; }
-.bloc-section:first-of-type { border-top: none; margin-top: 3px; padding-top: 0; }
+/* :empty = piste réservée par la sous-grille mais sans contenu pour CET objet (ex: scaling sur un
+   Stratagème) — pas de bordure flottante ni de padding, l'espace vide s'aligne quand même sur la
+   hauteur imposée par les autres cartes de la rangée. */
+.bloc-section { margin-top: 6px; padding-top: 6px; border-top: 1px solid #2a2a2a; }
+.bloc-section:empty { margin-top: 0; padding-top: 0; border-top: none; }
 .section-titre {
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
     color: var(--yellow); opacity: 0.85; margin-bottom: 3px;
@@ -584,6 +612,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // EXTENSION "PANOPLIE SEKIRO" (Arc de Genichiro) : rendu dédié pour les armes à modes de tir
     // multiples (modesTir), qui alternent à CHAQUE usage plutôt que d'être un simple passif
     // scalaire — absent/vide pour tout le reste du catalogue, donc n'affecte que cet objet.
+    // Ne renvoie plus sa propre .bloc-section englobante — la piste "fila-modes" est désormais
+    // toujours réservée par l'appelant (sous-grille), vide (donc invisible, voir .bloc-section:empty)
+    // pour tout le catalogue sauf les objets à modes de tir multiples.
     function construireModesTir(modesTir) {
         if (!modesTir || modesTir.length === 0) return '';
         const lignes = modesTir.map((m, i) => {
@@ -595,7 +626,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             details.push(`x${m.multiplicateurDegats} dégâts`);
             return `<div class="passif-ligne"><span class="texte">Mode ${i + 1} : ${details.join(', ')}</span></div>`;
         }).join('');
-        return `<div class="bloc-section"><div class="section-titre">Modes de tir (cycle à chaque attaque)</div><div class="bloc-passif">${lignes}</div></div>`;
+        return `<div class="section-titre">Modes de tir (cycle à chaque attaque)</div><div class="bloc-passif">${lignes}</div>`;
     }
 
     function construireDetails(s, estStrategeme) {
@@ -685,11 +716,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const stats1 = construireLignesStatGenerique(item.stat, item.bonus, item.increment, item.stat2, item.bonus2, item.increment2, item.stat3, item.bonus3, item.increment3, item.statsExtra).map(rendreLigneStat).join('');
         const stats2 = construireLignesStatGenerique(item.stance2Stat, item.stance2Bonus, item.stance2IncrementBonus, item.stance2Stat2, item.stance2Bonus2, item.stance2IncrementBonus2, item.stance2Stat3, item.stance2Bonus3, item.stance2IncrementBonus3).map(rendreLigneStat).join('');
 
+        // Chaque piste de la sous-grille (en-tête, scaling, bonus) accueille les DEUX vues stance1/
+        // stance2 superposées à la même ligne (bascule au survol déjà gérée par .stance-vue-1/2 en
+        // CSS) — c'est ce qui permet à ces pistes de s'aligner avec celles des cartes classiques de
+        // la même rangée, quelle que soit la vue active.
         return `
             <div class="carte ${rarete} carte-stance" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
                 <div class="carte-portrait">
                     <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LETTRE_RARETE[rarete] || '?'}</span>
-                    <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
+                    <span class="carte-etat-niveau${afficherNiveauMax ? ' etat-max' : ''}">${afficherNiveauMax ? 'MAX' : 'Base'}</span>
                     <div class="stance-indicateur">⇄</div>
                     <div class="carte-icone-zone">
                         <div class="stance-vue stance-vue-1">${imageStance1}</div>
@@ -697,19 +732,18 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     </div>
                 </div>
                 <div class="carte-corps">
-                    <div class="stance-vue stance-vue-1">
-                        ${construireNomLigne(item, ' <span class="stance-etiquette">Stance 1</span>')}
-                        ${construireBadgesLigne(item)}
-                        <div class="bloc-section">${scaling1}</div>
-                        ${stats1 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
-                    </div>
-                    <div class="stance-vue stance-vue-2">
-                        ${construireNomLigne(item, ' <span class="stance-etiquette stance-etiquette-2">Stance 2</span>')}
-                        <div class="bloc-section">${scaling2}</div>
-                        ${stats2 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats2}</div>` : ''}
-                    </div>
+                    <div class="carte-cabecera fila-header stance-vue stance-vue-1">${construireNomLigne(item, ' <span class="stance-etiquette">Stance 1</span>')}${construireBadgesLigne(item)}</div>
+                    <div class="carte-cabecera fila-header stance-vue stance-vue-2">${construireNomLigne(item, ' <span class="stance-etiquette stance-etiquette-2">Stance 2</span>')}</div>
 
-                    <div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">
+                    <div class="bloc-section fila-scaling stance-vue stance-vue-1">${scaling1 ? `<div class="section-titre">Scaling</div>${scaling1}` : ''}</div>
+                    <div class="bloc-section fila-scaling stance-vue stance-vue-2">${scaling2 ? `<div class="section-titre">Scaling</div>${scaling2}` : ''}</div>
+
+                    <div class="bloc-section fila-modes"></div>
+
+                    <div class="bloc-section fila-bonus stance-vue stance-vue-1">${stats1 ? `<div class="section-titre">Bonus</div>${stats1}` : ''}</div>
+                    <div class="bloc-section fila-bonus stance-vue stance-vue-2">${stats2 ? `<div class="section-titre">Bonus</div>${stats2}` : ''}</div>
+
+                    <div class="bloc-section fila-passif"><div class="section-titre">Passif</div><div class="bloc-passif">
                         Alterne de stance toutes les <b>${item.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge le poison et la brûlure sur le porteur lui-même.
                     </div></div>
                 </div>
@@ -728,16 +762,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             <div class="carte ${rarete}" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
                 <div class="carte-portrait">
                     <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LETTRE_RARETE[rarete] || '?'}</span>
-                    <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
+                    <span class="carte-etat-niveau${afficherNiveauMax ? ' etat-max' : ''}">${afficherNiveauMax ? 'MAX' : 'Base'}</span>
                     <div class="carte-icone-zone">${iconeOuImage(item, 'carte-icon')}</div>
                 </div>
                 <div class="carte-corps">
-                    ${construireNomLigne(item)}
-                    ${construireBadgesLigne(item)}
-                    ${scalingHtml ? `<div class="bloc-section">${scalingHtml}</div>` : ''}
-                    ${modesTirHtml}
-                    ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
-                    ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
+                    <div class="carte-cabecera fila-header">${construireNomLigne(item)}${construireBadgesLigne(item)}</div>
+                    <div class="bloc-section fila-scaling">${scalingHtml ? `<div class="section-titre">Scaling</div>${scalingHtml}` : ''}</div>
+                    <div class="bloc-section fila-modes">${modesTirHtml}</div>
+                    <div class="bloc-section fila-bonus">${lignesStat.length > 0 ? `<div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}` : ''}</div>
+                    <div class="bloc-section fila-passif">${passifTexte ? `<div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div>` : ''}</div>
                 </div>
             </div>
         `;
