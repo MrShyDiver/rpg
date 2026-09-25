@@ -71,28 +71,38 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.legendaire { border-color: rgba(242,194,48,0.45); }
 
 /* ============ PORTRAIT (haut de carte façon "carte à collectionner") ============ */
-/* Fond à rayons radiaux coloré par rareté (conic-gradient répété) + vignette pour la lisibilité +
-   médaillon circulaire pour l'icône/image + badge de rareté (une lettre) en coin. Rotation lente
-   du fond de rayons réservée aux légendaires ("légère vague"), via les variables --rayonA/--rayonB
-   redéfinies par palier de rareté plutôt qu'un jeu de règles dupliquées. */
+/* Fond réellement teinté par la rareté (color-mix, pas juste des rayons fins sur fond neutre) +
+   rayons radiaux (conic-gradient répété) en texture par-dessus + vignette pour la lisibilité +
+   médaillon circulaire pour l'icône/image + badge de rareté (une lettre) en coin. */
 .carte-portrait {
     position: relative; height: 148px; display: flex; align-items: center; justify-content: center;
     overflow: hidden; background: #18181a;
 }
-.carte.commun .carte-portrait { --rayonA: rgba(141,141,141,0.38); --rayonB: rgba(141,141,141,0); }
-.carte.normal .carte-portrait { --rayonA: rgba(93,221,122,0.4); --rayonB: rgba(93,221,122,0); }
-.carte.rare .carte-portrait { --rayonA: rgba(74,159,216,0.42); --rayonB: rgba(74,159,216,0); }
-.carte.epique .carte-portrait { --rayonA: rgba(168,85,247,0.46); --rayonB: rgba(168,85,247,0); }
-.carte.legendaire .carte-portrait { --rayonA: rgba(242,194,48,0.5); --rayonB: rgba(242,194,48,0); }
+.carte.commun .carte-portrait { --rayonA: rgba(141,141,141,0.3); --rayonB: rgba(141,141,141,0); background: color-mix(in srgb, var(--commun) 30%, #0e0e10); }
+.carte.normal .carte-portrait { --rayonA: rgba(93,221,122,0.32); --rayonB: rgba(93,221,122,0); background: color-mix(in srgb, var(--normal) 28%, #0e0e10); }
+.carte.rare .carte-portrait { --rayonA: rgba(74,159,216,0.34); --rayonB: rgba(74,159,216,0); background: color-mix(in srgb, var(--rare) 30%, #0e0e10); }
+.carte.epique .carte-portrait { --rayonA: rgba(168,85,247,0.36); --rayonB: rgba(168,85,247,0); background: color-mix(in srgb, var(--epique) 32%, #0e0e10); }
+.carte.legendaire .carte-portrait { --rayonA: rgba(242,194,48,0.38); --rayonB: rgba(242,194,48,0); background: color-mix(in srgb, var(--legendaire) 34%, #0e0e10); }
 .carte-portrait::before {
     content: ''; position: absolute; inset: -60%;
     background: repeating-conic-gradient(from 0deg, var(--rayonA) 0deg 8deg, var(--rayonB) 8deg 16deg);
 }
-.carte.legendaire .carte-portrait::before { animation: carteRayonsVague 48s linear infinite; }
-@keyframes carteRayonsVague { to { transform: rotate(360deg); } }
 .carte-portrait::after {
     content: ''; position: absolute; inset: 0;
     background: radial-gradient(circle at 50% 42%, transparent 34%, rgba(0,0,0,0.55) 100%);
+}
+/* Effet "holo" façon Pokémon, réservé aux légendaires : un reflet diagonal discret qui balaie
+   TOUTE la carte (portrait + corps confondus), pas juste le fond à rayons — remplace l'ancienne
+   rotation complète des rayons (jugée trop voyante) par un va-et-vient lent et subtil. */
+.carte.legendaire::after {
+    content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
+    background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.09) 47%, rgba(242,194,48,0.15) 50%, rgba(255,255,255,0.09) 53%, transparent 62%);
+    background-size: 260% 260%;
+    animation: carteHoloVague 7s ease-in-out infinite;
+}
+@keyframes carteHoloVague {
+    0%, 100% { background-position: 15% 0%; }
+    50% { background-position: 85% 100%; }
 }
 
 .carte-badge-rarete {
@@ -123,9 +133,18 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-medaillon .carte-icon { max-width: 66%; max-height: 66%; width: auto; height: auto; object-fit: contain; }
 .carte-medaillon .carte-icon-emoji { font-size: 38px; line-height: 1; }
 
-.carte-corps { padding: 14px 16px 16px; display: flex; flex-direction: column; flex: 1; }
+.carte-corps { padding: 14px 16px 16px; display: flex; flex-direction: column; flex: 1; position: relative; }
 .carte-nom { font-size: 15.5px; font-weight: 600; text-align: center; margin-bottom: 10px; }
 .carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; text-align: center; margin-top: -6px; margin-bottom: 10px; }
+/* Nom de l'objet + titres de section ("Scaling"/"Bonus"/"Passif") dans la couleur PURE de la
+   rareté (pas la version atténuée utilisée pour le fond du portrait) — pour que la rareté se lise
+   aussi dans le corps de la carte, pas seulement dans le badge. Les couleurs de STAT (ATK/DEF/...)
+   restent indépendantes, inchangées. */
+.carte.commun .carte-nom, .carte.commun .section-titre { color: var(--commun); }
+.carte.normal .carte-nom, .carte.normal .section-titre { color: var(--normal); }
+.carte.rare .carte-nom, .carte.rare .section-titre { color: var(--rare); }
+.carte.epique .carte-nom, .carte.epique .section-titre { color: var(--epique); }
+.carte.legendaire .carte-nom, .carte.legendaire .section-titre { color: var(--legendaire); }
 
 /* ============ SET + TYPE DE DÉGÂTS ============ */
 /* Set thématique (ex: "Sekiro") — simple pilule sous le nom, même esprit que stance-etiquette.
