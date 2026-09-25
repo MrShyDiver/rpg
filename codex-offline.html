@@ -186,17 +186,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
     color: var(--yellow); opacity: 0.85; margin-bottom: 3px;
 }
-/* Scaling condensé sur une seule ligne (lettre(s) de scaling + dégâts), plus de grille à 5
-   colonnes affichant des tirets pour les stats non concernées — pas de titre "Scaling" dédié,
-   l'info se lit d'elle-même. */
-/* Le texte de scaling (stats + dégâts) reste TOUJOURS sur une seule ligne (white-space: nowrap) —
-   c'est la pastille de progression à droite qui passe à la ligne suivante si la carte est trop
-   étroite pour tout contenir (flex-wrap sur le conteneur), jamais le texte lui-même. En dernier
-   recours (carte vraiment minuscule) le texte se tronque proprement avec "…" plutôt que de casser
-   au milieu d'un nombre. */
-.scaling-ligne { font-size: 13px; color: var(--paper-dim); display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 8px; }
-.scaling-ligne .gauche { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-width: 0; }
-.scaling-ligne b { color: var(--paper); font-weight: 700; }
+/* Grille des 5 stats scalables (ATK/DEF/PV/SPD/CRIT), une lettre ou "—" si non concernée — plus
+   lisible en un coup d'œil que la version condensée sur une ligne (retour arrière demandé). */
+.scaling-grille { display: flex; flex-wrap: wrap; gap: 4px; }
+.scaling-item { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
+.scaling-item .scaling-label { font-size: 9px; color: var(--paper-dim); margin-bottom: 2px; }
+.scaling-item .scaling-lettre { font-size: 15px; font-weight: 800; }
+/* Tiret cadratin collé ("12–16", pas "12 - 16") pour que la ligne de dégâts ne casse jamais au
+   milieu du nombre si la carte est étroite. */
+.scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.scaling-degats b { color: var(--paper); font-weight: 700; }
 
 /* ============ CARTE À CHANGEMENT DE STANCE ============ */
 .carte-stance { position: relative; cursor: pointer; }
@@ -326,6 +325,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     }
 
     const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
+    const STATS_SCALABLES = ["atk", "def", "pv", "spd", "crit"];
     const LABELS_SCALING = { atk: "ATK", def: "DEF", pv: "PV", spd: "SPD", crit: "CRIT" };
 
     const GABARITS_PASSIF = {
@@ -560,15 +560,20 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // Condensé sur une seule ligne : seules les stats réellement scalées apparaissent (fini la
     // grille à 5 colonnes avec des tirets pour ATK/DEF/PV/SPD/CRIT non concernées).
     function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, degatsMin, degatsMax, incrementDegats) {
-        // Toujours sur UNE seule ligne (voir .scaling-ligne .gauche : nowrap) — tiret cadratin sans
-        // espaces ("12–16") pour un rendu compact et lisible.
-        const lettres = [[scaling1Stat, scaling1Lettre], [scaling2Stat, scaling2Lettre]]
-            .filter(([stat]) => stat)
-            .map(([stat, lettre]) => `${LABELS_SCALING[stat]} <b style="color:${COULEUR_LETTRE_SCALING[lettre] || '#8d8d8d'}">${lettre}</b>`)
-            .join(' · ');
+        // Grille des 5 stats scalables (une lettre ou "—" pour celles non concernées) + ligne de
+        // dégâts séparée — plus lisible que la version condensée sur une seule ligne.
+        const badges = STATS_SCALABLES.map(stat => {
+            let lettre = null;
+            if (scaling1Stat === stat) lettre = scaling1Lettre;
+            else if (scaling2Stat === stat) lettre = scaling2Lettre;
+            const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
+            return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
+        }).join("");
         const pilule = scaling1Stat ? pilluleIncrement(incrementDegats) : "";
-        const gauche = (lettres ? `${lettres} · ` : '') + `Dégâts <b>${Math.round(degatsMin)}–${Math.round(degatsMax)}</b>`;
-        return `<div class="scaling-ligne"><span class="gauche">${gauche}</span>${pilule}</div>`;
+        // Tiret cadratin collé ("12–16") plutôt que " - " espacé, pour ne jamais casser au milieu
+        // du nombre sur une carte étroite.
+        const ligneDegats = `<div class="scaling-degats"><span class="gauche">Dégâts : <b>${Math.round(degatsMin)}–${Math.round(degatsMax)}</b></span>${pilule}</div>`;
+        return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
     }
 
     function construireScaling(s) {
