@@ -71,29 +71,20 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.legendaire { border-color: rgba(242,194,48,0.45); }
 
 /* ============ PORTRAIT (haut de carte façon "carte à collectionner") ============ */
-/* Fond réellement teinté par la rareté (color-mix, pas juste des rayons fins sur fond neutre) +
-   rayons radiaux (conic-gradient répété) en texture par-dessus + vignette pour la lisibilité +
-   médaillon circulaire pour l'icône/image + badge de rareté (une lettre) en coin. */
+/* Fond PLEIN (couleur de rareté, sans dégradé ni rayons ni halo) — l'icône posée directement dessus,
+   plus de médaillon circulaire. Portrait plus bas qu'avant : l'icône n'a plus besoin d'espace pour
+   un cadre, ce qui condense la carte. */
 .carte-portrait {
-    position: relative; height: 148px; display: flex; align-items: center; justify-content: center;
-    overflow: hidden; background: #18181a;
+    position: relative; height: 96px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
 }
-.carte.commun .carte-portrait { --rayonA: rgba(141,141,141,0.3); --rayonB: rgba(141,141,141,0); background: color-mix(in srgb, var(--commun) 30%, #0e0e10); }
-.carte.normal .carte-portrait { --rayonA: rgba(93,221,122,0.32); --rayonB: rgba(93,221,122,0); background: color-mix(in srgb, var(--normal) 28%, #0e0e10); }
-.carte.rare .carte-portrait { --rayonA: rgba(74,159,216,0.34); --rayonB: rgba(74,159,216,0); background: color-mix(in srgb, var(--rare) 30%, #0e0e10); }
-.carte.epique .carte-portrait { --rayonA: rgba(168,85,247,0.36); --rayonB: rgba(168,85,247,0); background: color-mix(in srgb, var(--epique) 32%, #0e0e10); }
-.carte.legendaire .carte-portrait { --rayonA: rgba(242,194,48,0.38); --rayonB: rgba(242,194,48,0); background: color-mix(in srgb, var(--legendaire) 34%, #0e0e10); }
-.carte-portrait::before {
-    content: ''; position: absolute; inset: -60%;
-    background: repeating-conic-gradient(from 0deg, var(--rayonA) 0deg 8deg, var(--rayonB) 8deg 16deg);
-}
-.carte-portrait::after {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 42%, transparent 34%, rgba(0,0,0,0.55) 100%);
-}
+.carte.commun .carte-portrait { background: color-mix(in srgb, var(--commun) 55%, #101012); }
+.carte.normal .carte-portrait { background: color-mix(in srgb, var(--normal) 45%, #101012); }
+.carte.rare .carte-portrait { background: color-mix(in srgb, var(--rare) 48%, #101012); }
+.carte.epique .carte-portrait { background: color-mix(in srgb, var(--epique) 50%, #101012); }
+.carte.legendaire .carte-portrait { background: color-mix(in srgb, var(--legendaire) 55%, #101012); }
 /* Effet "holo" façon Pokémon, réservé aux légendaires : un reflet diagonal discret qui balaie
-   TOUTE la carte (portrait + corps confondus), pas juste le fond à rayons — remplace l'ancienne
-   rotation complète des rayons (jugée trop voyante) par un va-et-vient lent et subtil. */
+   TOUTE la carte (portrait + corps) — inchangé par le passage à un fond plein ci-dessus. */
 .carte.legendaire::after {
     content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
     background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.09) 47%, rgba(242,194,48,0.15) 50%, rgba(255,255,255,0.09) 53%, transparent 62%);
@@ -106,9 +97,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 }
 
 .carte-badge-rarete {
-    position: absolute; top: 10px; left: 10px; z-index: 3; width: 22px; height: 22px; border-radius: 50%;
+    position: absolute; top: 8px; left: 8px; z-index: 3; width: 20px; height: 20px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center; font-family: 'Oswald', sans-serif;
-    font-size: 12px; font-weight: 700; color: #000; border: 1px solid rgba(0,0,0,0.35);
+    font-size: 11px; font-weight: 700; color: #000; border: 1px solid rgba(0,0,0,0.35);
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 .carte.commun .carte-badge-rarete { background: var(--commun); }
@@ -118,46 +109,38 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.legendaire .carte-badge-rarete { background: var(--legendaire); }
 
 .carte-numero {
-    position: absolute; top: 10px; right: 10px; z-index: 3; font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px; font-weight: 700; color: var(--paper-dim); background: rgba(0,0,0,0.4);
+    position: absolute; top: 8px; right: 8px; z-index: 3; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10.5px; font-weight: 700; color: var(--paper-dim); background: rgba(0,0,0,0.4);
     border-radius: 4px; padding: 2px 7px;
 }
 
-.carte-medaillon {
-    position: relative; z-index: 2; width: 92px; height: 92px; border-radius: 50%; overflow: hidden;
-    background: radial-gradient(circle at 35% 28%, #fdfdfa, #cfcabb 55%, #a49e88 100%);
-    border: 3px solid rgba(255,255,255,0.85);
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 4px 14px rgba(0,0,0,0.5);
-    display: flex; align-items: center; justify-content: center;
-}
-.carte-medaillon .carte-icon { max-width: 66%; max-height: 66%; width: auto; height: auto; object-fit: contain; }
-.carte-medaillon .carte-icon-emoji { font-size: 38px; line-height: 1; }
+.carte-icone-zone { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.carte-icone-zone .carte-icon { max-width: 56%; max-height: 68%; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+.carte-icone-zone .carte-icon-emoji { font-size: 34px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
 
-.carte-corps { padding: 14px 16px 16px; display: flex; flex-direction: column; flex: 1; position: relative; }
-.carte-nom { font-size: 15.5px; font-weight: 600; text-align: center; margin-bottom: 10px; }
-.carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; text-align: center; margin-top: -6px; margin-bottom: 10px; }
-/* Nom de l'objet + titres de section ("Scaling"/"Bonus"/"Passif") dans la couleur PURE de la
-   rareté (pas la version atténuée utilisée pour le fond du portrait) — pour que la rareté se lise
-   aussi dans le corps de la carte, pas seulement dans le badge. Les couleurs de STAT (ATK/DEF/...)
-   restent indépendantes, inchangées. */
+.carte-corps { padding: 10px 14px 14px; display: flex; flex-direction: column; flex: 1; position: relative; }
+.carte-nom { font-size: 15px; font-weight: 600; text-align: center; margin-bottom: 6px; }
+.carte-nom .carte-contributeur { font-size: 10px; font-weight: 400; color: var(--paper-dim); font-style: italic; }
+/* Nom de l'objet + titres de section ("Bonus"/"Passif") dans la couleur PURE de la rareté (pas la
+   version atténuée du fond du portrait) — pour que la rareté se lise aussi dans le corps de la
+   carte. Les couleurs de STAT (ATK/DEF/...) restent indépendantes, inchangées. */
 .carte.commun .carte-nom, .carte.commun .section-titre { color: var(--commun); }
 .carte.normal .carte-nom, .carte.normal .section-titre { color: var(--normal); }
 .carte.rare .carte-nom, .carte.rare .section-titre { color: var(--rare); }
 .carte.epique .carte-nom, .carte.epique .section-titre { color: var(--epique); }
 .carte.legendaire .carte-nom, .carte.legendaire .section-titre { color: var(--legendaire); }
 
-/* ============ SET + TYPE DE DÉGÂTS ============ */
-/* Set thématique (ex: "Sekiro") — simple pilule sous le nom, même esprit que stance-etiquette.
-   Purement identificatif pour l'instant (pas encore de bonus de set). */
+/* ============ SET + TYPE DE DÉGÂTS (regroupés sur une seule ligne condensée) ============ */
+.carte-badges-ligne { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin: 0 0 6px; }
+/* Set thématique (ex: "Sekiro") — pilule verte, même esprit que stance-etiquette. Purement
+   identificatif pour l'instant (pas encore de bonus de set). */
 .carte-set-tag {
-    display: block; width: fit-content; margin: -6px auto 10px; font-family: 'Barlow Condensed', sans-serif;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
-    color: #000; background: var(--set); border-radius: 4px; padding: 1px 7px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; color: #000; background: var(--set); border-radius: 4px; padding: 1px 7px;
 }
 /* Type(s) de dégâts : pilules auto-dérivées des mécaniques déjà présentes sur l'objet (jamais
    saisies à la main) — physique (Tranchant/Contondant/Perforant/Explosif selon l'animation, ou
    "Physique" générique si l'animation n'est pas reconnue) + éléments (Poison/Feu/Saignement). */
-.tags-degats { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin: -2px 0 10px; }
 .tag-degat {
     font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
     text-transform: uppercase; border-radius: 4px; padding: 2px 7px;
@@ -167,7 +150,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .tag-degat.feu { background: rgba(255,138,61,0.15); color: #ff8a3d; }
 .tag-degat.saignement { background: rgba(224,90,90,0.15); color: #e05a5a; }
 
-.stat-ligne { font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.stat-ligne { font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .stat-ligne .gauche { display: flex; align-items: baseline; gap: 6px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
 .stat-ligne .label { color: var(--paper-dim); font-weight: 600; }
 .stat-ligne .valeur-neutre { color: var(--paper); font-weight: 700; }
@@ -192,23 +175,22 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 }
 .pilule-scaling .fleche { font-size: 9px; }
 .pilule-scaling .unite { font-weight: 500; opacity: .8; }
-.bloc-passif { display: flex; flex-direction: column; gap: 6px; }
-.passif-ligne { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--paper-dim); line-height: 1.45; }
+.bloc-passif { display: flex; flex-direction: column; gap: 4px; }
+.passif-ligne { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--paper-dim); line-height: 1.4; }
 .passif-ligne .texte { flex: 1 1 auto; min-width: 0; }
 .passif-ligne b { color: var(--paper); font-weight: 600; }
 
-.bloc-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a2a2a; }
-.bloc-section:first-of-type { border-top: none; margin-top: 6px; padding-top: 0; }
+.bloc-section { margin-top: 5px; padding-top: 5px; border-top: 1px solid #2a2a2a; }
+.bloc-section:first-of-type { border-top: none; margin-top: 3px; padding-top: 0; }
 .section-titre {
-    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
-    color: var(--yellow); opacity: 0.85; margin-bottom: 5px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+    color: var(--yellow); opacity: 0.85; margin-bottom: 3px;
 }
-.scaling-grille { display: flex; flex-wrap: wrap; gap: 4px; }
-.scaling-item { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
-.scaling-item .scaling-label { font-size: 9px; color: var(--paper-dim); margin-bottom: 2px; }
-.scaling-item .scaling-lettre { font-size: 15px; font-weight: 800; }
-.scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.scaling-degats b { color: var(--paper); font-weight: 700; }
+/* Scaling condensé sur une seule ligne (lettre(s) de scaling + dégâts), plus de grille à 5
+   colonnes affichant des tirets pour les stats non concernées — pas de titre "Scaling" dédié,
+   l'info se lit d'elle-même. */
+.scaling-ligne { font-size: 13px; color: var(--paper-dim); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.scaling-ligne b { color: var(--paper); font-weight: 700; }
 
 /* ============ CARTE À CHANGEMENT DE STANCE ============ */
 .carte-stance { position: relative; cursor: pointer; }
@@ -221,12 +203,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stance-vue-2 { display: none; }
 .carte-stance:hover .stance-vue-1 { display: none; }
 .carte-stance:hover .stance-vue-2 { display: block; }
-/* Le médaillon (icône dans le portrait) doit basculer en display:flex pour rester centré — les
-   règles génériques ci-dessus (display:block) suffisent au panneau d'infos texte, pas à l'icône. */
-.carte-medaillon .stance-vue { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-.carte-medaillon .stance-vue-2 { display: none; }
-.carte-stance:hover .carte-medaillon .stance-vue-1 { display: none; }
-.carte-stance:hover .carte-medaillon .stance-vue-2 { display: flex; }
+/* La zone d'icône (portrait) doit basculer en display:flex pour rester centrée — les règles
+   génériques ci-dessus (display:block) suffisent au panneau d'infos texte, pas à l'icône. */
+.carte-icone-zone .stance-vue { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.carte-icone-zone .stance-vue-2 { display: none; }
+.carte-stance:hover .carte-icone-zone .stance-vue-1 { display: none; }
+.carte-stance:hover .carte-icone-zone .stance-vue-2 { display: flex; }
 .carte-stance:hover { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow); }
 .carte-stance:hover .stance-indicateur { background: var(--paper); }
 .stance-etiquette {
@@ -305,9 +287,20 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return types;
     }
     function rendreTagsDegats(s) {
-        const types = typesDegats(s);
-        if (types.length === 0) return '';
-        return `<div class="tags-degats">${types.map(t => `<span class="tag-degat ${t.classe}">${t.label}</span>`).join('')}</div>`;
+        // Ne renvoie plus sa propre div englobante — regroupé avec le tag de set dans
+        // .carte-badges-ligne par l'appelant, pour condenser en une seule ligne.
+        return typesDegats(s).map(t => `<span class="tag-degat ${t.classe}">${t.label}</span>`).join('');
+    }
+    // Set + type(s) de dégâts sur UNE seule ligne condensée (au lieu de deux blocs empilés).
+    function construireBadgesLigne(item) {
+        const set = item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : '';
+        const tags = rendreTagsDegats(item);
+        return (set || tags) ? `<div class="carte-badges-ligne">${set}${tags}</div>` : '';
+    }
+    // Nom + contributeur fusionnés sur une seule ligne (au lieu d'une ligne dédiée en dessous).
+    function construireNomLigne(item, suffixeHtml) {
+        const credit = item.contributeur ? ` <span class="carte-contributeur">— ${item.contributeur}</span>` : '';
+        return `<div class="carte-nom">${item.nom}${suffixeHtml || ''}${credit}</div>`;
     }
     // Couleur associée à chaque stat pour les lignes de "Bonus" — voir la légende dans l'entête.
     const COULEUR_STAT = { atk: "var(--atk)", def: "var(--def)", pv: "var(--pv)", spd: "var(--spd)", luck: "var(--luck)", esquive: "var(--esquive)" };
@@ -327,7 +320,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     }
 
     const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
-    const STATS_SCALABLES = ["atk", "def", "pv", "spd", "crit"];
     const LABELS_SCALING = { atk: "ATK", def: "DEF", pv: "PV", spd: "SPD", crit: "CRIT" };
 
     const GABARITS_PASSIF = {
@@ -559,17 +551,16 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // base progresse par doublon possédé (IncrementBaseDegats côté moteur), affichée même sans
     // aucun objet en inventaire puisque le Codex décrit l'objet indépendamment de qui le possède.
     // Ne s'affiche que si un scaling est renseigné (mêmes conditions que AppliquerAmelioration).
+    // Condensé sur une seule ligne : seules les stats réellement scalées apparaissent (fini la
+    // grille à 5 colonnes avec des tirets pour ATK/DEF/PV/SPD/CRIT non concernées).
     function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, degatsMin, degatsMax, incrementDegats) {
-        const badges = STATS_SCALABLES.map(stat => {
-            let lettre = null;
-            if (scaling1Stat === stat) lettre = scaling1Lettre;
-            else if (scaling2Stat === stat) lettre = scaling2Lettre;
-            const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
-            return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
-        }).join("");
+        const lettres = [[scaling1Stat, scaling1Lettre], [scaling2Stat, scaling2Lettre]]
+            .filter(([stat]) => stat)
+            .map(([stat, lettre]) => `${LABELS_SCALING[stat]} <b style="color:${COULEUR_LETTRE_SCALING[lettre] || '#8d8d8d'}">${lettre}</b>`)
+            .join(' · ');
         const pilule = scaling1Stat ? pilluleIncrement(incrementDegats) : "";
-        const ligneDegats = `<div class="scaling-degats"><span class="gauche">Dégâts : <b>${Math.round(degatsMin)} - ${Math.round(degatsMax)}</b></span>${pilule}</div>`;
-        return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
+        const gauche = lettres ? `${lettres} · Dégâts <b>${Math.round(degatsMin)} - ${Math.round(degatsMax)}</b>` : `Dégâts <b>${Math.round(degatsMin)} - ${Math.round(degatsMax)}</b>`;
+        return `<div class="scaling-ligne"><span class="gauche">${gauche}</span>${pilule}</div>`;
     }
 
     function construireScaling(s) {
@@ -687,24 +678,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LETTRE_RARETE[rarete] || '?'}</span>
                     <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
                     <div class="stance-indicateur">⇄</div>
-                    <div class="carte-medaillon">
+                    <div class="carte-icone-zone">
                         <div class="stance-vue stance-vue-1">${imageStance1}</div>
                         <div class="stance-vue stance-vue-2">${imageStance2}</div>
                     </div>
                 </div>
                 <div class="carte-corps">
                     <div class="stance-vue stance-vue-1">
-                        <div class="carte-nom">${item.nom} <span class="stance-etiquette">Stance 1</span></div>
-                        ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                        ${item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : ''}
-                        ${rendreTagsDegats(item)}
-                        <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling1}</div>
+                        ${construireNomLigne(item, ' <span class="stance-etiquette">Stance 1</span>')}
+                        ${construireBadgesLigne(item)}
+                        <div class="bloc-section">${scaling1}</div>
                         ${stats1 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
                     </div>
                     <div class="stance-vue stance-vue-2">
-                        <div class="carte-nom">${item.nom} <span class="stance-etiquette stance-etiquette-2">Stance 2</span></div>
-                        ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                        <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling2}</div>
+                        ${construireNomLigne(item, ' <span class="stance-etiquette stance-etiquette-2">Stance 2</span>')}
+                        <div class="bloc-section">${scaling2}</div>
                         ${stats2 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats2}</div>` : ''}
                     </div>
 
@@ -728,14 +716,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 <div class="carte-portrait">
                     <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LETTRE_RARETE[rarete] || '?'}</span>
                     <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
-                    <div class="carte-medaillon">${iconeOuImage(item, 'carte-icon')}</div>
+                    <div class="carte-icone-zone">${iconeOuImage(item, 'carte-icon')}</div>
                 </div>
                 <div class="carte-corps">
-                    <div class="carte-nom">${item.nom}</div>
-                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                    ${item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : ''}
-                    ${rendreTagsDegats(item)}
-                    ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
+                    ${construireNomLigne(item)}
+                    ${construireBadgesLigne(item)}
+                    ${scalingHtml ? `<div class="bloc-section">${scalingHtml}</div>` : ''}
                     ${modesTirHtml}
                     ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
                     ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
