@@ -82,8 +82,15 @@ const CHAMP_STAT_PRINCIPALE = {
     ParalysieChance: 'paralysieChance', RiposteEtourdissementTousLesCoups: 'riposteEtourdissementTousLesCoups',
 };
 
+// Miroir de NIVEAU_MAX_PAR_RARETE (moteur-combat.cs) -- garder synchronisé.
+const NIVEAU_MAX_PAR_RARETE = { commun: 25, normal: 20, rare: 15, epique: 10, legendaire: 5 };
+function niveauMaxPourRarete(rarete) {
+    return NIVEAU_MAX_PAR_RARETE[rarete] !== undefined ? NIVEAU_MAX_PAR_RARETE[rarete] : NIVEAU_MAX_PAR_RARETE.commun;
+}
+
 function appliquerAmelioration(original, niveau) {
     if (!original || !niveau || niveau <= 0) return original;
+    niveau = Math.min(niveau, niveauMaxPourRarete(original.rarete));
     // ⚠️ EXTENSION additive : statsExtra/passifsExtra (4e stat, 5e stat, 2e passif...) -- une copie
     // superficielle (spread) suffit pour les champs scalaires, mais statsExtra est un TABLEAU
     // partagé avec l'objet catalogue original : il faut le recopier explicitement (map) avant d'en
