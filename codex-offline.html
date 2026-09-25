@@ -104,10 +104,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     50% { background-position: 85% 100%; }
 }
 
+/* Label de rareté en toutes lettres (au lieu d'une seule lettre) — même famille visuelle que le
+   badge Base/MAX en face, à l'autre coin du portrait. */
 .carte-badge-rarete {
-    position: absolute; top: 8px; left: 8px; z-index: 3; width: 20px; height: 20px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; font-family: 'Oswald', sans-serif;
-    font-size: 11px; font-weight: 700; color: #000; border: 1px solid rgba(0,0,0,0.35);
+    position: absolute; top: 8px; left: 8px; z-index: 3; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: #000; border-radius: 4px; padding: 2px 8px; border: 1px solid rgba(0,0,0,0.35);
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 .carte.commun .carte-badge-rarete { background: var(--commun); }
@@ -310,9 +312,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     const SUFFIXE_STAT = { esquive: "%" };
     const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
     const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", epique: "Épique", legendaire: "Légendaire" };
-    // Lettre du badge de rareté en coin du portrait (design carte à collectionner) — le mot complet
-    // reste consultable au survol (title) via LABELS_RARETE.
-    const LETTRE_RARETE = { commun: "C", normal: "N", rare: "R", epique: "É", legendaire: "L" };
     // Type de dégâts physique dérivé de l'animation de l'objet (arme ou Stratagème) — "Physique"
     // générique en repli si l'animation n'est pas reconnue (ex: objet sans Anim renseigné).
     const LABELS_TYPE_PHYSIQUE = { slash: "Tranchant", smash: "Contondant", tir: "Perforant", explosion: "Explosif", bombardement: "Explosif" };
@@ -731,7 +730,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return `
             <div class="carte ${rarete} carte-stance" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
                 <div class="carte-portrait">
-                    <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LETTRE_RARETE[rarete] || '?'}</span>
+                    <span class="carte-badge-rarete">${LABELS_RARETE[rarete] || rarete}</span>
                     <span class="carte-etat-niveau${afficherNiveauMax ? ' etat-max' : ''}">${afficherNiveauMax ? 'MAX' : 'Base'}</span>
                     <div class="stance-indicateur">⇄</div>
                     <div class="carte-icone-zone">
@@ -769,7 +768,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return `
             <div class="carte ${rarete}" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
                 <div class="carte-portrait">
-                    <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LETTRE_RARETE[rarete] || '?'}</span>
+                    <span class="carte-badge-rarete">${LABELS_RARETE[rarete] || rarete}</span>
                     <span class="carte-etat-niveau${afficherNiveauMax ? ' etat-max' : ''}">${afficherNiveauMax ? 'MAX' : 'Base'}</span>
                     <div class="carte-icone-zone">${iconeOuImage(item, 'carte-icon')}</div>
                 </div>
