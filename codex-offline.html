@@ -9,7 +9,8 @@
 :root {
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
     --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
-    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --epique: #a855f7; --legendaire: #f2c230;
+    --set: #2dd4bf;
     /* Code couleur par stat — identique à calculateur.html/stats.html, pour reconnaître une stat
        d'un coup d'œil sur tout le site. */
     --atk: #ff5e3a; --def: #3b82f6; --pv: #ca2972; --spd: #FFCC00; --luck: #00ffaa; --esquive: #22d3ee;
@@ -44,6 +45,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .filtre-pilule.actif { background: var(--yellow); color: #000; border-color: var(--yellow); }
 .filtre-pilule.actif.r-normal { background: var(--normal); border-color: var(--normal); }
 .filtre-pilule.actif.r-rare { background: var(--rare); border-color: var(--rare); }
+.filtre-pilule.actif.r-epique { background: var(--epique); border-color: var(--epique); }
 .filtre-pilule.actif.r-legendaire { background: var(--legendaire); border-color: var(--legendaire); }
 .filtre-pilule.actif.r-commun { background: var(--commun); border-color: var(--commun); color: #000; }
 
@@ -65,6 +67,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 6px; padding: 16px; position: relative; display: flex; flex-direction: column; }
 .carte.normal { border-left-color: var(--normal); }
 .carte.rare { border-left-color: var(--rare); }
+.carte.epique { border-left-color: var(--epique); }
 .carte.legendaire { border-left-color: var(--legendaire); }
 
 .carte-numero {
@@ -80,6 +83,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-rarete-tag.commun { background: rgba(141,141,141,0.18); color: var(--commun); }
 .carte-rarete-tag.normal { background: rgba(93,221,122,0.15); color: var(--normal); }
 .carte-rarete-tag.rare { background: rgba(74,159,216,0.15); color: var(--rare); }
+.carte-rarete-tag.epique { background: rgba(168,85,247,0.15); color: var(--epique); }
 .carte-rarete-tag.legendaire { background: rgba(242,194,48,0.15); color: var(--legendaire); }
 
 .carte-image-zone { display: flex; justify-content: center; margin: 22px 0 12px; }
@@ -88,6 +92,27 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
 .carte-nom { font-size: 15.5px; font-weight: 600; text-align: center; margin-bottom: 10px; }
 .carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; text-align: center; margin-top: -6px; margin-bottom: 10px; }
+
+/* ============ SET + TYPE DE DÉGÂTS ============ */
+/* Set thématique (ex: "Sekiro") — simple pilule sous le nom, même esprit que stance-etiquette.
+   Purement identificatif pour l'instant (pas encore de bonus de set). */
+.carte-set-tag {
+    display: block; width: fit-content; margin: -6px auto 10px; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: #000; background: var(--set); border-radius: 4px; padding: 1px 7px;
+}
+/* Type(s) de dégâts : pilules auto-dérivées des mécaniques déjà présentes sur l'objet (jamais
+   saisies à la main) — physique (Tranchant/Contondant/Perforant/Explosif selon l'animation, ou
+   "Physique" générique si l'animation n'est pas reconnue) + éléments (Poison/Feu/Saignement). */
+.tags-degats { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin: -2px 0 10px; }
+.tag-degat {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+    text-transform: uppercase; border-radius: 4px; padding: 2px 7px;
+}
+.tag-degat.physique { background: rgba(184,178,160,0.15); color: var(--paper-dim); }
+.tag-degat.poison { background: rgba(140,255,90,0.15); color: #8cff5a; }
+.tag-degat.feu { background: rgba(255,138,61,0.15); color: #ff8a3d; }
+.tag-degat.saignement { background: rgba(224,90,90,0.15); color: #e05a5a; }
 
 .stat-ligne { font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .stat-ligne .gauche { display: flex; align-items: baseline; gap: 6px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
@@ -182,6 +207,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     <div class="barre-controles">
         <input type="text" class="champ-recherche" id="champRecherche" placeholder="Rechercher un objet par son nom...">
+        <button type="button" class="filtre-pilule" id="toggleNiveauMax" title="Affiche chaque objet entièrement amélioré (plafond de niveau selon sa rareté), doublons compris">Voir au niveau max</button>
     </div>
     <div class="filtres-rangee" id="filtresRarete"></div>
     <div class="compteur-resultats" id="compteurResultats"></div>
@@ -201,7 +227,26 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     const LABELS_STAT = { atk: "ATK", def: "DEF", pv: "PDV", esquive: "Esquive", spd: "Vitesse", luck: "LUCK" };
     const SUFFIXE_STAT = { esquive: "%" };
     const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
-    const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", legendaire: "Légendaire" };
+    const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", epique: "Épique", legendaire: "Légendaire" };
+    // Type de dégâts physique dérivé de l'animation de l'objet (arme ou Stratagème) — "Physique"
+    // générique en repli si l'animation n'est pas reconnue (ex: objet sans Anim renseigné).
+    const LABELS_TYPE_PHYSIQUE = { slash: "Tranchant", smash: "Contondant", tir: "Perforant", explosion: "Explosif", bombardement: "Explosif" };
+    // Types de dégâts affichés sous forme de pilules — TOUJOURS dérivés des champs déjà présents
+    // sur l'objet, jamais d'une nouvelle donnée saisie à la main (reste synchronisé sans effort).
+    function typesDegats(s) {
+        const types = [];
+        const faitDegatsDirects = (s.baseDegatsMin > 0 || s.baseDegatsMax > 0 || s.degatsDirects > 0);
+        if (faitDegatsDirects) types.push({ classe: "physique", label: LABELS_TYPE_PHYSIQUE[s.anim] || "Physique" });
+        if (s.poisonDegats > 0) types.push({ classe: "poison", label: "Poison" });
+        if (s.brulureDegats > 0 || s.bruleeReflectionDegats > 0) types.push({ classe: "feu", label: "Feu" });
+        if (s.saignementDegats > 0) types.push({ classe: "saignement", label: "Saignement" });
+        return types;
+    }
+    function rendreTagsDegats(s) {
+        const types = typesDegats(s);
+        if (types.length === 0) return '';
+        return `<div class="tags-degats">${types.map(t => `<span class="tag-degat ${t.classe}">${t.label}</span>`).join('')}</div>`;
+    }
     // Couleur associée à chaque stat pour les lignes de "Bonus" — voir la légende dans l'entête.
     const COULEUR_STAT = { atk: "var(--atk)", def: "var(--def)", pv: "var(--pv)", spd: "var(--spd)", luck: "var(--luck)", esquive: "var(--esquive)" };
 
@@ -226,7 +271,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     const GABARITS_PASSIF = {
         Lifesteal: (v, s) => `Vol de vie : <b>${v}%</b> des dégâts infligés sont rendus en PV.`,
         PoisonDegats: (v, s) => `Poison : inflige <b>${v}</b> dégâts au tour suivant, puis <b>${Math.max(0, v - 1)}</b>, <b>${Math.max(0, v - 2)}</b>... jusqu'à 0 (s'additionne si réappliqué).`,
-        EtourdissementChance: (v, s) => `<b>${v}%</b> de chance d'étourdir la cible (saute son tour suivant).`,
+        // EXTENSION "PANOPLIE SEKIRO" : durée personnalisable (Hache Chargée, 2 tours) au lieu du
+        // classique "saute 1 action" — etourdissementDureeTours absent/1 pour tout le reste du
+        // catalogue donne exactement l'ancien texte, comportement inchangé.
+        EtourdissementChance: (v, s) => {
+            const duree = s.etourdissementDureeTours && s.etourdissementDureeTours > 1 ? s.etourdissementDureeTours : 1;
+            return duree > 1
+                ? `<b>${v}%</b> de chance d'étourdir la cible (saute ses <b>${duree}</b> prochains tours).`
+                : `<b>${v}%</b> de chance d'étourdir la cible (saute son tour suivant).`;
+        },
         ExecutionBonus: (v, s) => `Sous <b>${s.executionSeuil}%</b> de PV, inflige <b>+${v}%</b> de dégâts.`,
         Precision: (v, s) => `<b>+${v}</b> précision — réduit l'esquive adverse.`,
         Blocage: (v, s) => `<b>${v}%</b> de chance de bloquer, réduit alors les dégâts de <b>${s.blocageReduction}%</b>.`,
@@ -246,8 +299,42 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ParadeChance: (v, s) => `<b>${v}%</b> de chance d'annuler un coup reçu et de riposter immédiatement.`,
         TenaciteChance: (v, s) => `<b>${v}%</b> de chance de résister à un étourdissement.`,
         Penetration: (v, s) => `Pénétration : Ignore <b>${v}%</b> de l'armure adverse.`,
-        DernierSouffleActif: () => `Une fois par combat, survit à <b>1 PV</b> au lieu de mourir.`,
+        // EXTENSION "PANOPLIE SEKIRO" (Manteau du Loup) : quand DernierSouffleFractionPv est
+        // renseigné, le dernier souffle relève à une FRACTION des PV max plutôt qu'à 1 PV fixe —
+        // le taux de progression par niveau (IncrementParNiveau sur DernierSouffleFractionPv, qui
+        // n'a pas d'entrée dédiée dans CHAMP_PAR_STAT_PRINCIPALE puisqu'il ne s'affiche jamais
+        // seul) est mentionné directement dans la phrase plutôt que via la pastille automatique.
+        DernierSouffleActif: (v, s) => {
+            if (s.dernierSouffleFractionPv > 0) {
+                const pct = Math.round(s.dernierSouffleFractionPv * 10000) / 100;
+                const tauxNiveau = (s.statPrincipale === "DernierSouffleFractionPv" && s.incrementPassif > 0)
+                    ? ` (<b>+${Math.round(s.incrementPassif * 10000) / 100}%</b>/niveau)` : '';
+                return `Une fois par combat, survit avec <b>${pct}%</b> de tes PV max au lieu de mourir${tauxNiveau} (au lieu d'1 PV).`;
+            }
+            return `Une fois par combat, survit à <b>1 PV</b> au lieu de mourir.`;
+        },
         FrenesieBonusSpd: (v, s) => `Un critique accorde <b>+${v}</b> Vitesse pendant <b>${s.frenesieDuree}</b> tours.`,
+        // ==========================================================
+        // EXTENSION "PANOPLIE SEKIRO" (17 nouveaux objets, patch en cours) — nouveaux passifs.
+        // ==========================================================
+        RechargeSacrificePourcentage: (v, s) => `Tous les <b>${s.rechargeTousLesCoups}</b> coups portés, sacrifie <b>${v}%</b> de tes PV actuels pour recharger immédiatement une charge de Stratagème ou de soin actif en recharge.`,
+        ReductionPvMaxPourcentage: (v, s) => {
+            const contrepartie = s.autoDegatsPourcentageDesDegats > 0
+                ? ` Contrepartie : tu subis <b>${s.autoDegatsPourcentageDesDegats}%</b> de tes propres dégâts infligés.`
+                : '';
+            return `Chaque coup porté réduit les PV MAX de la cible de <b>${v}%</b> (multiplicatif, jusqu'à -90%).${contrepartie}`;
+        },
+        AmplificationSoinsPourcentage: (v, s) => `Amplifie de <b>${v}%</b> les soins que tu reçois de toi-même (régénération, soin actif).`,
+        EsquiveParadeBuffPourcentage: (v, s) => `Quand tu es touché : gagne <b>${v}%</b> d'esquive (ou de parade si elle est plus élevée) pendant <b>${s.esquiveParadeBuffDuree}</b> tours.`,
+        BriseDefPoints: (v, s) => {
+            const duree = s.briseDefDuree >= 999 ? `jusqu'à la fin du combat` : `pendant <b>${s.briseDefDuree}</b> tours`;
+            return `Chaque coup porté réduit la DEF de la cible de <b>${v}</b> points, ${duree}.`;
+        },
+        BruleeReflectionDegats: (v, s) => `Quand tu es touché : brûle l'attaquant pour <b>${v}</b> dégâts par tour pendant <b>${s.bruleeReflectionDuree}</b> tours.`,
+        AmplificationDegatsFeuPourcentage: (v, s) => `Amplifie tes dégâts de Brûlure infligés de <b>${v}%</b>.`,
+        SaignementChanceParCoup: (v, s) => `Chaque projectile a <b>${v}%</b> de chance d'infliger un stack de Saignement.`,
+        ParalysieChance: (v, s) => `<b>${v}%</b> de chance de paralyser la cible pendant <b>${s.paralysieDuree}</b> tour${s.paralysieDuree > 1 ? 's' : ''} (ne peut plus agir, mais peut toujours utiliser Stratagème/soin).`,
+        RiposteEtourdissementTousLesCoups: (v, s) => `Tous les <b>${v}</b> coups reçus, étourdit l'attaquant à son prochain tour.`,
     };
     const CHAMP_PAR_STAT_PRINCIPALE = {
         Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", EtourdissementChance: "etourdissementChance", Penetration: "penetration",
@@ -257,7 +344,114 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         AntiHealPourcentage: "antiHealPourcentage", ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax",
         MarqueDegatsPourcentage: "marqueDegatsPourcentage", ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance",
         DernierSouffleActif: "dernierSouffleActif", FrenesieBonusSpd: "frenesieBonusSpd",
+        // EXTENSION "PANOPLIE SEKIRO" -- mêmes principe, nouveaux champs. DernierSouffleFractionPv
+        // et AutoDegatsPourcentageDesDegats n'ont volontairement PAS d'entrée ici : ce sont des
+        // champs de CONTEXTE lus depuis GABARITS_PASSIF.DernierSouffleActif/ReductionPvMaxPourcentage
+        // (comme s.executionSeuil pour ExecutionBonus), jamais affichés comme leur propre ligne.
+        RechargeSacrificePourcentage: "rechargeSacrificePourcentage",
+        ReductionPvMaxPourcentage: "reductionPvMaxPourcentage",
+        AmplificationSoinsPourcentage: "amplificationSoinsPourcentage",
+        EsquiveParadeBuffPourcentage: "esquiveParadeBuffPourcentage",
+        BriseDefPoints: "briseDefPoints",
+        BruleeReflectionDegats: "bruleeReflectionDegats",
+        AmplificationDegatsFeuPourcentage: "amplificationDegatsFeuPourcentage",
+        SaignementChanceParCoup: "saignementChanceParCoup",
+        ParalysieChance: "paralysieChance",
+        RiposteEtourdissementTousLesCoups: "riposteEtourdissementTousLesCoups",
     };
+
+    // ==========================================================
+    // "VOIR AU NIVEAU MAX" — porte fidèlement AppliquerAmelioration (moteur-combat.cs) + son
+    // plafond de niveau par rareté (NIVEAU_MAX_PAR_RARETE, ajouté le 25/09) en JS pur, en autonome
+    // (le Codex ne dépend d'aucun autre script que nav.js) : même principe que le mirror JS déjà
+    // embarqué dans moteur-combat.cs pour calculateur.html/simulation.html, mais recopié ici pour
+    // ne pas dépendre d'un fetch supplémentaire vers formule-combat.js. ⚠️ Garder synchronisé si la
+    // formule change côté moteur.
+    const NIVEAU_MAX_PAR_RARETE = { commun: 25, normal: 20, rare: 15, epique: 10, legendaire: 5 };
+    function niveauMaxPourRarete(rarete) {
+        return NIVEAU_MAX_PAR_RARETE[rarete] !== undefined ? NIVEAU_MAX_PAR_RARETE[rarete] : NIVEAU_MAX_PAR_RARETE.commun;
+    }
+    // Table COMPLÈTE (distincte de CHAMP_PAR_STAT_PRINCIPALE ci-dessus, qui ne sert qu'à l'AFFICHAGE
+    // des lignes de passif) : toutes les cibles possibles de StatPrincipale/PassifsExtra rencontrées
+    // dans le catalogue, y compris DegatsDirects/SaignementDegats qui sont exclus de l'affichage
+    // générique (déjà montrés via leur propre ligne "Dégâts"/scaling) mais doivent quand même monter
+    // correctement quand on calcule la version au niveau max d'un objet.
+    const CHAMP_STAT_PRINCIPALE_NIVELAGE = {
+        Lifesteal: "lifesteal", PoisonDegats: "poisonDegats", Precision: "precision", CritBonus: "critBonus",
+        Penetration: "penetration", EtourdissementChance: "etourdissementChance", ExecutionBonus: "executionBonus",
+        Blocage: "blocage", BlocageReduction: "blocageReduction", Reflection: "reflection",
+        ResistancePoison: "resistancePoison", ResistanceFeu: "resistanceFeu", Regeneration: "regeneration", ResistanceCrit: "resistanceCrit",
+        ReductionDegatsTir: "reductionDegatsTir", DegatsDirects: "degatsDirects", SoinDirect: "soinDirect",
+        SaignementDegats: "saignementDegats", BrulureDegats: "brulureDegats", AntiHealPourcentage: "antiHealPourcentage",
+        ShieldMontant: "shieldMontant", RageBonusMax: "rageBonusMax", MarqueDegatsPourcentage: "marqueDegatsPourcentage",
+        ParadeChance: "paradeChance", TenaciteChance: "tenaciteChance", DernierSouffleActif: "dernierSouffleActif",
+        FrenesieBonusSpd: "frenesieBonusSpd",
+        // EXTENSION "PANOPLIE SEKIRO"
+        RechargeSacrificePourcentage: "rechargeSacrificePourcentage", ReductionPvMaxPourcentage: "reductionPvMaxPourcentage",
+        AutoDegatsPourcentageDesDegats: "autoDegatsPourcentageDesDegats", AmplificationSoinsPourcentage: "amplificationSoinsPourcentage",
+        EsquiveParadeBuffPourcentage: "esquiveParadeBuffPourcentage", BriseDefPoints: "briseDefPoints",
+        DernierSouffleFractionPv: "dernierSouffleFractionPv", BruleeReflectionDegats: "bruleeReflectionDegats",
+        AmplificationDegatsFeuPourcentage: "amplificationDegatsFeuPourcentage", SaignementChanceParCoup: "saignementChanceParCoup",
+        RiposteEtourdissementTousLesCoups: "riposteEtourdissementTousLesCoups", ParalysieChance: "paralysieChance",
+    };
+    function appliquerAmelioration(original, niveau) {
+        if (!original || !niveau || niveau <= 0) return original;
+        niveau = Math.min(niveau, niveauMaxPourRarete(original.rarete));
+        const c = { ...original };
+        if (original.statsExtra) c.statsExtra = original.statsExtra.map(sl => ({ ...sl }));
+        if (original.passifsExtra) c.passifsExtra = original.passifsExtra.map(p => ({ ...p }));
+
+        if (c.stat) c.bonus = (c.bonus || 0) + niveau * (c.increment || 0);
+        if (c.stat2) c.bonus2 = (c.bonus2 || 0) + niveau * (c.increment2 || 0);
+        if (c.stat3) c.bonus3 = (c.bonus3 || 0) + niveau * (c.increment3 || 0);
+        if (c.statsExtra) c.statsExtra.forEach(slot => { slot.bonus = (slot.bonus || 0) + niveau * (slot.increment || 0); });
+
+        if (c.scaling1Stat && c.incrementBaseDegats) {
+            c.baseDegatsMin = (c.baseDegatsMin || 0) + niveau * c.incrementBaseDegats;
+            c.baseDegatsMax = (c.baseDegatsMax || 0) + niveau * c.incrementBaseDegats;
+        }
+        if ((c.degatsDirects || 0) > 0 && c.incrementDegatsDirects) {
+            c.degatsDirects = c.degatsDirects + niveau * c.incrementDegatsDirects;
+        }
+
+        if (c.dureeStance) {
+            if (c.stance2Stat) c.stance2Bonus = (c.stance2Bonus || 0) + niveau * (c.stance2IncrementBonus || 0);
+            if (c.stance2Stat2) c.stance2Bonus2 = (c.stance2Bonus2 || 0) + niveau * (c.stance2IncrementBonus2 || 0);
+            if (c.stance2Stat3) c.stance2Bonus3 = (c.stance2Bonus3 || 0) + niveau * (c.stance2IncrementBonus3 || 0);
+            if (c.stance2Scaling1Stat && c.stance2IncrementBaseDegats) {
+                c.stance2BaseDegatsMin = (c.stance2BaseDegatsMin || 0) + niveau * c.stance2IncrementBaseDegats;
+                c.stance2BaseDegatsMax = (c.stance2BaseDegatsMax || 0) + niveau * c.stance2IncrementBaseDegats;
+            }
+        }
+
+        if (c.statPrincipale) {
+            const champ = CHAMP_STAT_PRINCIPALE_NIVELAGE[c.statPrincipale];
+            if (champ) c[champ] = (c[champ] || 0) + niveau * c.incrementPassif;
+        }
+        if (c.passifsExtra) {
+            c.passifsExtra.forEach(passif => {
+                const champ = CHAMP_STAT_PRINCIPALE_NIVELAGE[passif.champ];
+                if (champ) c[champ] = (c[champ] || 0) + niveau * passif.incrementPassif;
+            });
+        }
+        return c;
+    }
+    // Version "niveau max" d'un objet du catalogue, PRÊTE À AFFICHER : au-delà du nivelage
+    // ci-dessus, remet à zéro tous les champs "increment*" de la copie — les pastilles de
+    // progression (pilluleIncrement) n'ont plus de sens une fois la valeur finale déjà atteinte,
+    // et se masquent déjà automatiquement quand leur valeur est à 0 (aucune logique d'affichage
+    // séparée à maintenir).
+    function construireVersionNiveauMax(original) {
+        const niveau = niveauMaxPourRarete(original.rarete);
+        const c = appliquerAmelioration(original, niveau);
+        if (c === original) return original; // niveau 0 (ne devrait pas arriver, tous les paliers sont > 0)
+        c.increment = 0; c.increment2 = 0; c.increment3 = 0; c.incrementBaseDegats = 0;
+        c.incrementDegatsDirects = 0; c.incrementPassif = 0;
+        c.stance2IncrementBonus = 0; c.stance2IncrementBonus2 = 0; c.stance2IncrementBonus3 = 0; c.stance2IncrementBaseDegats = 0;
+        if (c.statsExtra) c.statsExtra = c.statsExtra.map(sl => ({ ...sl, increment: 0 }));
+        if (c.passifsExtra) c.passifsExtra = c.passifsExtra.map(p => ({ ...p, incrementPassif: 0 }));
+        return c;
+    }
 
     const iconeOuImage = (ref, classeImg) => ref.image
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
@@ -319,6 +513,23 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     function construireScaling(s) {
         if (!s.scaling1Stat) return null;
         return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats);
+    }
+
+    // EXTENSION "PANOPLIE SEKIRO" (Arc de Genichiro) : rendu dédié pour les armes à modes de tir
+    // multiples (modesTir), qui alternent à CHAQUE usage plutôt que d'être un simple passif
+    // scalaire — absent/vide pour tout le reste du catalogue, donc n'affecte que cet objet.
+    function construireModesTir(modesTir) {
+        if (!modesTir || modesTir.length === 0) return '';
+        const lignes = modesTir.map((m, i) => {
+            const details = [];
+            if (m.coupsParUsage > 1) details.push(`${m.coupsParUsage} coups`);
+            if (m.penetration > 0) details.push(`Pénétration ${m.penetration}%`);
+            if (m.etourdissementChance > 0) details.push(`${m.etourdissementChance}% étourdissement`);
+            if (m.saignementDegats > 0) details.push(`${m.saignementDegats} saignement/stack`);
+            details.push(`x${m.multiplicateurDegats} dégâts`);
+            return `<div class="passif-ligne"><span class="texte">Mode ${i + 1} : ${details.join(', ')}</span></div>`;
+        }).join('');
+        return `<div class="bloc-section"><div class="section-titre">Modes de tir (cycle à chaque attaque)</div><div class="bloc-passif">${lignes}</div></div>`;
     }
 
     function construireDetails(s, estStrategeme) {
@@ -411,13 +622,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return `
             <div class="carte ${rarete} carte-stance" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
                 <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
-                <span class="carte-numero">N°${numero}</span>
+                <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
                 <div class="stance-indicateur">⇄</div>
 
                 <div class="stance-vue stance-vue-1">
                     <div class="carte-image-zone">${imageStance1}</div>
                     <div class="carte-nom">${item.nom} <span class="stance-etiquette">Stance 1</span></div>
                     ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
+                    ${item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : ''}
+                    ${rendreTagsDegats(item)}
                     <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling1}</div>
                     ${stats1 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
                 </div>
@@ -442,14 +655,18 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const rarete = item.rarete || 'commun';
         const estStrategeme = item.slot === 'strategeme';
         const { scalingHtml, lignesStat, passifTexte } = construireDetails(item, estStrategeme);
+        const modesTirHtml = construireModesTir(item.modesTir);
         return `
             <div class="carte ${rarete}" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
                 <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
-                <span class="carte-numero">N°${numero}</span>
+                <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
                 <div class="carte-image-zone">${iconeOuImage(item, 'carte-icon')}</div>
                 <div class="carte-nom">${item.nom}</div>
                 ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
+                ${item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : ''}
+                ${rendreTagsDegats(item)}
                 ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
+                ${modesTirHtml}
                 ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
                 ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
             </div>
@@ -460,6 +677,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     let raretesDisponibles = [];
     let raretesActives = new Set();
     let texteRecherche = '';
+    let afficherNiveauMax = false;
 
     function appliquerFiltres() {
         document.querySelectorAll('.carte').forEach(carte => {
@@ -480,7 +698,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const parCategorie = { weapon_1h: [], weapon_2h: [], offhand: [], torso: [], strategeme: [] };
         raretesDisponibles = [];
         for (const numero in STATS) {
-            const item = STATS[numero];
+            const item = afficherNiveauMax ? construireVersionNiveauMax(STATS[numero]) : STATS[numero];
             const cat = categorieAffichage(item);
             if (!parCategorie[cat]) continue;
             parCategorie[cat].push({ numero, item });
@@ -488,12 +706,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             if (!raretesDisponibles.includes(rarete)) raretesDisponibles.push(rarete);
         }
 
-        const ordreRarete = ['commun', 'normal', 'rare', 'legendaire'];
+        const ordreRarete = ['commun', 'normal', 'rare', 'epique', 'legendaire'];
         raretesDisponibles.sort((a, b) => ordreRarete.indexOf(a) - ordreRarete.indexOf(b));
 
+        // ⚠️ raretesActives (le filtre choisi) survit à un reconstruirePage() (ex: bascule "niveau
+        // max", qui reconstruit toute la grille sans repartir de zéro) — les pastilles régénérées
+        // doivent donc refléter son état ACTUEL, pas retomber sur "Toutes les raretés" par défaut.
         const filtresEl = document.getElementById('filtresRarete');
-        filtresEl.innerHTML = `<div class="filtre-pilule actif" data-rarete="tous">Toutes les raretés</div>`
-            + raretesDisponibles.map(r => `<div class="filtre-pilule r-${r}" data-rarete="${r}">${LABELS_RARETE[r] || r}</div>`).join('');
+        filtresEl.innerHTML = `<div class="filtre-pilule${raretesActives.size === 0 ? ' actif' : ''}" data-rarete="tous">Toutes les raretés</div>`
+            + raretesDisponibles.map(r => `<div class="filtre-pilule r-${r}${raretesActives.has(r) ? ' actif' : ''}" data-rarete="${r}">${LABELS_RARETE[r] || r}</div>`).join('');
 
         filtresEl.querySelectorAll('.filtre-pilule').forEach(pilule => {
             pilule.addEventListener('click', () => {
@@ -517,11 +738,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         Object.keys(LABELS_CATEGORIE).forEach(cat => {
             const items = parCategorie[cat];
             if (items.length === 0) return;
-            const ordreRarete = ['commun', 'normal', 'rare', 'legendaire'];
+            const ordreRarete = ['commun', 'normal', 'rare', 'epique', 'legendaire'];
             items.sort((a, b) => {
                 const indexA = ordreRarete.indexOf(a.item.rarete || 'commun');
                 const indexB = ordreRarete.indexOf(b.item.rarete || 'commun');
-                
+
                 if (indexA !== indexB) {
                     return indexA - indexB;
                 }
@@ -541,6 +762,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     document.getElementById('champRecherche').addEventListener('input', (e) => {
         texteRecherche = e.target.value.trim().toLowerCase();
         appliquerFiltres();
+    });
+
+    // "Voir au niveau max" : bascule globale, reconstruit toute la page (les objets affichés
+    // viennent alors de construireVersionNiveauMax au lieu des données brutes du catalogue) — pas
+    // besoin de recharger catalogue_stats.json, tout se recalcule côté client.
+    document.getElementById('toggleNiveauMax').addEventListener('click', (e) => {
+        afficherNiveauMax = !afficherNiveauMax;
+        e.currentTarget.classList.toggle('actif', afficherNiveauMax);
+        construirePage();
     });
 
     fetch('catalogue_stats.json?v=' + Date.now())
