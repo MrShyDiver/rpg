@@ -67,11 +67,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
    et prend la hauteur imposée par ses voisines de la même rangée visuelle. C'est ce qui aligne
    "Scaling"/"Bonus"/"Passif" au même niveau d'une carte à l'autre, peu importe la longueur du
    contenu de chacune (alignement demandé sur la carte la plus grande de la rangée). */
-.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: min-content; gap: 16px; align-items: start; }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: minmax(0, min-content); gap: 16px; align-items: start; }
 
 .carte {
     background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative;
-    display: grid; grid-template-rows: subgrid; grid-row: span 6;
+    display: grid; grid-template-rows: subgrid; grid-row: span 5; row-gap: 0;
 }
 .carte.normal { border-color: rgba(93,221,122,0.35); }
 .carte.rare { border-color: rgba(74,159,216,0.35); }
@@ -133,17 +133,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte-icone-zone .carte-icon { max-width: 78%; max-height: 84%; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
 .carte-icone-zone .carte-icon-emoji { font-size: 54px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
 
-/* Sous-grille des 5 pistes du corps (en-tête, scaling, modes de tir, bonus, passif) — hérite les
-   hauteurs de ligne de .carte ci-dessus, donc de toute la rangée visuelle de cartes. */
-.carte-corps { padding: 10px 14px 14px; display: grid; grid-template-rows: subgrid; grid-row: 2 / span 5; row-gap: 0; position: relative; }
+/* .carte-corps n'est plus une sous-grille imbriquée : un niveau de subgrid supplémentaire
+   (.carte > .carte-corps > pistes) laisse un résidu de ~16px sur une piste pourtant vide dans
+   Chromium (l'espacement par défaut d'une ligne de texte, même sans aucun contenu). display:contents
+   fait disparaître la boîte de .carte-corps — ses enfants (les pistes) deviennent directement des
+   items de la grille de .carte, sur UN SEUL niveau de subgrid, ce qui élimine le résidu. Le padding
+   qu'assurait .carte-corps est redistribué sur chaque piste individuellement ci-dessous. */
+.carte-corps { display: contents; }
 /* grid-column explicite : sur les cartes à stance, deux éléments (stance 1 / stance 2) partagent
    la même piste — sans ça, le placement automatique leur trouverait chacun leur propre colonne au
-   lieu de les superposer (le CSS de survol .stance-vue-1/2 s'occupe déjà de n'en montrer qu'un). */
-.fila-header { grid-row: 1; grid-column: 1; }
-.fila-scaling { grid-row: 2; grid-column: 1; }
-.fila-modes { grid-row: 3; grid-column: 1; }
-.fila-bonus { grid-row: 4; grid-column: 1; }
-.fila-passif { grid-row: 5; grid-column: 1; }
+   lieu de les superposer (le CSS de survol .stance-vue-1/2 s'occupe déjà de n'en montrer qu'un).
+   Numérotation directement dans le référentiel de .carte (portrait = ligne 1). */
+.fila-header { grid-row: 2; grid-column: 1; min-height: 0; padding: 10px 14px 0; }
+.fila-scaling { grid-row: 3; grid-column: 1; min-height: 0; padding-left: 14px; padding-right: 14px; }
+.fila-bonus { grid-row: 4; grid-column: 1; min-height: 0; padding-left: 14px; padding-right: 14px; }
+.fila-passif { grid-row: 5; grid-column: 1; min-height: 0; padding-left: 14px; padding-right: 14px; padding-bottom: 14px; }
 .carte-nom { font-size: 15px; font-weight: 600; text-align: center; margin-bottom: 6px; }
 .carte-nom .carte-contributeur { font-size: 10px; font-weight: 400; color: var(--paper-dim); font-style: italic; }
 /* Nom de l'objet + titres de section ("Bonus"/"Passif") dans la couleur PURE de la rareté (pas la
@@ -209,7 +213,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
    Stratagème) — pas de bordure flottante ni de padding, l'espace vide s'aligne quand même sur la
    hauteur imposée par les autres cartes de la rangée. */
 .bloc-section { margin-top: 6px; padding-top: 6px; border-top: 1px solid #2a2a2a; }
-.bloc-section:empty { margin-top: 0; padding-top: 0; border-top: none; }
+/* height:0 explicite : sans ça, un item de grille vide "étiré" (align-self:stretch, par défaut)
+   sur une piste de sous-grille pourtant dimensionnée à 0px garde quand même ~16px de hauteur
+   affichée dans Chromium (comportement observé, indépendant du padding/bordure déjà à zéro) — d'où
+   l'espace résiduel signalé sur les objets sans scaling/bonus/passif à afficher. */
+.bloc-section:empty { margin-top: 0; padding-top: 0; border-top: none; height: 0; }
 .section-titre {
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
     color: var(--yellow); opacity: 0.85; margin-bottom: 3px;
@@ -612,21 +620,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // EXTENSION "PANOPLIE SEKIRO" (Arc de Genichiro) : rendu dédié pour les armes à modes de tir
     // multiples (modesTir), qui alternent à CHAQUE usage plutôt que d'être un simple passif
     // scalaire — absent/vide pour tout le reste du catalogue, donc n'affecte que cet objet.
-    // Ne renvoie plus sa propre .bloc-section englobante — la piste "fila-modes" est désormais
-    // toujours réservée par l'appelant (sous-grille), vide (donc invisible, voir .bloc-section:empty)
-    // pour tout le catalogue sauf les objets à modes de tir multiples.
+    // Rattaché à la section Passif (piste "fila-passif") plutôt qu'à sa propre piste dédiée — un
+    // mode de tir alterné est un comportement du porteur comme un autre, pas une catégorie à part,
+    // et une piste réservée sur TOUTE carte pour un seul objet du catalogue (Arc de Genichiro)
+    // n'avait pas de sens. Renvoie directement des .passif-ligne, concaténables avec les autres.
     function construireModesTir(modesTir) {
         if (!modesTir || modesTir.length === 0) return '';
-        const lignes = modesTir.map((m, i) => {
+        return modesTir.map((m, i) => {
             const details = [];
             if (m.coupsParUsage > 1) details.push(`${m.coupsParUsage} coups`);
             if (m.penetration > 0) details.push(`Pénétration ${m.penetration}%`);
             if (m.etourdissementChance > 0) details.push(`${m.etourdissementChance}% étourdissement`);
             if (m.saignementDegats > 0) details.push(`${m.saignementDegats} saignement/stack`);
             details.push(`x${m.multiplicateurDegats} dégâts`);
-            return `<div class="passif-ligne"><span class="texte">Mode ${i + 1} : ${details.join(', ')}</span></div>`;
+            return `<div class="passif-ligne"><span class="texte">Mode ${i + 1} (cycle à chaque attaque) : ${details.join(', ')}</span></div>`;
         }).join('');
-        return `<div class="section-titre">Modes de tir (cycle à chaque attaque)</div><div class="bloc-passif">${lignes}</div>`;
     }
 
     function construireDetails(s, estStrategeme) {
@@ -738,8 +746,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     <div class="bloc-section fila-scaling stance-vue stance-vue-1">${scaling1 ? `<div class="section-titre">Scaling</div>${scaling1}` : ''}</div>
                     <div class="bloc-section fila-scaling stance-vue stance-vue-2">${scaling2 ? `<div class="section-titre">Scaling</div>${scaling2}` : ''}</div>
 
-                    <div class="bloc-section fila-modes"></div>
-
                     <div class="bloc-section fila-bonus stance-vue stance-vue-1">${stats1 ? `<div class="section-titre">Bonus</div>${stats1}` : ''}</div>
                     <div class="bloc-section fila-bonus stance-vue stance-vue-2">${stats2 ? `<div class="section-titre">Bonus</div>${stats2}` : ''}</div>
 
@@ -757,7 +763,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const rarete = item.rarete || 'commun';
         const estStrategeme = item.slot === 'strategeme';
         const { scalingHtml, lignesStat, passifTexte } = construireDetails(item, estStrategeme);
-        const modesTirHtml = construireModesTir(item.modesTir);
+        // Modes de tir fusionnés dans le passif (voir construireModesTir) — vide pour tout le
+        // catalogue sauf l'Arc de Genichiro, placé avant les éventuelles autres lignes de passif.
+        const passifComplet = construireModesTir(item.modesTir) + passifTexte;
         return `
             <div class="carte ${rarete}" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
                 <div class="carte-portrait">
@@ -768,9 +776,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 <div class="carte-corps">
                     <div class="carte-cabecera fila-header">${construireNomLigne(item)}${construireBadgesLigne(item)}</div>
                     <div class="bloc-section fila-scaling">${scalingHtml ? `<div class="section-titre">Scaling</div>${scalingHtml}` : ''}</div>
-                    <div class="bloc-section fila-modes">${modesTirHtml}</div>
                     <div class="bloc-section fila-bonus">${lignesStat.length > 0 ? `<div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}` : ''}</div>
-                    <div class="bloc-section fila-passif">${passifTexte ? `<div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div>` : ''}</div>
+                    <div class="bloc-section fila-passif">${passifComplet ? `<div class="section-titre">Passif</div><div class="bloc-passif">${passifComplet}</div>` : ''}</div>
                 </div>
             </div>
         `;
