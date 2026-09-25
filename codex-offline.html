@@ -64,32 +64,66 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .categorie-titre::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
 
-.carte { background: var(--bg-panel); border: 1px solid var(--line); border-left: 4px solid var(--commun); border-radius: 6px; padding: 16px; position: relative; display: flex; flex-direction: column; }
-.carte.normal { border-left-color: var(--normal); }
-.carte.rare { border-left-color: var(--rare); }
-.carte.epique { border-left-color: var(--epique); }
-.carte.legendaire { border-left-color: var(--legendaire); }
+.carte { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+.carte.normal { border-color: rgba(93,221,122,0.35); }
+.carte.rare { border-color: rgba(74,159,216,0.35); }
+.carte.epique { border-color: rgba(168,85,247,0.4); }
+.carte.legendaire { border-color: rgba(242,194,48,0.45); }
+
+/* ============ PORTRAIT (haut de carte façon "carte à collectionner") ============ */
+/* Fond à rayons radiaux coloré par rareté (conic-gradient répété) + vignette pour la lisibilité +
+   médaillon circulaire pour l'icône/image + badge de rareté (une lettre) en coin. Rotation lente
+   du fond de rayons réservée aux légendaires ("légère vague"), via les variables --rayonA/--rayonB
+   redéfinies par palier de rareté plutôt qu'un jeu de règles dupliquées. */
+.carte-portrait {
+    position: relative; height: 148px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; background: #18181a;
+}
+.carte.commun .carte-portrait { --rayonA: rgba(141,141,141,0.38); --rayonB: rgba(141,141,141,0); }
+.carte.normal .carte-portrait { --rayonA: rgba(93,221,122,0.4); --rayonB: rgba(93,221,122,0); }
+.carte.rare .carte-portrait { --rayonA: rgba(74,159,216,0.42); --rayonB: rgba(74,159,216,0); }
+.carte.epique .carte-portrait { --rayonA: rgba(168,85,247,0.46); --rayonB: rgba(168,85,247,0); }
+.carte.legendaire .carte-portrait { --rayonA: rgba(242,194,48,0.5); --rayonB: rgba(242,194,48,0); }
+.carte-portrait::before {
+    content: ''; position: absolute; inset: -60%;
+    background: repeating-conic-gradient(from 0deg, var(--rayonA) 0deg 8deg, var(--rayonB) 8deg 16deg);
+}
+.carte.legendaire .carte-portrait::before { animation: carteRayonsVague 48s linear infinite; }
+@keyframes carteRayonsVague { to { transform: rotate(360deg); } }
+.carte-portrait::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 42%, transparent 34%, rgba(0,0,0,0.55) 100%);
+}
+
+.carte-badge-rarete {
+    position: absolute; top: 10px; left: 10px; z-index: 3; width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-family: 'Oswald', sans-serif;
+    font-size: 12px; font-weight: 700; color: #000; border: 1px solid rgba(0,0,0,0.35);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.carte.commun .carte-badge-rarete { background: var(--commun); }
+.carte.normal .carte-badge-rarete { background: var(--normal); }
+.carte.rare .carte-badge-rarete { background: var(--rare); color: #fff; }
+.carte.epique .carte-badge-rarete { background: var(--epique); color: #fff; }
+.carte.legendaire .carte-badge-rarete { background: var(--legendaire); }
 
 .carte-numero {
-    position: absolute; top: 10px; right: 10px; font-family: 'Barlow Condensed', sans-serif;
+    position: absolute; top: 10px; right: 10px; z-index: 3; font-family: 'Barlow Condensed', sans-serif;
     font-size: 11px; font-weight: 700; color: var(--paper-dim); background: rgba(0,0,0,0.4);
     border-radius: 4px; padding: 2px 7px;
 }
-.carte-rarete-tag {
-    position: absolute; top: 10px; left: 10px; font-family: 'Barlow Condensed', sans-serif;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-    border-radius: 4px; padding: 2px 7px;
+
+.carte-medaillon {
+    position: relative; z-index: 2; width: 92px; height: 92px; border-radius: 50%; overflow: hidden;
+    background: radial-gradient(circle at 35% 28%, #fdfdfa, #cfcabb 55%, #a49e88 100%);
+    border: 3px solid rgba(255,255,255,0.85);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 4px 14px rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
 }
-.carte-rarete-tag.commun { background: rgba(141,141,141,0.18); color: var(--commun); }
-.carte-rarete-tag.normal { background: rgba(93,221,122,0.15); color: var(--normal); }
-.carte-rarete-tag.rare { background: rgba(74,159,216,0.15); color: var(--rare); }
-.carte-rarete-tag.epique { background: rgba(168,85,247,0.15); color: var(--epique); }
-.carte-rarete-tag.legendaire { background: rgba(242,194,48,0.15); color: var(--legendaire); }
+.carte-medaillon .carte-icon { max-width: 66%; max-height: 66%; width: auto; height: auto; object-fit: contain; }
+.carte-medaillon .carte-icon-emoji { font-size: 38px; line-height: 1; }
 
-.carte-image-zone { display: flex; justify-content: center; margin: 22px 0 12px; }
-.carte-icon { max-width: 130px; width: 100%; height: auto; max-height: 100px; object-fit: contain; }
-.carte-icon-emoji { font-size: 56px; line-height: 1; }
-
+.carte-corps { padding: 14px 16px 16px; display: flex; flex-direction: column; flex: 1; }
 .carte-nom { font-size: 15.5px; font-weight: 600; text-align: center; margin-bottom: 10px; }
 .carte-contributeur { font-size: 10.5px; color: var(--paper-dim); font-style: italic; text-align: center; margin-top: -6px; margin-bottom: 10px; }
 
@@ -168,6 +202,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .stance-vue-2 { display: none; }
 .carte-stance:hover .stance-vue-1 { display: none; }
 .carte-stance:hover .stance-vue-2 { display: block; }
+/* Le médaillon (icône dans le portrait) doit basculer en display:flex pour rester centré — les
+   règles génériques ci-dessus (display:block) suffisent au panneau d'infos texte, pas à l'icône. */
+.carte-medaillon .stance-vue { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.carte-medaillon .stance-vue-2 { display: none; }
+.carte-stance:hover .carte-medaillon .stance-vue-1 { display: none; }
+.carte-stance:hover .carte-medaillon .stance-vue-2 { display: flex; }
 .carte-stance:hover { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow); }
 .carte-stance:hover .stance-indicateur { background: var(--paper); }
 .stance-etiquette {
@@ -228,6 +268,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     const SUFFIXE_STAT = { esquive: "%" };
     const suffixeStat = (stat) => SUFFIXE_STAT[stat] || "";
     const LABELS_RARETE = { commun: "Commun", normal: "Normal", rare: "Rare", epique: "Épique", legendaire: "Légendaire" };
+    // Lettre du badge de rareté en coin du portrait (design carte à collectionner) — le mot complet
+    // reste consultable au survol (title) via LABELS_RARETE.
+    const LETTRE_RARETE = { commun: "C", normal: "N", rare: "R", epique: "É", legendaire: "L" };
     // Type de dégâts physique dérivé de l'animation de l'objet (arme ou Stratagème) — "Physique"
     // générique en repli si l'animation n'est pas reconnue (ex: objet sans Anim renseigné).
     const LABELS_TYPE_PHYSIQUE = { slash: "Tranchant", smash: "Contondant", tir: "Perforant", explosion: "Explosif", bombardement: "Explosif" };
@@ -621,30 +664,35 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
         return `
             <div class="carte ${rarete} carte-stance" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
-                <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
-                <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
-                <div class="stance-indicateur">⇄</div>
-
-                <div class="stance-vue stance-vue-1">
-                    <div class="carte-image-zone">${imageStance1}</div>
-                    <div class="carte-nom">${item.nom} <span class="stance-etiquette">Stance 1</span></div>
-                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                    ${item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : ''}
-                    ${rendreTagsDegats(item)}
-                    <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling1}</div>
-                    ${stats1 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
+                <div class="carte-portrait">
+                    <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LETTRE_RARETE[rarete] || '?'}</span>
+                    <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
+                    <div class="stance-indicateur">⇄</div>
+                    <div class="carte-medaillon">
+                        <div class="stance-vue stance-vue-1">${imageStance1}</div>
+                        <div class="stance-vue stance-vue-2">${imageStance2}</div>
+                    </div>
                 </div>
-                <div class="stance-vue stance-vue-2">
-                    <div class="carte-image-zone">${imageStance2}</div>
-                    <div class="carte-nom">${item.nom} <span class="stance-etiquette stance-etiquette-2">Stance 2</span></div>
-                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                    <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling2}</div>
-                    ${stats2 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats2}</div>` : ''}
-                </div>
+                <div class="carte-corps">
+                    <div class="stance-vue stance-vue-1">
+                        <div class="carte-nom">${item.nom} <span class="stance-etiquette">Stance 1</span></div>
+                        ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
+                        ${item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : ''}
+                        ${rendreTagsDegats(item)}
+                        <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling1}</div>
+                        ${stats1 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats1}</div>` : ''}
+                    </div>
+                    <div class="stance-vue stance-vue-2">
+                        <div class="carte-nom">${item.nom} <span class="stance-etiquette stance-etiquette-2">Stance 2</span></div>
+                        ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
+                        <div class="bloc-section"><div class="section-titre">Scaling</div>${scaling2}</div>
+                        ${stats2 ? `<div class="bloc-section"><div class="section-titre">Bonus</div>${stats2}</div>` : ''}
+                    </div>
 
-                <div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">
-                    Alterne de stance toutes les <b>${item.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge le poison et la brûlure sur le porteur lui-même.
-                </div></div>
+                    <div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">
+                        Alterne de stance toutes les <b>${item.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge le poison et la brûlure sur le porteur lui-même.
+                    </div></div>
+                </div>
             </div>
         `;
     }
@@ -658,17 +706,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const modesTirHtml = construireModesTir(item.modesTir);
         return `
             <div class="carte ${rarete}" data-nom="${item.nom.toLowerCase()}" data-rarete="${rarete}">
-                <span class="carte-rarete-tag ${rarete}">${LABELS_RARETE[rarete] || rarete}</span>
-                <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
-                <div class="carte-image-zone">${iconeOuImage(item, 'carte-icon')}</div>
-                <div class="carte-nom">${item.nom}</div>
-                ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
-                ${item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : ''}
-                ${rendreTagsDegats(item)}
-                ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
-                ${modesTirHtml}
-                ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
-                ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
+                <div class="carte-portrait">
+                    <span class="carte-badge-rarete" title="${LABELS_RARETE[rarete] || rarete}">${LETTRE_RARETE[rarete] || '?'}</span>
+                    <span class="carte-numero">N°${numero}${afficherNiveauMax ? ` · NIV. ${niveauMaxPourRarete(rarete)}` : ''}</span>
+                    <div class="carte-medaillon">${iconeOuImage(item, 'carte-icon')}</div>
+                </div>
+                <div class="carte-corps">
+                    <div class="carte-nom">${item.nom}</div>
+                    ${item.contributeur ? `<div class="carte-contributeur">Objet forgé par ${item.contributeur}</div>` : ''}
+                    ${item.set ? `<span class="carte-set-tag">Set ${item.set}</span>` : ''}
+                    ${rendreTagsDegats(item)}
+                    ${scalingHtml ? `<div class="bloc-section"><div class="section-titre">Scaling</div>${scalingHtml}</div>` : ''}
+                    ${modesTirHtml}
+                    ${lignesStat.length > 0 ? `<div class="bloc-section"><div class="section-titre">${estStrategeme ? 'Statistiques' : 'Bonus'}</div>${lignesStat.map(rendreLigneStat).join('')}</div>` : ''}
+                    ${passifTexte ? `<div class="bloc-section"><div class="section-titre">Passif</div><div class="bloc-passif">${passifTexte}</div></div>` : ''}
+                </div>
             </div>
         `;
     }
