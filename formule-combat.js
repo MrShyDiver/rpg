@@ -99,6 +99,12 @@ function appliquerAmelioration(original, niveau) {
     const c = { ...original };
     if (original.statsExtra) c.statsExtra = original.statsExtra.map(sl => ({ ...sl }));
     if (original.passifsExtra) c.passifsExtra = original.passifsExtra.map(p => ({ ...p }));
+    // EXTENSION "5 SCALINGS" : scalingExtra/stance2ScalingExtra (au-delà de scaling1/scaling2) --
+    // même précaution : ce sont des tableaux partagés avec le catalogue, recopiés en nouveaux
+    // objets. Pas de montée par niveau ici (les lettres de scaling ne scalent pas), donc une
+    // simple copie superficielle par entrée suffit -- miroir de ScalingExtra?.ConvertAll côté C#.
+    if (original.scalingExtra) c.scalingExtra = original.scalingExtra.map(sl => ({ ...sl }));
+    if (original.stance2ScalingExtra) c.stance2ScalingExtra = original.stance2ScalingExtra.map(sl => ({ ...sl }));
     // EXTENSION "PANOPLIE SEKIRO" : modesTir (Arc de Genichiro) -- même précaution, même si rien
     // ne monte en niveau dedans (pas d'incrément par mode) : évite de partager la référence.
     if (original.modesTir) c.modesTir = original.modesTir.map(m => ({ ...m }));
@@ -212,6 +218,10 @@ function vueArmeSelonStance(arme, stance) {
         baseDegatsMin: arme.stance2BaseDegatsMin, baseDegatsMax: arme.stance2BaseDegatsMax,
         scaling1Stat: arme.stance2Scaling1Stat, scaling1Lettre: arme.stance2Scaling1Lettre,
         scaling2Stat: arme.stance2Scaling2Stat, scaling2Lettre: arme.stance2Scaling2Lettre,
+        // ⚠️ EXTENSION "5 SCALINGS" : la vue stance 2 lit désormais stance2ScalingExtra comme sa
+        // propre liste de scalings supplémentaires -- absent (toutes les armes existantes) = pas
+        // de scalingExtra en stance 2, comportement inchangé.
+        scalingExtra: arme.stance2ScalingExtra,
     };
 }
 
@@ -244,6 +254,9 @@ function estimerAtkEquivalent(stats, arme) {
     }
     appliquer(arme.scaling1Stat, arme.scaling1Lettre);
     appliquer(arme.scaling2Stat, arme.scaling2Lettre);
+    // ⚠️ EXTENSION "5 SCALINGS" : scalings supplémentaires (jusqu'à 5 stats au total sur une
+    // arme) -- absent (toutes les armes existantes) ne change rien au résultat par rapport à avant.
+    if (arme.scalingExtra) arme.scalingExtra.forEach(sl => appliquer(sl.stat, sl.lettre));
     if (!atkDejaCompte) total += stats.atk * CST.COEF_ATK_BASE;
     return total;
 }
