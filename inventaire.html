@@ -443,11 +443,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     // Rangée de badges de scaling (ATK/DEF/PV/SPD/CRIT) — seulement pour une arme qui en définit.
     // Un tiret long remplace la lettre pour toute stat sur laquelle l'arme ne scale pas.
-    function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, baseMin, baseMax, incrementBaseDegats, niveau) {
+    // ⚠️ EXTENSION "scaling illimité" : scalingExtra est une liste de { stat, lettre }, symétrique
+    // à statsExtra/passifsExtra ailleurs sur cette page. On construit d'abord la liste COMPLÈTE
+    // des scalings configurés (scaling1 + scaling2 + scalingExtra) puis on boucle sur
+    // STATS_SCALABLES en cherchant dans cette liste — absent/vide pour tout objet existant,
+    // comportement strictement identique à avant son ajout (scaling1/scaling2 restent trouvés en
+    // priorité, même ordre).
+    function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, scalingExtra, baseMin, baseMax, incrementBaseDegats, niveau) {
+        const listeScalings = [
+            { stat: scaling1Stat, lettre: scaling1Lettre },
+            { stat: scaling2Stat, lettre: scaling2Lettre },
+            ...(scalingExtra || []),
+        ].filter(sc => sc.stat);
         const badges = STATS_SCALABLES.map(stat => {
-            let lettre = null;
-            if (scaling1Stat === stat) lettre = scaling1Lettre;
-            else if (scaling2Stat === stat) lettre = scaling2Lettre;
+            const trouve = listeScalings.find(sc => sc.stat === stat);
+            const lettre = trouve ? trouve.lettre : null;
             const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
             return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
         }).join("");
@@ -465,7 +475,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     function construireScaling(s, niveau) {
         if (!s.scaling1Stat) return null;
-        return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
+        return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.scalingExtra, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
     }
 
     // colorer=true -> ligne de "Bonus" de stat (ATK/DEF/PV/SPD/LUCK/Esquive) : teintée de la
@@ -514,8 +524,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const s = item;
         const imageStance1 = iconeOuImage(s, 'carte-icon');
         const imageStance2 = iconeOuImage({ image: s.stance2ImageUrl || s.image, icone: s.icone }, 'carte-icon');
-        const scaling1 = blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
-        const scaling2 = blocScalingUnique(s.stance2Scaling1Stat, s.stance2Scaling1Lettre, s.stance2Scaling2Stat, s.stance2Scaling2Lettre, s.stance2BaseDegatsMin, s.stance2BaseDegatsMax, s.stance2IncrementBaseDegats, niveau);
+        const scaling1 = blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.scalingExtra, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
+        const scaling2 = blocScalingUnique(s.stance2Scaling1Stat, s.stance2Scaling1Lettre, s.stance2Scaling2Stat, s.stance2Scaling2Lettre, s.stance2ScalingExtra, s.stance2BaseDegatsMin, s.stance2BaseDegatsMax, s.stance2IncrementBaseDegats, niveau);
         const stats1 = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, niveau, s.statsExtra).map(rendreLigneStat).join('');
         const stats2 = construireLignesStatGenerique(s.stance2Stat, s.stance2Bonus, s.stance2IncrementBonus, s.stance2Stat2, s.stance2Bonus2, s.stance2IncrementBonus2, s.stance2Stat3, s.stance2Bonus3, s.stance2IncrementBonus3, niveau).map(rendreLigneStat).join('');
 
