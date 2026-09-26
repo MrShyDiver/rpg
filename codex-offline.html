@@ -594,13 +594,22 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // Ne s'affiche que si un scaling est renseigné (mêmes conditions que AppliquerAmelioration).
     // Condensé sur une seule ligne : seules les stats réellement scalées apparaissent (fini la
     // grille à 5 colonnes avec des tirets pour ATK/DEF/PV/SPD/CRIT non concernées).
-    function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, degatsMin, degatsMax, incrementDegats) {
+    // ⚠️ EXTENSION "scaling illimité" : scalingExtra est une liste de { stat, lettre }, symétrique
+    // à StatsExtra/PassifsExtra plus haut. On construit d'abord la liste COMPLÈTE des scalings
+    // configurés (scaling1 + scaling2 + scalingExtra) puis on boucle sur STATS_SCALABLES en
+    // cherchant dans cette liste — absent/vide pour tout objet existant, comportement strictement
+    // identique à avant son ajout (scaling1/scaling2 restent trouvés en priorité, même ordre).
+    function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, scalingExtra, degatsMin, degatsMax, incrementDegats) {
+        const listeScalings = [
+            { stat: scaling1Stat, lettre: scaling1Lettre },
+            { stat: scaling2Stat, lettre: scaling2Lettre },
+            ...(scalingExtra || []),
+        ].filter(sc => sc.stat);
         // Grille des 5 stats scalables (une lettre ou "—" pour celles non concernées) + ligne de
         // dégâts séparée — plus lisible que la version condensée sur une seule ligne.
         const badges = STATS_SCALABLES.map(stat => {
-            let lettre = null;
-            if (scaling1Stat === stat) lettre = scaling1Lettre;
-            else if (scaling2Stat === stat) lettre = scaling2Lettre;
+            const trouve = listeScalings.find(sc => sc.stat === stat);
+            const lettre = trouve ? trouve.lettre : null;
             const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
             return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
         }).join("");
@@ -613,7 +622,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     function construireScaling(s) {
         if (!s.scaling1Stat) return null;
-        return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats);
+        return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.scalingExtra, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats);
     }
 
     // EXTENSION "PANOPLIE SEKIRO" (Arc de Genichiro) : rendu dédié pour les armes à modes de tir
@@ -718,8 +727,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const rarete = item.rarete || 'commun';
         const imageStance1 = iconeOuImage(item, 'carte-icon');
         const imageStance2 = iconeOuImage({ image: item.stance2ImageUrl || item.image, icone: item.icone }, 'carte-icon');
-        const scaling1 = blocScalingUnique(item.scaling1Stat, item.scaling1Lettre, item.scaling2Stat, item.scaling2Lettre, item.baseDegatsMin, item.baseDegatsMax, item.incrementBaseDegats);
-        const scaling2 = blocScalingUnique(item.stance2Scaling1Stat, item.stance2Scaling1Lettre, item.stance2Scaling2Stat, item.stance2Scaling2Lettre, item.stance2BaseDegatsMin, item.stance2BaseDegatsMax, item.stance2IncrementBaseDegats);
+        const scaling1 = blocScalingUnique(item.scaling1Stat, item.scaling1Lettre, item.scaling2Stat, item.scaling2Lettre, item.scalingExtra, item.baseDegatsMin, item.baseDegatsMax, item.incrementBaseDegats);
+        const scaling2 = blocScalingUnique(item.stance2Scaling1Stat, item.stance2Scaling1Lettre, item.stance2Scaling2Stat, item.stance2Scaling2Lettre, item.stance2ScalingExtra, item.stance2BaseDegatsMin, item.stance2BaseDegatsMax, item.stance2IncrementBaseDegats);
         const stats1 = construireLignesStatGenerique(item.stat, item.bonus, item.increment, item.stat2, item.bonus2, item.increment2, item.stat3, item.bonus3, item.increment3, item.statsExtra).map(rendreLigneStat).join('');
         const stats2 = construireLignesStatGenerique(item.stance2Stat, item.stance2Bonus, item.stance2IncrementBonus, item.stance2Stat2, item.stance2Bonus2, item.stance2IncrementBonus2, item.stance2Stat3, item.stance2Bonus3, item.stance2IncrementBonus3).map(rendreLigneStat).join('');
 
