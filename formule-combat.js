@@ -8,7 +8,7 @@
 // Constantes et logique copiées le 2025 depuis duel.cs (voir commentaires
 // d'origine côté C# pour le détail de chaque choix de calibrage).
 // =========================================================================
-
+ 
 const CST = {
     BASE_ATK: 10.0, BONUS_ATK_PAR_STACK: 1.0,
     BASE_DEF: 10.0, BONUS_DEF_PAR_STACK: 1.0,
@@ -47,11 +47,11 @@ const CST = {
     // à recalculer si le roster d'armes change significativement.
     PROPORTION_ARMES_TIR: 0.30,
 };
-
+ 
 function mitigation(def) {
     return (CST.DEF_MITIGATION_MAX * Math.tanh(def / CST.K_DEF_MITIGATION)) / 100.0;
 }
-
+ 
 // Port fidèle de AppliquerAmelioration (duel.cs, ~L2252) : renvoie une COPIE de l'objet du
 // catalogue avec tous ses champs qui progressent par doublon réellement appliqués au niveau
 // possédé — les 3 stats (Bonus/Bonus2/Bonus3 via Increment/2/3), la fourchette de dégâts d'arme
@@ -81,13 +81,13 @@ const CHAMP_STAT_PRINCIPALE = {
     AmplificationDegatsFeuPourcentage: 'amplificationDegatsFeuPourcentage', SaignementChanceParCoup: 'saignementChanceParCoup',
     ParalysieChance: 'paralysieChance', RiposteEtourdissementTousLesCoups: 'riposteEtourdissementTousLesCoups',
 };
-
+ 
 // Miroir de NIVEAU_MAX_PAR_RARETE (moteur-combat.cs) -- garder synchronisé.
 const NIVEAU_MAX_PAR_RARETE = { commun: 25, normal: 20, rare: 15, epique: 10, legendaire: 5 };
 function niveauMaxPourRarete(rarete) {
     return NIVEAU_MAX_PAR_RARETE[rarete] !== undefined ? NIVEAU_MAX_PAR_RARETE[rarete] : NIVEAU_MAX_PAR_RARETE.commun;
 }
-
+ 
 function appliquerAmelioration(original, niveau) {
     if (!original || !niveau || niveau <= 0) return original;
     niveau = Math.min(niveau, niveauMaxPourRarete(original.rarete));
@@ -108,14 +108,14 @@ function appliquerAmelioration(original, niveau) {
     // EXTENSION "PANOPLIE SEKIRO" : modesTir (Arc de Genichiro) -- même précaution, même si rien
     // ne monte en niveau dedans (pas d'incrément par mode) : évite de partager la référence.
     if (original.modesTir) c.modesTir = original.modesTir.map(m => ({ ...m }));
-
+ 
     if (c.stat) c.bonus = (c.bonus || 0) + niveau * (c.increment || 0);
     if (c.stat2) c.bonus2 = (c.bonus2 || 0) + niveau * (c.increment2 || 0);
     if (c.stat3) c.bonus3 = (c.bonus3 || 0) + niveau * (c.increment3 || 0);
     // ⚠️ EXTENSION : les stats supplémentaires montent elles aussi, chacune à son propre rythme --
     // un objet sans statsExtra (tous les objets existants) traverse cette boucle sans rien faire.
     if (c.statsExtra) c.statsExtra.forEach(slot => { slot.bonus = (slot.bonus || 0) + niveau * (slot.increment || 0); });
-
+ 
     if (c.scaling1Stat && c.incrementBaseDegats) {
         c.baseDegatsMin = (c.baseDegatsMin || 0) + niveau * c.incrementBaseDegats;
         c.baseDegatsMax = (c.baseDegatsMax || 0) + niveau * c.incrementBaseDegats;
@@ -123,7 +123,7 @@ function appliquerAmelioration(original, niveau) {
     if ((c.degatsDirects || 0) > 0 && c.incrementDegatsDirects) {
         c.degatsDirects = c.degatsDirects + niveau * c.incrementDegatsDirects;
     }
-
+ 
     if (c.dureeStance) {
         if (c.stance2Stat) c.stance2Bonus = (c.stance2Bonus || 0) + niveau * (c.stance2IncrementBonus || 0);
         if (c.stance2Stat2) c.stance2Bonus2 = (c.stance2Bonus2 || 0) + niveau * (c.stance2IncrementBonus2 || 0);
@@ -133,13 +133,13 @@ function appliquerAmelioration(original, niveau) {
             c.stance2BaseDegatsMax = (c.stance2BaseDegatsMax || 0) + niveau * c.stance2IncrementBaseDegats;
         }
     }
-
+ 
     // Le passif historique (statPrincipale) ET chaque entrée de passifsExtra suivent maintenant le
     // même principe : un nom de champ (PascalCase, traduit via CHAMP_STAT_PRINCIPALE) + un montant
     // à ajouter par niveau -- un objet à 2 passifs a statPrincipale (le 1er, comme avant) PLUS une
     // entrée dans passifsExtra (le 2e), chacun montant indépendamment de l'autre.
     if (c.statPrincipale) {
-
+ 
         const champ = CHAMP_STAT_PRINCIPALE[c.statPrincipale];
         if (champ) c[champ] = (c[champ] || 0) + niveau * c.incrementPassif;
     }
@@ -150,10 +150,10 @@ function appliquerAmelioration(original, niveau) {
             if (champ) c[champ] = (c[champ] || 0) + niveau * passif.incrementPassif;
         });
     }
-
+ 
     return c;
 }
-
+ 
 // --- Construit les Stats effectives à partir de stacks CHOISIS (hypothétiques) et d'un
 // équipement CHOISI (hypothétique) — équivalent JS de GetEffectiveStats, mais sans jamais lire
 // les registres réels : tout vient des choix faits sur cette page. L'équipement reçu ici doit
@@ -180,7 +180,7 @@ function calculerStatsEffectives(stacks, equipement) {
     });
     return s;
 }
-
+ 
 function appliquerStatAuPersonnage(s, stat, bonus) {
     if (!stat) return;
     if (stat === 'atk') s.atk += bonus;
@@ -195,7 +195,7 @@ function appliquerStatAuPersonnage(s, stat, bonus) {
     // directement à luckLineaire -- comme si le joueur avait investi ce montant lui-même.
     else if (stat === 'luck') s.luckLineaire += bonus;
 }
-
+ 
 function valeurStat(s, nomStat) {
     let brute;
     switch (nomStat) {
@@ -209,7 +209,7 @@ function valeurStat(s, nomStat) {
     const poids = CST.POIDS_SCALING_STAT[nomStat] ?? 1.0;
     return brute * poids;
 }
-
+ 
 // Vue de l'arme selon la stance (1 = stance2) — substitue uniquement les champs de dégâts/scaling.
 function vueArmeSelonStance(arme, stance) {
     if (!arme || !arme.dureeStance || stance === 0) return arme;
@@ -224,7 +224,7 @@ function vueArmeSelonStance(arme, stance) {
         scalingExtra: arme.stance2ScalingExtra,
     };
 }
-
+ 
 function appliquerBonusArmeStance(s, arme, stance, signe) {
     if (!arme) return;
     if (stance === 0) {
@@ -240,7 +240,7 @@ function appliquerBonusArmeStance(s, arme, stance, signe) {
         appliquerStatAuPersonnage(s, arme.stance2Stat3, signe * (arme.stance2Bonus3 || 0));
     }
 }
-
+ 
 function estimerAtkEquivalent(stats, arme) {
     if (!arme || !arme.scaling1Stat) return stats.atk;
     let total = ((arme.baseDegatsMin || 0) + (arme.baseDegatsMax || 0)) / 2.0;
@@ -260,7 +260,7 @@ function estimerAtkEquivalent(stats, arme) {
     if (!atkDejaCompte) total += stats.atk * CST.COEF_ATK_BASE;
     return total;
 }
-
+ 
 // Moyenne 50/50 stance0/stance2, exactement comme EstimerAtkEquivalentAvecStance (voir duel.cs :
 // le porteur passe autant de tours dans chaque stance, DureeStance régissant le switch dans les
 // deux sens — c'est directement l'approximation justifiée par la mécanique réelle, pas un choix
@@ -274,12 +274,12 @@ function estimerAtkEquivalentAvecStance(s, arme) {
     const stance2 = estimerAtkEquivalent(sStance2, vueArmeSelonStance(arme, 1));
     return (stance0 + stance2) / 2.0;
 }
-
+ 
 // Horizon utilise pour amorcer une toute premiere estimation de survie, avant qu on ait pu
 // calculer un survieTours reel pour CE personnage precis (voir le second passage plus bas, dans
 // calculerPowerLevelSimule).
 const HORIZON_INITIAL_TOURS = 10.0;
-
+ 
 function usagesEffectifsStrategeme(s, horizonTours) {
     const usages = Math.max(1, s.usagesParCombat || 1);
     let total = 0;
@@ -289,7 +289,7 @@ function usagesEffectifsStrategeme(s, horizonTours) {
     }
     return total;
 }
-
+ 
 // ⚠️ REMPLACE L'ANCIENNE "FATIGUE" (un multiplicateur abstrait sur les dégâts subis) PAR UN
 // MANNEQUIN QUI GRANDIT RÉELLEMENT : ses 4 stats (ATK/DEF/Chance/Vitesse) démarrent à la vraie
 // base du jeu (10, 10, 10 -- BASE_LUCK_MANNEQUIN --, 10) et progressent au même rythme que
@@ -309,7 +309,7 @@ function simulerSurvieEtOffense(pvTotaux, hitChance, atkEquivalent, critMulti, a
         const facteur = Math.pow(CST.FATIGUE_CROISSANCE, paliers);
         const mannequinAtk = CST.BASE_ATK * facteur, mannequinDef = CST.BASE_DEF * facteur;
         const mannequinLuck = CST.BASE_LUCK_MANNEQUIN * facteur, mannequinSpd = CST.BASE_SPD * facteur;
-
+ 
         // Dégâts que TU infliges ce tour-ci -- de plus en plus mitigés, sa DEF grandissant.
         const defCibleEff = mannequinDef * (1.0 - Math.min(1.0, penetrationTotal / 100.0));
         const mitigationRef = mitigation(defCibleEff);
@@ -318,7 +318,7 @@ function simulerSurvieEtOffense(pvTotaux, hitChance, atkEquivalent, critMulti, a
             dpaInfligeCeTour *= (1.0 + Math.min(1.0, arme.executionSeuil / 100.0) * (arme.executionBonus / 100.0));
         }
         totalDmgOffense += dpaInfligeCeTour;
-
+ 
         // Dégâts que LE MANNEQUIN t'inflige ce tour-ci -- de plus en plus fort (ATK), plus souvent
         // (SPD) et critique plus souvent (Chance), au même rythme.
         const mannequinCritPct = CST.BASE_CRIT + CST.LUCK_CRIT_MAX * Math.tanh(mannequinLuck / CST.K_LUCK);
@@ -327,7 +327,7 @@ function simulerSurvieEtOffense(pvTotaux, hitChance, atkEquivalent, critMulti, a
         if (etourdissementTotal > 0) dpaSubiCeTour *= (1.0 - Math.min(0.5, hitChance * (etourdissementTotal / 100.0) * 0.7));
         if (reductionTirTotal > 0) dpaSubiCeTour *= (1.0 - Math.min(1.0, reductionTirTotal / 100.0) * CST.PROPORTION_ARMES_TIR);
         dpaSubiCeTour *= (mannequinSpd / CST.BASE_SPD);
-
+ 
         const soinCeTour = regen + dpaInfligeCeTour * (lifesteal / 100.0);
         const degatsDeCeTour = dpaSubiCeTour - Math.min(soinCeTour, dpaSubiCeTour * 0.60);
         const cumulAvantCeTour = cumulDegatsSubis;
@@ -339,7 +339,7 @@ function simulerSurvieEtOffense(pvTotaux, hitChance, atkEquivalent, critMulti, a
     }
     return { survieTours: Math.max(1.0, survieTours), totalDmgOffense };
 }
-
+ 
 // Port fidèle de CalculerPowerLevelSimule — même structure, mêmes noms de variable côté C#
 // pour qu'un futur correctif soit trivial à reporter ici par simple comparaison ligne à ligne.
 function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, offhand, torso, strat) {
@@ -350,7 +350,7 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
     // EXTENSION "PANOPLIE SEKIRO" : burn porté par l'équipement (weapon/offhand/torso), en plus
     // du burn de stratagème déjà compté plus bas. Miroir de la même addition côté C#.
     let brulureDmgGear = 0;
-
+ 
     const gearAvecSoin = [];
     [arme, offhand, torso].forEach(g => {
         if (!g) return;
@@ -403,18 +403,18 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
             bonusPlatDivers += (moyMulti - 1.0) * 30.0;
         }
     });
-
+ 
     const hitChance = (100.0 - Math.max(0, CST.BASE_ESQUIVE - precisionTotal)) / 100.0;
     const critMulti = 1.0 + (critPct + critBonusTotal) / 100.0;
     let enemyHitChance = (100.0 - esquivePct) / 100.0;
     enemyHitChance *= (100.0 - parade) / 100.0;
     const mitigationSelf = mitigation(s.def);
     const blocageMitig = (blocage / 100.0) * (blocageReduc / 100.0);
-
+ 
     const fractionActionsPropres = s.spd / (s.spd + CST.BASE_SPD);
     const tourDebutCroissance = CST.ROPE_START_ACTION * fractionActionsPropres;
     const toursParTickCroissance = Math.max(0.01, CST.ROPE_CADENCE * fractionActionsPropres);
-
+ 
     // Recharges de bouclier/soin en 2 passages, comme avant : la fatigue étant remplacée par un
     // mannequin qui grandit, l'horizon pertinent pour "combien de charges avant la mort" reste la
     // survie ESTIMÉE, pas un chiffre fixe arbitraire.
@@ -424,7 +424,7 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
         if (strat && strat.shieldMontant > 0) shieldStratH = strat.shieldMontant * usagesEffectifsStrategeme(strat, horizon);
         return s.pv + shield + shieldStratH + soinDirectH;
     };
-
+ 
     const passeInitiale = simulerSurvieEtOffense(calculerPvTotaux(HORIZON_INITIAL_TOURS), hitChance, atkEquivalent, critMulti, arme,
         penetrationTotal, enemyHitChance, mitigationSelf, blocageMitig, etourdissementTotal, reductionTirTotal,
         regen, lifesteal, tourDebutCroissance, toursParTickCroissance);
@@ -433,15 +433,15 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
         penetrationTotal, enemyHitChance, mitigationSelf, blocageMitig, etourdissementTotal, reductionTirTotal,
         regen, lifesteal, tourDebutCroissance, toursParTickCroissance);
     let survieTours = passeFinale.survieTours;
-
+ 
     let totalDmg = passeFinale.totalDmgOffense * (s.spd / CST.BASE_SPD);
-
+ 
     const coupsQuiTouchent = hitChance * survieTours;
     const facteurPoisonSoutenu = Math.min(80.0, 1.0 + coupsQuiTouchent * coupsQuiTouchent * 0.03);
     totalDmg += poisonDmg * facteurPoisonSoutenu;
     totalDmg += saignementDmg * 3.0 * Math.min(3.0, survieTours / 3.0);
     totalDmg += brulureDmgGear;
-
+ 
     if (strat) {
         let stratDegats = (strat.degatsDirects || 0) * usagesEffectifsStrategeme(strat, survieTours) * Math.max(1, strat.coupsParUsage || 1);
         if (strat.delaiTours > 0) {
@@ -449,7 +449,7 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
             stratDegats *= fiabilite;
         }
         totalDmg += (stratDegats * CST.POIDS_BURST);
-
+ 
         if (strat.poisonDegats > 0) {
             const stratPoisonDmg = strat.poisonDegats * (strat.poisonDegats + 1) / 2.0 * usagesEffectifsStrategeme(strat, survieTours);
             totalDmg += stratPoisonDmg * CST.POIDS_BURST;
@@ -459,13 +459,13 @@ function calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, arme, o
             totalDmg += stratBrulureDmg * CST.POIDS_BURST;
         }
     }
-
+ 
     const scoreBrut = totalDmg + (pvTotaux * CST.POIDS_DEFENSE) + bonusPlatDivers;
     const powerLevel = scoreBrut / CST.DIVISEUR;
-
+ 
     return { dpaInflige: passeFinale.totalDmgOffense / Math.max(1, survieTours), survieTours, totalDmg, powerLevel, pvTotaux };
 }
-
+ 
 // Point d'entrée unique pour la page : à partir de stacks + équipement CHOISIS, renvoie tout ce
 // qu'affiche le calculateur. `equipementBrut` = { arme, offhand, torso, strat } (objets BRUTS du
 // catalogue, avec un champ .niveau ajouté = nombre de doublons possédés, comme partout ailleurs
@@ -479,7 +479,7 @@ function simulerBuild(stacks, equipementBrut) {
     const resultat = calculerPowerLevelSimule(s, atkEquivalent, critPct, esquivePct, equipement.arme, equipement.offhand, equipement.torso, equipement.strat);
     return { stats: s, critPct, esquivePct, atkEquivalent, equipementNivele: equipement, ...resultat };
 }
-
+ 
 // Nivelle les 4 emplacements d'un coup (voir appliquerAmelioration). Centralisé ici pour qu'un
 // seul appel niveler + un seul appel simulerBuild ne double jamais l'application du niveau.
 function nivelerEquipement(equipementBrut) {
@@ -490,5 +490,5 @@ function nivelerEquipement(equipementBrut) {
         strat: appliquerAmelioration(equipementBrut.strat, equipementBrut.strat ? (equipementBrut.strat.niveau || 0) : 0),
     };
 }
-
+ 
 if (typeof module !== 'undefined') module.exports = { CST, simulerBuild, calculerStatsEffectives, calculerPowerLevelSimule, estimerAtkEquivalentAvecStance, appliquerAmelioration, nivelerEquipement, mitigation };
