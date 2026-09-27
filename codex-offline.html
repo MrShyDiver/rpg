@@ -91,17 +91,24 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.rare .carte-portrait { background: color-mix(in srgb, var(--rare) 48%, #101012); }
 .carte.epique .carte-portrait { background: color-mix(in srgb, var(--epique) 50%, #101012); }
 .carte.legendaire .carte-portrait { background: color-mix(in srgb, var(--legendaire) 55%, #101012); }
-/* Effet "holo" façon Pokémon, réservé aux légendaires : un reflet diagonal discret qui balaie
-   TOUTE la carte (portrait + corps) — inchangé par le passage à un fond plein ci-dessus. */
+/* Effet "holo" façon Pokémon, réservé aux légendaires : un reflet diagonal qui balaie TOUTE la
+   carte (portrait + corps) TOUJOURS dans le même sens (gauche → droite), jamais dans les deux sens.
+   Trajet 0%→38% (sweep), 38%→48% (flash lumineux qui "valide le passage" du voile en bout de
+   course), 48%→48.01% (saut instantané et invisible vers le point de départ — on ne fait jamais
+   défiler le voile à l'envers), puis pause avant de reprendre le même trajet. */
 .carte.legendaire::after {
     content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
     background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.09) 47%, rgba(242,194,48,0.15) 50%, rgba(255,255,255,0.09) 53%, transparent 62%);
     background-size: 260% 260%;
-    animation: carteHoloVague 7s ease-in-out infinite;
+    animation: carteHoloVague 6s linear infinite;
 }
 @keyframes carteHoloVague {
-    0%, 100% { background-position: 15% 0%; }
-    50% { background-position: 85% 100%; }
+    0%     { background-position: 15% 0%;   filter: brightness(1); }
+    38%    { background-position: 85% 100%; filter: brightness(1); }
+    43%    { background-position: 85% 100%; filter: brightness(2.4); }
+    48%    { background-position: 85% 100%; filter: brightness(1); }
+    48.01% { background-position: 15% 0%;   filter: brightness(1); }
+    100%   { background-position: 15% 0%;   filter: brightness(1); }
 }
 
 /* Label de rareté en toutes lettres (au lieu d'une seule lettre) — même famille visuelle que le
@@ -652,6 +659,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const lignesStat = [{ label: "Montant soigné", valeur: s.soinDirect, pilule: piluleSoin, colorer: false }];
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
+            // Fusion avec les bonus de stat génériques (ex: Gourde Médicinale, qui a aussi du PV/DEF
+            // en plus de son soin actif) — sans ça, avoir un SoinDirect masquait complètement tout
+            // Stat/Bonus classique configuré sur le même objet (early return qui ne les affichait
+            // jamais). Vide pour un objet sans Stat/Bonus (ex: Stimulant), comportement inchangé.
+            lignesStat.push(...construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, s.statsExtra));
             return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, "SoinDirect").join("") };
         }
 
@@ -686,14 +698,21 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         }
 
         const lignesStat = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, s.statsExtra);
+        // Cas générique (armes, torse, off-hand sans SoinDirect) : Utilisations/Cooldown étaient
+        // rendus SEULEMENT dans les branches SoinDirect/Stratagème ci-dessus — un objet comme les
+        // Pétards Shinobi, Plumes de corbeau ou le Canon Flamboyant (off-hand à charges, mais ni
+        // soin actif ni Stratagème) n'avait donc aucun moyen de les afficher. Même condition
+        // (> 0) que dans les deux autres branches.
+        if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
+        if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
         const passifTexte = construirePassifs(s, "Bonus").join("");
         return { scalingHtml: construireScaling(s), lignesStat, passifTexte };
     }
 
     // colorer=true -> ligne de "Bonus" de stat (ATK/DEF/PV/SPD/LUCK/Esquive) : teintée de la
     // couleur propre à cette stat, avec un badge à bordure rouge pour les valeurs négatives — le
-    // badge reste visible même en cas de daltonisme, la teinte seule ne suffirait pas. La pastille
-    // de progression (si présente) est toujours casée à droite, jamais mélangée à la valeur.
+    // badge reste visible même en cas de daltonisme. La pastille de progression (si présente) est
+    // toujours casée à droite, jamais mélangée à la valeur.
     function rendreLigneStat({ label, valeur, colorer, stat, negatif, pilule }) {
         const piluleHtml = pilule || '';
         if (!colorer) return `<div class="stat-ligne"><span class="gauche"><span class="label">${label}</span><span class="valeur-neutre">${valeur}</span></span>${piluleHtml}</div>`;
