@@ -93,17 +93,27 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.legendaire .carte-portrait { background: color-mix(in srgb, var(--legendaire) 55%, #101012); }
 /* Effet "holo" façon Pokémon, réservé aux légendaires : un reflet diagonal qui balaie TOUTE la
    carte (portrait + corps) STRICTEMENT de gauche à droite, en boucle avec une légère pause entre
-   deux passages. */
+   deux passages.
+   ⚠️ Round 13 (bis) : la version précédente animait `background-position` en % sur un dégradé en
+   `background-size: 260%` (image plus large que la carte) -- avec une image plus large que son
+   conteneur, la sémantique du POURCENTAGE de background-position est CONTRE-INTUITIVE : elle est
+   relative à (taille_conteneur - taille_image), une valeur NÉGATIVE ici, donc faire croître le %
+   de 0 à 100 déplace la fenêtre visible vers la droite DANS l'image, ce qui fait paraître un point
+   fixe du dégradé se déplacer vers la GAUCHE à l'écran (l'inverse de l'effet recherché) -- cause
+   du bug "va de la droite vers la gauche". Remplacé par un pseudo-élément étroit dont on anime la
+   position `left` (en % de la largeur de LA CARTE, un repère sans ambiguïté) : left va de -45%
+   (bande entièrement cachée à gauche, largeur 45% pile alignée pour toucher le bord gauche) à 100%
+   (bande entièrement sortie à droite) -- traversée garantie sur TOUTE la largeur de la carte,
+   coupée proprement par le overflow:hidden de .carte. */
 .carte.legendaire::after {
-    content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
-    background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.09) 47%, rgba(242,194,48,0.15) 50%, rgba(255,255,255,0.09) 53%, transparent 62%);
-    background-size: 260% 260%;
+    content: ''; position: absolute; top: 0; bottom: 0; left: -45%; width: 45%; z-index: 6; pointer-events: none;
+    background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.12) 35%, rgba(242,194,48,0.2) 50%, rgba(255,255,255,0.12) 65%, transparent 100%);
     animation: carteHoloVague 3.2s linear infinite;
 }
 @keyframes carteHoloVague {
-    0%   { background-position: 0% 50%; }
-    32%  { background-position: 100% 50%; }
-    100% { background-position: 100% 50%; }
+    0%   { left: -45%; }
+    35%  { left: 100%; }
+    100% { left: 100%; }
 }
  
 /* Label de rareté en toutes lettres (au lieu d'une seule lettre) — même famille visuelle que le
