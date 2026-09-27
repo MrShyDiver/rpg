@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon arsenal</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
+  --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
+  --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --epique: #a855f7; --legendaire: #f2c230;
+  --twitch: #9146ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 32px 16px 64px; }
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.page { max-width: 980px; margin: 0 auto; }
+.cache { display: none !important; }
+
+/* En-tête */
+.entete { display: flex; align-items: center; gap: 16px; padding-bottom: 18px; border-bottom: 3px solid var(--yellow); margin-bottom: 26px; flex-wrap: wrap; }
+.entete img { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--yellow); }
+.entete-texte { flex: 1; min-width: 180px; }
+.entete-texte h1 { font-size: 26px; }
+.entete-texte h1 span { color: var(--yellow); }
+.entete-texte p { color: var(--paper-dim); font-size: 13.5px; margin-top: 4px; }
+.lien-discret { background: none; border: 1px solid var(--line); color: var(--paper-dim); padding: 7px 12px; font-size: 13px; }
+.lien-discret:hover { color: var(--paper); border-color: var(--paper-dim); }
+
+/* Connexion */
+.accueil { text-align: center; padding: 64px 16px; border: 1px solid var(--line); background: var(--bg-panel); }
+.accueil h1 { font-size: 34px; margin-bottom: 10px; }
+.accueil p { color: var(--paper-dim); max-width: 460px; margin: 0 auto 26px; line-height: 1.5; }
+.btn-twitch { background: var(--twitch); color: #fff; border: 0; padding: 14px 26px; font-family: 'Oswald', sans-serif; font-size: 17px; text-transform: uppercase; letter-spacing: .04em; }
+.btn-twitch:hover { filter: brightness(1.1); }
+
+/* Ressources */
+.encarts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 26px; }
+.encart { background: var(--bg-panel); border: 1px solid var(--line); padding: 14px 16px; }
+.encart b { display: block; font-family: 'Oswald', sans-serif; font-size: 28px; color: var(--yellow); }
+.encart span { color: var(--paper-dim); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+
+/* Lootbox */
+section { margin-bottom: 34px; }
+section > h2 { font-size: 20px; margin-bottom: 12px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+section > h2 small { font-family: 'Barlow', sans-serif; text-transform: none; font-size: 13px; color: var(--paper-dim); font-weight: 500; letter-spacing: 0; }
+.coffre { background: var(--bg-panel); border: 1px solid var(--line); padding: 20px; }
+.coffre-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn-ouvrir { background: var(--yellow); color: #111; border: 0; padding: 13px 22px; font-family: 'Oswald', sans-serif; font-size: 17px; text-transform: uppercase; letter-spacing: .04em; }
+.btn-ouvrir.secondaire { background: transparent; color: var(--yellow); border: 2px solid var(--yellow); padding: 11px 20px; }
+.btn-ouvrir:disabled { opacity: .35; cursor: not-allowed; }
+.coffre-vide { color: var(--paper-dim); font-size: 14px; }
+.tirages { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 18px; }
+.tirages:empty { display: none; }
+
+/* Cartes objet (tirages + inventaire) */
+.objet { --c: var(--commun); position: relative; background: #0f0f11; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.objet.normal { --c: var(--normal); } .objet.rare { --c: var(--rare); }
+.objet.epique { --c: var(--epique); } .objet.legendaire { --c: var(--legendaire); }
+.objet img { width: 100%; aspect-ratio: 1; object-fit: contain; background: radial-gradient(circle, color-mix(in srgb, var(--c) 18%, transparent), transparent 70%); }
+.objet .nom { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; line-height: 1.15; }
+.objet .rarete { color: var(--c); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+.objet .niveau { position: absolute; top: 8px; right: 8px; background: var(--c); color: #111; font-family: 'Oswald', sans-serif; font-size: 13px; padding: 2px 7px; }
+.objet .niveau.nouveau { background: var(--yellow); }
+.objet.equipe { box-shadow: inset 0 0 0 2px var(--yellow); }
+.objet button { margin-top: auto; background: transparent; color: var(--paper); border: 1px solid var(--line); padding: 7px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; }
+.objet button:hover { border-color: var(--yellow); color: var(--yellow); }
+.objet.equipe button { background: var(--yellow); color: #111; border-color: var(--yellow); }
+
+.tirages .objet { animation: apparition .45s ease-out both; }
+.tirages .objet.epique, .tirages .objet.legendaire { box-shadow: 0 0 24px color-mix(in srgb, var(--c) 55%, transparent); }
+@keyframes apparition { from { opacity: 0; transform: translateY(14px) scale(.94); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tirages .objet { animation: none; } }
+
+/* Équipement */
+.loadout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.slot-vide { border: 1px dashed var(--line); color: var(--paper-dim); display: grid; place-items: center; min-height: 150px; font-size: 13px; text-align: center; padding: 12px; }
+.slot-titre { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--paper-dim); margin-bottom: 6px; }
+
+/* Inventaire */
+.onglets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.onglets button { background: transparent; color: var(--paper-dim); border: 1px solid var(--line); padding: 7px 13px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; }
+.onglets button[aria-pressed="true"] { color: #111; background: var(--yellow); border-color: var(--yellow); }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.vide { color: var(--paper-dim); font-size: 14px; padding: 18px; border: 1px dashed var(--line); }
+
+.message { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--red); color: #fff; padding: 12px 18px; max-width: calc(100% - 32px); font-weight: 600; }
+
+@media (max-width: 640px) {
+  .encarts { gap: 8px; }
+  .encart { padding: 10px; } .encart b { font-size: 22px; }
+  .loadout { grid-template-columns: 1fr 1fr; }
+  .tirages, .grille { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div id="ecran-connexion" class="accueil cache">
+    <h1>Ton <span style="color:var(--yellow)">arsenal</span></h1>
+    <p>Connecte-toi avec ton compte Twitch pour ouvrir tes lootbox, gérer ton équipement et retrouver tout ce que tu as gagné en live.</p>
+    <button class="btn-twitch" id="btn-connexion">Se connecter avec Twitch</button>
+  </div>
+
+  <div id="ecran-jeu" class="cache">
+    <header class="entete">
+      <img id="avatar" alt="" class="cache">
+      <div class="entete-texte">
+        <h1>Arsenal de <span id="pseudo"></span></h1>
+        <p><a href="codex.html" style="color:inherit">Voir le détail des objets dans le Codex</a></p>
+      </div>
+      <button class="lien-discret" id="btn-deconnexion">Se déconnecter</button>
+    </header>
+
+    <div class="encarts">
+      <div class="encart"><b id="nb-lootbox">0</b><span>Lootbox</span></div>
+      <div class="encart"><b id="nb-tickets">0</b><span>Tickets</span></div>
+      <div class="encart"><b id="nb-medailles">0</b><span>Médailles</span></div>
+    </div>
+
+    <section>
+      <h2>Lootbox <small>Gagne-les en live avec tes points de chaîne</small></h2>
+      <div class="coffre">
+        <div class="coffre-actions">
+          <button class="btn-ouvrir" id="btn-ouvrir-1">Ouvrir 1</button>
+          <button class="btn-ouvrir secondaire" id="btn-ouvrir-n">Ouvrir 10</button>
+          <span class="coffre-vide cache" id="coffre-vide">Plus de lootbox pour l'instant. Reviens en live pour en gagner !</span>
+        </div>
+        <div class="tirages" id="tirages" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Équipement</h2>
+      <div class="loadout" id="loadout"></div>
+    </section>
+
+    <section>
+      <h2>Inventaire <small id="nb-objets"></small></h2>
+      <div class="onglets" id="onglets"></div>
+      <div class="grille" id="grille"></div>
+    </section>
+  </div>
+
+  <div class="message cache" id="message" role="alert"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+// Clé publique : lecture + fonctions autorisées. Toute la logique de jeu est côté serveur.
+const sb = supabase.createClient(
+  "https://jpmrgxezdzkvbkctwqlh.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwbXJneGV6ZHprdmJrY3R3cWxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzkwMjksImV4cCI6MjEwNjExNTAyOX0.cLxYjrtd-vJgG-IMGa22JloSanUfIvfKOHAzEGRdeJo"
+);
+
+const RARETES = { commun: "Commun", normal: "Normal", rare: "Rare", epique: "Épique", legendaire: "Légendaire" };
+const ORDRE_RARETE = ["legendaire", "epique", "rare", "normal", "commun"];
+const EMPLACEMENTS = [
+  { col: "arme", slot: "weapon", label: "Arme" },
+  { col: "offhand", slot: "offhand", label: "Main gauche" },
+  { col: "armure", slot: "torso", label: "Armure" },
+  { col: "strategeme", slot: "strategeme", label: "Stratagème" },
+];
+const NIVEAU_MAX = { commun: 25, normal: 20, rare: 15, epique: 10, legendaire: 5 };
+
+const $ = (id) => document.getElementById(id);
+const etat = { joueur: null, inventaire: [], loadout: {}, onglet: "tout" };
+
+// Construit un élément sans jamais passer par innerHTML (les noms viennent de la base).
+function el(tag, attrs = {}, ...enfants) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "onclick") e.onclick = v; else if (v !== null && v !== undefined) e.setAttribute(k, v);
+  }
+  for (const c of enfants) if (c !== null && c !== undefined) e.append(c);
+  return e;
+}
+
+function erreur(msg) {
+  const m = $("message");
+  m.textContent = msg;
+  m.classList.remove("cache");
+  clearTimeout(erreur.t);
+  erreur.t = setTimeout(() => m.classList.add("cache"), 5000);
+}
+
+function etiquetteNiveau(rarete, niveau, nouveau) {
+  if (nouveau) return el("span", { class: "niveau nouveau" }, "NOUVEAU");
+  if (niveau >= NIVEAU_MAX[rarete]) return el("span", { class: "niveau" }, "MAX");
+  if (niveau > 0) return el("span", { class: "niveau" }, "+" + niveau);
+  return null;
+}
+
+function carteObjet(o, { nouveau = false, bouton = null, equipe = false } = {}) {
+  return el("div", { class: `objet ${o.rarete}${equipe ? " equipe" : ""}` },
+    etiquetteNiveau(o.rarete, o.niveau, nouveau),
+    el("img", { src: o.image || "", alt: "", loading: "lazy" }),
+    el("div", { class: "nom" }, o.nom),
+    el("div", { class: "rarete" }, RARETES[o.rarete] || o.rarete),
+    bouton);
+}
+
+// ---------- Chargement ----------
+async function charger(user) {
+  const { data: joueur, error } = await sb.from("players").select("*").eq("auth_user_id", user.id).maybeSingle();
+  if (error) return erreur("Impossible de charger ton profil : " + error.message);
+  if (!joueur) return erreur("Ton compte Twitch n'est pas encore rattaché. Déconnecte-toi puis reconnecte-toi.");
+
+  const [inv, lo] = await Promise.all([
+    sb.from("inventory").select("item_numero, niveau, items(nom, slot, rarete, data)").eq("player_id", joueur.id),
+    sb.from("loadouts").select("*").eq("player_id", joueur.id).maybeSingle(),
+  ]);
+  if (inv.error) return erreur("Impossible de charger ton inventaire : " + inv.error.message);
+
+  etat.joueur = joueur;
+  etat.loadout = lo.data || {};
+  etat.inventaire = inv.data.map((l) => ({
+    numero: l.item_numero, niveau: l.niveau, nom: l.items.nom, slot: l.items.slot,
+    rarete: l.items.rarete, image: l.items.data.image,
+  })).sort((a, b) => ORDRE_RARETE.indexOf(a.rarete) - ORDRE_RARETE.indexOf(b.rarete) || a.nom.localeCompare(b.nom));
+  afficher();
+}
+
+// ---------- Affichage ----------
+function afficher() {
+  const j = etat.joueur;
+  $("pseudo").textContent = j.display_name;
+  // Avatar affiché seulement s'il se charge (sinon pas d'icône d'image cassée).
+  $("avatar").onload = () => $("avatar").classList.remove("cache");
+  if (j.avatar_url) $("avatar").src = j.avatar_url;
+  $("nb-lootbox").textContent = j.lootbox;
+  $("nb-tickets").textContent = j.tickets;
+  $("nb-medailles").textContent = j.medailles;
+
+  $("btn-ouvrir-1").disabled = j.lootbox < 1;
+  $("btn-ouvrir-n").disabled = j.lootbox < 2;
+  $("btn-ouvrir-n").textContent = "Ouvrir " + Math.min(10, Math.max(j.lootbox, 2));
+  $("coffre-vide").classList.toggle("cache", j.lootbox > 0);
+
+  // Équipement
+  const parNumero = Object.fromEntries(etat.inventaire.map((o) => [o.numero, o]));
+  $("loadout").replaceChildren(...EMPLACEMENTS.map((e) => {
+    const o = parNumero[etat.loadout[e.col]];
+    return el("div", {}, el("div", { class: "slot-titre" }, e.label),
+      o ? carteObjet(o, { equipe: true, bouton: el("button", { onclick: () => equiper(e.col, null) }, "Retirer") })
+        : el("div", { class: "slot-vide" }, "Aucun objet équipé"));
+  }));
+
+  // Onglets + inventaire
+  const onglets = [{ slot: "tout", label: "Tout" }, ...EMPLACEMENTS];
+  $("onglets").replaceChildren(...onglets.map((o) => el("button", {
+    "aria-pressed": String(etat.onglet === o.slot),
+    onclick: () => { etat.onglet = o.slot; afficher(); },
+  }, o.label)));
+
+  const visibles = etat.inventaire.filter((o) => etat.onglet === "tout" || o.slot === etat.onglet);
+  $("nb-objets").textContent = `${etat.inventaire.length} objet${etat.inventaire.length > 1 ? "s" : ""}`;
+  $("grille").replaceChildren(...(visibles.length ? visibles.map((o) => {
+    const e = EMPLACEMENTS.find((x) => x.slot === o.slot);
+    const equipe = etat.loadout[e.col] === o.numero;
+    return carteObjet(o, {
+      equipe,
+      bouton: el("button", { onclick: () => equiper(e.col, equipe ? null : o.numero) }, equipe ? "Équipé" : "Équiper"),
+    });
+  }) : [el("div", { class: "vide" }, "Rien ici pour l'instant. Ouvre des lootbox pour remplir ton arsenal !")]));
+}
+
+// ---------- Actions ----------
+async function ouvrir(nombre) {
+  const boutons = [$("btn-ouvrir-1"), $("btn-ouvrir-n")];
+  boutons.forEach((b) => (b.disabled = true));
+  const { data, error } = await sb.rpc("ouvrir_lootbox", { p_nombre: nombre });
+  if (error) { erreur(error.message); afficher(); return; }
+
+  $("tirages").replaceChildren(...data.tirages.map((t, i) => {
+    const c = carteObjet(t, { nouveau: t.nouveau });
+    c.style.animationDelay = i * 120 + "ms";
+    return c;
+  }));
+  const { data: { user } } = await sb.auth.getUser();
+  await charger(user);
+}
+
+async function equiper(emplacement, numero) {
+  const { error } = await sb.rpc("equiper", { p_emplacement: emplacement, p_numero: numero });
+  if (error) return erreur(error.message);
+  etat.loadout[emplacement] = numero;
+  afficher();
+}
+
+$("btn-ouvrir-1").onclick = () => ouvrir(1);
+$("btn-ouvrir-n").onclick = () => ouvrir(Math.min(10, etat.joueur.lootbox));
+$("btn-connexion").onclick = () => sb.auth.signInWithOAuth({
+  provider: "twitch", options: { redirectTo: location.origin + location.pathname },
+});
+$("btn-deconnexion").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+// ---------- Démarrage ----------
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  $("ecran-connexion").classList.toggle("cache", !!session);
+  $("ecran-jeu").classList.toggle("cache", !session);
+  if (session) await charger(session.user);
+})();
+</script>
+</body>
+</html>
