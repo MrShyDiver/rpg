@@ -195,9 +195,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         return { investi, objets };
     }
     function decomposerSpd(totalAffiche, stacks) {
-        const investiAffiche = Math.round(SPD_MAX_BONUS * Math.tanh(stacks / K_SPD));
-        const objets = Math.round(totalAffiche - BASE_SPD - investiAffiche);
-        return { investi: investiAffiche, objets };
+        // Rendement dégressif (tanh) : la vraie contribution de "stacks" à la stat finale est
+        // réduite au-delà d'un certain seuil (voir boost-spd.cs, SPD_MAX_BONUS/K_SPD) -- utilisée
+        // ICI uniquement pour calculer "objets" par différence, jamais affichée telle quelle : les
+        // joueurs ne doivent voir que leurs points BRUTS dépensés, pas une valeur "réduite".
+        const investiEffectif = SPD_MAX_BONUS * Math.tanh(stacks / K_SPD);
+        const objets = Math.round(totalAffiche - BASE_SPD - investiEffectif);
+        return { investi: Math.round(stacks), objets };
     }
     function ligneDetail(d, base, coefStack) {
         const signe = d.objets >= 0 ? '+' : '-';
