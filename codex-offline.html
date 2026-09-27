@@ -101,17 +101,23 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
    de 0 à 100 déplace la fenêtre visible vers la droite DANS l'image, ce qui fait paraître un point
    fixe du dégradé se déplacer vers la GAUCHE à l'écran (l'inverse de l'effet recherché) -- cause
    du bug "va de la droite vers la gauche". Remplacé par un pseudo-élément étroit dont on anime la
-   position `left` (en % de la largeur de LA CARTE, un repère sans ambiguïté) : left va de -45%
-   (bande entièrement cachée à gauche, largeur 45% pile alignée pour toucher le bord gauche) à 100%
-   (bande entièrement sortie à droite) -- traversée garantie sur TOUTE la largeur de la carte,
-   coupée proprement par le overflow:hidden de .carte. */
+   position `left` (en % de la largeur de LA CARTE, un repère sans ambiguïté).
+   ⚠️ Round 13 (ter) : le résultat traversait bien dans le bon sens mais était "moche" -- une bande
+   trop LARGE (45% de la carte) et une couleur dorée semi-opaque en superposition normale donnaient
+   un bloc plat et boueux plutôt qu'un reflet de lumière. Remplacé par une bande bien plus ÉTROITE
+   (16% de la carte, effet "filet de lumière" plutôt que "pavé coloré") et surtout `mix-blend-mode:
+   screen` au lieu d'une superposition classique : le blanc du dégradé ÉCLAIRCIT ce qu'il y a
+   dessous (fond de portrait, texte...) au lieu de peindre une couleur plate par-dessus -- c'est ce
+   qui donne l'aspect "reflet de lumière qui glisse sur du métal/verre" plutôt qu'un calque coloré.
+   Une pointe d'or au centre (au lieu de blanc pur) rappelle la rareté légendaire sans alourdir. */
 .carte.legendaire::after {
-    content: ''; position: absolute; top: 0; bottom: 0; left: -45%; width: 45%; z-index: 6; pointer-events: none;
-    background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.12) 35%, rgba(242,194,48,0.2) 50%, rgba(255,255,255,0.12) 65%, transparent 100%);
+    content: ''; position: absolute; top: 0; bottom: 0; left: -16%; width: 16%; z-index: 6; pointer-events: none;
+    mix-blend-mode: screen;
+    background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.55) 42%, rgba(255,238,190,0.85) 50%, rgba(255,255,255,0.55) 58%, transparent 100%);
     animation: carteHoloVague 3.2s linear infinite;
 }
 @keyframes carteHoloVague {
-    0%   { left: -45%; }
+    0%   { left: -16%; }
     35%  { left: 100%; }
     100% { left: 100%; }
 }
