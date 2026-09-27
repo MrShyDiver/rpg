@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Général Foudroyé — Classement</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Bebas+Neue&display=swap');
+
+    :root {
+        --or: #f0a020; --or-clair: #ffd23f;
+        --argent: #c7ccd6; --bronze: #cd8a4d;
+        --epique: #a855f7; --rare: #4a9fd8; --normal: #7fbf6a; --commun: #9aa0a8;
+        --fond: #0d0f14; --panneau: #16191f; --panneau-clair: #1f232b;
+        --texte: #e8e6e0; --texte-att: #9aa0ac;
+        --danger: #c92a2a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        background: radial-gradient(ellipse at top, #1a1410 0%, var(--fond) 55%);
+        color: var(--texte); font-family: 'Oswald', sans-serif;
+        min-height: 100vh; padding: 0 0 60px;
+    }
+    .titre-affiche { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+
+    /* ============ HERO ============ */
+    .hero {
+        position: relative; overflow: hidden;
+        padding: 56px 20px 40px; text-align: center;
+        border-bottom: 2px solid #3a2c14;
+        background-size: cover; background-position: center;
+    }
+    .hero::before {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(10,10,14,0.55) 0%, rgba(10,10,14,0.92) 100%);
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero-statut {
+        display: inline-block; padding: 5px 18px; border-radius: 20px;
+        font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+        margin-bottom: 18px;
+    }
+    .hero-statut.vaincu { background: rgba(240,160,32,0.15); border: 1px solid var(--or); color: var(--or-clair); }
+    .hero-statut.en-cours { background: rgba(201,42,42,0.15); border: 1px solid var(--danger); color: #ff8a8a; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+    .hero-portrait {
+        width: 140px; height: 140px; border-radius: 14px; object-fit: cover;
+        image-rendering: pixelated; border: 3px solid var(--or); margin-bottom: 18px;
+        box-shadow: 0 0 40px rgba(240,160,32,0.35);
+    }
+    .hero-nom { font-size: 52px; color: var(--or-clair); text-shadow: 0 0 30px rgba(240,160,32,0.4); line-height: 1; }
+    .hero-titre { font-size: 16px; color: var(--texte-att); font-style: italic; margin-top: 4px; margin-bottom: 26px; }
+
+    .hero-pv-bar-outer {
+        max-width: 560px; margin: 0 auto 10px; height: 22px; background: #1a1a1a;
+        border: 1px solid #4a3820; border-radius: 4px; overflow: hidden; position: relative;
+    }
+    .hero-pv-bar-inner { height: 100%; background: linear-gradient(90deg, #8b1a1a, var(--danger)); transition: width 1s ease-out; }
+    .hero-pv-bar-inner.vaincu { background: linear-gradient(90deg, #6b5010, var(--or)); }
+    .hero-pv-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px #000; }
+
+    .hero-stats { display: flex; justify-content: center; gap: 40px; margin-top: 26px; flex-wrap: wrap; }
+    .hero-stat { text-align: center; }
+    .hero-stat .valeur { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: var(--or-clair); letter-spacing: 1px; }
+    .hero-stat .label { font-size: 11px; color: var(--texte-att); text-transform: uppercase; letter-spacing: 1px; }
+
+    .hero-coup-fatal { margin-top: 22px; font-size: 14px; color: var(--texte-att); }
+    .hero-coup-fatal strong { color: var(--or-clair); }
+
+    /* ============ TROPHÉES LÉGENDAIRES ============ */
+    .section { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    .section-titre {
+        font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px;
+        margin: 48px 0 20px; color: var(--texte); display: flex; align-items: center; gap: 10px;
+    }
+    .section-titre::before { content: ''; width: 4px; height: 22px; background: var(--or); display: inline-block; }
+
+    .trophees { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .trophee-carte {
+        background: var(--panneau); border: 1px solid #3a2c14; border-radius: 10px; padding: 16px;
+        display: flex; gap: 12px; align-items: center;
+    }
+    .trophee-carte img { width: 48px; height: 48px; object-fit: contain; image-rendering: pixelated; }
+    .trophee-nom { font-weight: 600; color: var(--or-clair); font-size: 14px; }
+    .trophee-source { font-size: 11px; color: var(--texte-att); margin-top: 2px; }
+
+    /* ============ ONGLETS DE CLASSEMENT ============ */
+    .onglets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+    .onglet {
+        padding: 10px 18px; background: var(--panneau); border: 1px solid #2a2e38; border-radius: 8px 8px 0 0;
+        cursor: pointer; font-size: 13px; font-weight: 500; color: var(--texte-att);
+        transition: all 0.15s;
+    }
+    .onglet:hover { color: var(--texte); }
+    .onglet.actif { background: var(--panneau-clair); color: var(--or-clair); border-color: var(--or); border-bottom-color: var(--panneau-clair); }
+
+    .panneau-classement { background: var(--panneau-clair); border: 1px solid #2a2e38; border-radius: 0 8px 8px 8px; padding: 24px; }
+    .panneau-classement.masque { display: none; }
+
+    /* ---- Podium ---- */
+    .podium { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin-bottom: 30px; flex-wrap: wrap; }
+    .podium-place { text-align: center; width: 150px; }
+    .podium-avatar-wrap {
+        width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 8px; display: flex;
+        align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 26px;
+        border: 3px solid; background: var(--panneau);
+    }
+    .podium-place.p1 .podium-avatar-wrap { border-color: var(--or); color: var(--or-clair); width: 80px; height: 80px; font-size: 32px; box-shadow: 0 0 24px rgba(240,160,32,0.4); }
+    .podium-place.p2 .podium-avatar-wrap { border-color: var(--argent); color: var(--argent); }
+    .podium-place.p3 .podium-avatar-wrap { border-color: var(--bronze); color: var(--bronze); }
+    .podium-medaille { font-size: 20px; margin-bottom: 4px; }
+    .podium-pseudo { font-weight: 600; font-size: 15px; margin-top: 6px; }
+    .podium-place.p1 .podium-pseudo { font-size: 18px; color: var(--or-clair); }
+    .podium-valeur { font-size: 13px; color: var(--texte-att); margin-top: 2px; }
+    .podium-boites { font-size: 11px; color: var(--or); margin-top: 6px; font-weight: 600; }
+    .podium-socle { height: 50px; background: linear-gradient(180deg, #2a2e38, #1a1d24); border-radius: 4px 4px 0 0; margin-top: 10px; }
+    .podium-place.p1 .podium-socle { height: 76px; background: linear-gradient(180deg, #3a3016, #1a1d24); }
+    .podium-place.p2 .podium-socle { height: 54px; }
+    .podium-place.p3 .podium-socle { height: 34px; }
+
+    /* ---- Liste complète (4e et suivants) ---- */
+    table.classement-liste { width: 100%; border-collapse: collapse; }
+    table.classement-liste th {
+        text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+        color: var(--texte-att); padding: 8px 10px; border-bottom: 1px solid #2a2e38;
+    }
+    table.classement-liste td { padding: 9px 10px; border-bottom: 1px solid #22262e; font-size: 14px; }
+    table.classement-liste td.rang { color: var(--texte-att); width: 40px; }
+    table.classement-liste tr.moi { background: rgba(240,160,32,0.08); }
+    table.classement-liste tr.moi td.pseudo { color: var(--or-clair); font-weight: 600; }
+
+    /* ============ RECHERCHE ============ */
+    .barre-recherche { max-width: 1100px; margin: 0 auto; padding: 0 20px 8px; display: flex; justify-content: flex-end; }
+    .barre-recherche input {
+        background: var(--panneau); border: 1px solid #2a2e38; border-radius: 6px; color: var(--texte);
+        padding: 8px 12px; font-family: 'Oswald', sans-serif; font-size: 13px; width: 220px;
+    }
+    .barre-recherche input:focus { outline: 1px solid var(--or); }
+
+    .repli { text-align: center; color: var(--texte-att); padding: 30px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="hero" id="hero">
+    <span class="hero-statut" id="heroStatut">—</span><br>
+    <img class="hero-portrait" id="heroPortrait" src="" alt="">
+    <div class="hero-nom titre-affiche" id="heroNom">—</div>
+    <div class="hero-titre" id="heroTitre"></div>
+
+    <div class="hero-pv-bar-outer">
+        <div class="hero-pv-bar-inner" id="heroPvBar" style="width:100%"></div>
+        <div class="hero-pv-text" id="heroPvText">— / —</div>
+    </div>
+
+    <div class="hero-stats">
+        <div class="hero-stat"><div class="valeur" id="statParticipants">—</div><div class="label">Participants</div></div>
+        <div class="hero-stat"><div class="valeur" id="statAttaques">—</div><div class="label">Attaques portées</div></div>
+        <div class="hero-stat"><div class="valeur" id="statDegats">—</div><div class="label">Dégâts cumulés</div></div>
+    </div>
+
+    <div class="hero-coup-fatal" id="heroCoupFatal"></div>
+</div>
+
+<div class="section" id="sectionTrophees" style="display:none">
+    <div class="section-titre">Butin débloqué</div>
+    <div class="trophees" id="trophees"></div>
+</div>
+
+<div class="barre-recherche">
+    <input type="text" id="rechercheJoueur" placeholder="Chercher un pseudo...">
+</div>
+
+<div class="section">
+    <div class="onglets" id="onglets"></div>
+    <div id="panneaux"></div>
+</div>
+
+<script>
+// ==========================================================
+// CONTRAT DE DONNEES ATTENDU -- a publier via snapshot-vers-github.cs (pas encore fait a ce
+// stade), toutes les 5-10 min comme le reste des JSON du site, a partir des registres deja
+// alimentes par boss-battle.cs (helldivers_boss_degats_totaux / _coups / _rounds_totaux) :
+//
+// boss_status.json :
+// {
+//   "nom": "...", "titre": "...", "imagePortrait": "...",
+//   "pvActuels": 0, "pvTotal": 500000, "combatTermine": true,
+//   "dateVictoire": "2026-09-24T18:32:00Z", "coupFatalPar": "pseudo",
+//   "participantsTotal": 34, "attaquesTotal": 210, "degatsTotal": 512340,
+//   "legendairesDebloques": [ { "nom": "...", "icon": "...", "imageUrl": "...", "nombrePossesseurs": 3 } ]
+// }
+//
+// boss_classements.json :
+// { "efficacite": [{"pseudo":"...","valeur":12.4}, ...], "attaques": [...], "rounds": [...], "degats": [...],
+//   "ratioDegatsHp": [...], "degatsSubis": [...], "soins": [...], "meilleurCritique": [...] }
+// (deja tries decroissant, ou tries ici par securite -- voir le tri applique dans rendreOnglet)
+// ==========================================================
+const CHEMIN_STATUS = 'boss_status.json';
+const CHEMIN_CLASSEMENTS = 'boss_classements.json';
+
+const CLASSEMENTS_DEF = [
+    { cle: 'efficacite', label: 'Efficacité', unite: '', decimales: 2, boitesTop3: [5, 3, 1] },
+    { cle: 'attaques',   label: "Nombre d'attaques", unite: '', decimales: 0, boitesTop3: [5, 3, 1] },
+    { cle: 'rounds',     label: 'Rounds effectués', unite: '', decimales: 0, boitesTop3: [5, 3, 1] },
+    { cle: 'degats',     label: 'Dégâts totaux', unite: '', decimales: 0, boitesTop3: [5, 3, 1] },
+    // 4 nouveaux classements (demande utilisateur) -- suivi seul, pas de boîtes de victoire liées
+    // (DistribuerRecompensesVictoire dans boss-battle.cs ne récompense que les 4 podiums ci-dessus).
+    { cle: 'ratioDegatsHp',   label: 'Ratio Dégâts/HP', unite: '', decimales: 2 },
+    { cle: 'degatsSubis',     label: 'Dégâts subis', unite: '', decimales: 0 },
+    { cle: 'soins',           label: 'Soins prodigués', unite: '', decimales: 0 },
+    { cle: 'meilleurCritique', label: 'Meilleur Critique', unite: '', decimales: 0 },
+];
+
+function formatNombre(n, decimales) {
+    return Number(n).toLocaleString('fr-FR', { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
+}
+
+async function chargerJson(chemin) {
+    try {
+        const res = await fetch(chemin + '?t=' + Date.now());
+        return res.ok ? await res.json() : null;
+    } catch (e) { return null; }
+}
+
+function remplirHero(status) {
+    const vaincu = !!status.combatTermine;
+    const statutEl = document.getElementById('heroStatut');
+    statutEl.textContent = vaincu ? '✅ Vaincu' : '⚔️ Combat en cours';
+    statutEl.className = 'hero-statut ' + (vaincu ? 'vaincu' : 'en-cours');
+
+    document.getElementById('heroPortrait').src = status.imagePortrait || '';
+    document.getElementById('heroNom').textContent = status.nom || 'Boss inconnu';
+    document.getElementById('heroTitre').textContent = status.titre || '';
+
+    const pct = Math.max(0, Math.min(100, (status.pvActuels / status.pvTotal) * 100));
+    const barre = document.getElementById('heroPvBar');
+    barre.style.width = pct + '%';
+    barre.classList.toggle('vaincu', vaincu);
+    document.getElementById('heroPvText').textContent = vaincu
+        ? 'ANÉANTI'
+        : `${formatNombre(status.pvActuels, 0)} / ${formatNombre(status.pvTotal, 0)} PV`;
+
+    document.getElementById('statParticipants').textContent = status.participantsTotal ?? '—';
+    document.getElementById('statAttaques').textContent = formatNombre(status.attaquesTotal ?? 0, 0);
+    document.getElementById('statDegats').textContent = formatNombre(status.degatsTotal ?? 0, 0);
+
+    const coupFatalEl = document.getElementById('heroCoupFatal');
+    if (vaincu && status.coupFatalPar) {
+        const date = status.dateVictoire ? new Date(status.dateVictoire).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+        coupFatalEl.innerHTML = `Coup fatal porté par <strong>${status.coupFatalPar}</strong>${date ? ' — ' + date : ''}`;
+    } else {
+        coupFatalEl.textContent = '';
+    }
+
+    if (vaincu && status.legendairesDebloques && status.legendairesDebloques.length > 0) {
+        document.getElementById('sectionTrophees').style.display = '';
+        const zone = document.getElementById('trophees');
+        zone.innerHTML = '';
+        status.legendairesDebloques.forEach(item => {
+            const carte = document.createElement('div');
+            carte.className = 'trophee-carte';
+            carte.innerHTML = `
+                <img src="${item.imageUrl || ''}" alt="">
+                <div>
+                    <div class="trophee-nom">${item.icon || '🏆'} ${item.nom}</div>
+                    <div class="trophee-source">${item.nombrePossesseurs > 0 ? item.nombrePossesseurs + ' joueur' + (item.nombrePossesseurs > 1 ? 's' : '') + ' l\'ont obtenu' : 'Disponible dans la roue/lootbox'}</div>
+                </div>`;
+            zone.appendChild(carte);
+        });
+    }
+}
+
+function medaille(rang) { return rang === 0 ? '🥇' : rang === 1 ? '🥈' : '🥉'; }
+
+function construirePodium(def, lignes) {
+    const top3 = lignes.slice(0, 3);
+    const conteneur = document.createElement('div');
+    conteneur.className = 'podium';
+    // Ordre visuel classique : 2e - 1er - 3e
+    const ordreAffichage = [1, 0, 2].filter(i => top3[i]);
+    ordreAffichage.forEach(i => {
+        const ligne = top3[i];
+        const div = document.createElement('div');
+        div.className = 'podium-place p' + (i + 1);
+        div.innerHTML = `
+            <div class="podium-medaille">${medaille(i)}</div>
+            <div class="podium-avatar-wrap">${ligne.pseudo.slice(0, 2).toUpperCase()}</div>
+            <div class="podium-pseudo">${ligne.pseudo}</div>
+            <div class="podium-valeur">${formatNombre(ligne.valeur, def.decimales)}${def.unite}</div>
+            ${def.boitesTop3 ? `<div class="podium-boites">+${def.boitesTop3[i]} boîte${def.boitesTop3[i] > 1 ? 's' : ''} de victoire</div>` : ''}
+            <div class="podium-socle"></div>`;
+        conteneur.appendChild(div);
+    });
+    return conteneur;
+}
+
+function construireListe(def, lignes, pseudoRecherche) {
+    const reste = lignes.slice(3);
+    if (reste.length === 0) return document.createTextNode('');
+    const table = document.createElement('table');
+    table.className = 'classement-liste';
+    table.innerHTML = `<thead><tr><th>Rang</th><th>Joueur</th><th>${def.label}</th></tr></thead>`;
+    const tbody = document.createElement('tbody');
+    reste.forEach((ligne, idx) => {
+        const tr = document.createElement('tr');
+        const estMoi = pseudoRecherche && ligne.pseudo.toLowerCase() === pseudoRecherche;
+        if (estMoi) tr.className = 'moi';
+        tr.innerHTML = `<td class="rang">#${idx + 4}</td><td class="pseudo">${ligne.pseudo}</td><td>${formatNombre(ligne.valeur, def.decimales)}${def.unite}</td>`;
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+}
+
+let classementsData = null;
+
+function rendreOnglet(cle) {
+    const def = CLASSEMENTS_DEF.find(d => d.cle === cle);
+    const lignes = (classementsData && classementsData[cle] || []).slice().sort((a, b) => b.valeur - a.valeur);
+    const pseudoRecherche = document.getElementById('rechercheJoueur').value.trim().toLowerCase();
+
+    document.querySelectorAll('.onglet').forEach(el => el.classList.toggle('actif', el.dataset.cle === cle));
+    document.querySelectorAll('.panneau-classement').forEach(el => el.classList.toggle('masque', el.dataset.cle !== cle));
+
+    const panneau = document.querySelector(`.panneau-classement[data-cle="${cle}"]`);
+    panneau.innerHTML = '';
+    if (lignes.length === 0) {
+        panneau.innerHTML = '<div class="repli">Personne n\'a encore de score ici.</div>';
+        return;
+    }
+    panneau.appendChild(construirePodium(def, lignes));
+    panneau.appendChild(construireListe(def, lignes, pseudoRecherche));
+
+    if (pseudoRecherche) {
+        const ligneMoi = panneau.querySelector('tr.moi');
+        if (ligneMoi) ligneMoi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function construireOngletsEtPanneaux() {
+    const onglets = document.getElementById('onglets');
+    const panneaux = document.getElementById('panneaux');
+    CLASSEMENTS_DEF.forEach((def, idx) => {
+        const onglet = document.createElement('div');
+        onglet.className = 'onglet' + (idx === 0 ? ' actif' : '');
+        onglet.dataset.cle = def.cle;
+        onglet.textContent = def.label;
+        onglet.addEventListener('click', () => rendreOnglet(def.cle));
+        onglets.appendChild(onglet);
+
+        const panneau = document.createElement('div');
+        panneau.className = 'panneau-classement' + (idx === 0 ? '' : ' masque');
+        panneau.dataset.cle = def.cle;
+        panneaux.appendChild(panneau);
+    });
+}
+
+async function init() {
+    construireOngletsEtPanneaux();
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('joueur')) document.getElementById('rechercheJoueur').value = params.get('joueur');
+
+    const status = await chargerJson(CHEMIN_STATUS);
+    if (status) remplirHero(status);
+    else document.getElementById('hero').innerHTML = '<div class="repli">boss_status.json introuvable — voir le contrat de données en commentaire dans le script.</div>';
+
+    classementsData = await chargerJson(CHEMIN_CLASSEMENTS);
+    rendreOnglet(CLASSEMENTS_DEF[0].cle);
+
+    document.getElementById('rechercheJoueur').addEventListener('input', () => {
+        const cleActive = document.querySelector('.onglet.actif').dataset.cle;
+        rendreOnglet(cleActive);
+    });
+
+    // Actualisation reguliere tant que le combat n'est pas termine (classement vivant)
+    setInterval(async () => {
+        const s = await chargerJson(CHEMIN_STATUS);
+        if (s) remplirHero(s);
+        if (!s || !s.combatTermine) {
+            classementsData = await chargerJson(CHEMIN_CLASSEMENTS);
+            rendreOnglet(document.querySelector('.onglet.actif').dataset.cle);
+        }
+    }, 15000);
+}
+
+init();
+</script>
+
+</body>
+</html>
