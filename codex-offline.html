@@ -20,12 +20,12 @@
 body { background: var(--bg); color: var(--paper); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 30px 20px 60px; }
 h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .page { max-width: 1100px; margin: 0 auto; }
-
+ 
 .entete { padding-bottom: 18px; border-bottom: 3px solid var(--yellow); margin-bottom: 22px; }
 .entete h1 { font-size: 26px; font-weight: 700; }
 .entete h1 span { color: var(--yellow); }
 .entete p { color: var(--paper-dim); font-size: 13.5px; margin-top: 6px; }
-
+ 
 /* ============ BARRE DE RECHERCHE ET FILTRES ============ */
 .barre-controles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; align-items: center; }
 .champ-recherche {
@@ -34,7 +34,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 }
 .champ-recherche::placeholder { color: var(--paper-dim); }
 .champ-recherche:focus { outline: none; border-color: var(--yellow); }
-
+ 
 .filtres-rangee { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
 .filtre-pilule {
     font-family: 'Barlow Condensed', sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: 0.5px;
@@ -48,14 +48,14 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .filtre-pilule.actif.r-epique { background: var(--epique); border-color: var(--epique); }
 .filtre-pilule.actif.r-legendaire { background: var(--legendaire); border-color: var(--legendaire); }
 .filtre-pilule.actif.r-commun { background: var(--commun); border-color: var(--commun); color: #000; }
-
+ 
 .compteur-resultats { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 18px; }
-
+ 
 .legende-stats { display: flex; flex-wrap: wrap; gap: 14px 20px; margin-bottom: 20px; font-size: 12px; color: var(--paper-dim); }
 .legende-stats span { display: inline-flex; align-items: center; gap: 6px; }
 .legende-stats .pastille { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
 .legende-stats .pastille-malus { width: 14px; height: 10px; border-radius: 3px; border: 1px solid var(--negatif); background: rgba(255,107,107,0.1); display: inline-block; }
-
+ 
 /* ============ CATÉGORIES + GRILLE (repris d'inventaire.html) ============ */
 .categorie { margin-bottom: 34px; }
 .categorie-titre { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -68,7 +68,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
    "Scaling"/"Bonus"/"Passif" au même niveau d'une carte à l'autre, peu importe la longueur du
    contenu de chacune (alignement demandé sur la carte la plus grande de la rangée). */
 .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: minmax(0, min-content); gap: 16px; align-items: start; }
-
+ 
 .carte {
     background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative;
     display: grid; grid-template-rows: subgrid; grid-row: span 5; row-gap: 0;
@@ -77,7 +77,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.rare { border-color: rgba(74,159,216,0.35); }
 .carte.epique { border-color: rgba(168,85,247,0.4); }
 .carte.legendaire { border-color: rgba(242,194,48,0.45); }
-
+ 
 /* ============ PORTRAIT (haut de carte façon "carte à collectionner") ============ */
 /* Fond PLEIN (couleur de rareté, sans dégradé ni rayons ni halo) — l'icône posée directement dessus,
    plus de médaillon circulaire. Portrait plus haut que la version condensée précédente pour mettre
@@ -92,45 +92,20 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.epique .carte-portrait { background: color-mix(in srgb, var(--epique) 50%, #101012); }
 .carte.legendaire .carte-portrait { background: color-mix(in srgb, var(--legendaire) 55%, #101012); }
 /* Effet "holo" façon Pokémon, réservé aux légendaires : un reflet diagonal qui balaie TOUTE la
-   carte (portrait + corps) STRICTEMENT de gauche à droite (background-position n'anime plus QUE
-   l'axe X, jamais Y — avant, l'axe Y bougeait aussi, ce qui donnait un trajet diagonal descendant
-   plutôt qu'un vrai passage horizontal), jamais dans les deux sens.
-   Trajet 0%→38% (sweep gauche→droite), 38%→48% (le voile reste immobile à droite : c'est la fenêtre
-   du flash, géré par le ::before ci-dessous), 48%→48.01% (saut instantané et invisible vers le point
-   de départ à gauche — on ne fait jamais défiler le voile à l'envers), puis pause avant de reprendre
-   le même trajet. */
+   carte (portrait + corps) STRICTEMENT de gauche à droite, en boucle avec une légère pause entre
+   deux passages. */
 .carte.legendaire::after {
     content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
     background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.09) 47%, rgba(242,194,48,0.15) 50%, rgba(255,255,255,0.09) 53%, transparent 62%);
     background-size: 260% 260%;
-    animation: carteHoloVague 6s linear infinite;
+    animation: carteHoloVague 3.2s linear infinite;
 }
 @keyframes carteHoloVague {
-    0%     { background-position: 0% 50%; }
-    38%    { background-position: 100% 50%; }
-    48%    { background-position: 100% 50%; }
-    48.01% { background-position: 0% 50%; }
-    100%   { background-position: 0% 50%; }
+    0%   { background-position: 0% 50%; }
+    32%  { background-position: 100% 50%; }
+    100% { background-position: 100% 50%; }
 }
-/* Lueur de validation, séparée du voile ci-dessus : un `filter: brightness()` appliqué directement
-   sur le dégradé du voile ne fonctionnait pas, car ses zones les plus visibles sont déjà proches du
-   blanc pur (255,255,255) — un canal déjà au maximum ne peut plus être "éclairci" par un multiplicateur
-   de luminosité, le flash restait invisible. À la place : une lueur radiale à PART, plaquée là où le
-   voile sort de la carte (bord droit), dont on anime uniquement l'opacité (0 → pleine intensité → 0)
-   pendant la même fenêtre 38%-48% que l'immobilisation du voile ci-dessus — donc bien synchronisée
-   avec son arrivée en bout de course. */
-.carte.legendaire::before {
-    content: ''; position: absolute; inset: 0; z-index: 7; pointer-events: none;
-    background: radial-gradient(circle at 92% 50%, rgba(255,255,255,0.9), rgba(242,194,48,0.55) 35%, transparent 65%);
-    opacity: 0;
-    animation: carteHoloFlash 6s linear infinite;
-}
-@keyframes carteHoloFlash {
-    0%, 36% { opacity: 0; }
-    41%     { opacity: 1; }
-    48%, 100% { opacity: 0; }
-}
-
+ 
 /* Label de rareté en toutes lettres (au lieu d'une seule lettre) — même famille visuelle que le
    badge Base/MAX en face, à l'autre coin du portrait. */
 .carte-badge-rarete {
@@ -144,7 +119,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.rare .carte-badge-rarete { background: var(--rare); color: #fff; }
 .carte.epique .carte-badge-rarete { background: var(--epique); color: #fff; }
 .carte.legendaire .carte-badge-rarete { background: var(--legendaire); }
-
+ 
 /* Le numéro de catalogue n'a aucun intérêt pour les viewers — remplacé par un indicateur d'état
    "Base" (valeurs de départ) / "MAX" (bascule "Voir au niveau max"), ce dernier mis en valeur pour
    qu'il saute aux yeux quand on parcourt le catalogue en mode "niveau max". */
@@ -157,11 +132,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     color: #000; background: var(--yellow); font-weight: 800; font-size: 11px;
     box-shadow: 0 1px 6px rgba(242,194,48,0.55);
 }
-
+ 
 .carte-icone-zone { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .carte-icone-zone .carte-icon { max-width: 78%; max-height: 84%; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
 .carte-icone-zone .carte-icon-emoji { font-size: 54px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
-
+ 
 /* .carte-corps n'est plus une sous-grille imbriquée : un niveau de subgrid supplémentaire
    (.carte > .carte-corps > pistes) laisse un résidu de ~16px sur une piste pourtant vide dans
    Chromium (l'espacement par défaut d'une ligne de texte, même sans aucun contenu). display:contents
@@ -187,7 +162,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .carte.rare .carte-nom, .carte.rare .section-titre { color: var(--rare); }
 .carte.epique .carte-nom, .carte.epique .section-titre { color: var(--epique); }
 .carte.legendaire .carte-nom, .carte.legendaire .section-titre { color: var(--legendaire); }
-
+ 
 /* ============ SET + TYPE DE DÉGÂTS (regroupés sur une seule ligne condensée) ============ */
 .carte-badges-ligne { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin: 0 0 6px; }
 /* Set thématique (ex: "Sekiro") — pilule verte, même esprit que stance-etiquette. Purement
@@ -207,7 +182,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .tag-degat.poison { background: rgba(140,255,90,0.15); color: #8cff5a; }
 .tag-degat.feu { background: rgba(255,138,61,0.15); color: #ff8a3d; }
 .tag-degat.saignement { background: rgba(224,90,90,0.15); color: #e05a5a; }
-
+ 
 .stat-ligne { font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .stat-ligne .gauche { display: flex; align-items: baseline; gap: 6px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
 .stat-ligne .label { color: var(--paper-dim); font-weight: 600; }
@@ -237,7 +212,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 .passif-ligne { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--paper-dim); line-height: 1.4; }
 .passif-ligne .texte { flex: 1 1 auto; min-width: 0; }
 .passif-ligne b { color: var(--paper); font-weight: 600; }
-
+ 
 /* :empty = piste réservée par la sous-grille mais sans contenu pour CET objet (ex: scaling sur un
    Stratagème) — pas de bordure flottante ni de padding, l'espace vide s'aligne quand même sur la
    hauteur imposée par les autres cartes de la rangée. */
@@ -261,7 +236,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
    milieu du nombre si la carte est étroite. */
 .scaling-degats { font-size: 13px; color: var(--paper-dim); margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .scaling-degats b { color: var(--paper); font-weight: 700; }
-
+ 
 /* ============ CARTE À CHANGEMENT DE STANCE ============ */
 .carte-stance { position: relative; cursor: pointer; }
 .stance-indicateur {
@@ -287,9 +262,9 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     border-radius: 4px; padding: 1px 6px; vertical-align: middle; margin-left: 4px;
 }
 .stance-etiquette-2 { background: var(--legendaire); }
-
+ 
 .vide-message { text-align: center; padding: 60px 20px; color: var(--paper-dim); }
-
+ 
 @media (max-width: 640px) {
     body { padding: 20px 12px 50px; }
     .entete h1 { font-size: 20px; }
@@ -304,7 +279,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         <h1>LE <span>CODEX</span></h1>
         <p>Tout l'arsenal disponible dans le jeu, armes, protections et Stratagèmes — indépendamment de ce que tu possèdes.</p>
     </div>
-
+ 
     <div class="legende-stats">
         <span><span class="pastille" style="background:var(--atk)"></span>Attaque</span>
         <span><span class="pastille" style="background:var(--def)"></span>Défense</span>
@@ -315,17 +290,17 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         <span><span class="pastille-malus"></span>Valeur négative (malus)</span>
         <span><span class="pilule-scaling"><span class="fleche">▲</span>+2<span class="unite">/niv.</span></span> = gain à chaque exemplaire supplémentaire possédé</span>
     </div>
-
+ 
     <div class="barre-controles">
         <input type="text" class="champ-recherche" id="champRecherche" placeholder="Rechercher un objet par son nom...">
         <button type="button" class="filtre-pilule" id="toggleNiveauMax" title="Affiche chaque objet entièrement amélioré (plafond de niveau selon sa rareté), doublons compris">Voir au niveau max</button>
     </div>
     <div class="filtres-rangee" id="filtresRarete"></div>
     <div class="compteur-resultats" id="compteurResultats"></div>
-
+ 
     <div id="grillePrincipale"></div>
 </div>
-
+ 
 <script>
     const LABELS_CATEGORIE = {
         weapon_1h: "Armes à une main", weapon_2h: "Armes à deux mains",
@@ -371,7 +346,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     }
     // Couleur associée à chaque stat pour les lignes de "Bonus" — voir la légende dans l'entête.
     const COULEUR_STAT = { atk: "var(--atk)", def: "var(--def)", pv: "var(--pv)", spd: "var(--spd)", luck: "var(--luck)", esquive: "var(--esquive)" };
-
+ 
     // Formate un nombre en tronquant les décimales inutiles (0.16 reste "0.16", 10.0 devient "10").
     function formatNombre(v) {
         return (Math.round(v * 100) / 100).toString();
@@ -385,11 +360,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const signe = valeurIncrement >= 0 ? "+" : "";
         return `<span class="pilule-scaling" title="Gagné à chaque exemplaire supplémentaire possédé de cet objet"><span class="fleche">▲</span>${signe}${formatNombre(valeurIncrement)}<span class="unite">/niv.</span></span>`;
     }
-
+ 
     const COULEUR_LETTRE_SCALING = { S: "#f2c230", A: "#e8934a", B: "#d65f5f", C: "#a878c9", D: "#6a9bc3", E: "#8d8d8d" };
     const STATS_SCALABLES = ["atk", "def", "pv", "spd", "crit"];
     const LABELS_SCALING = { atk: "ATK", def: "DEF", pv: "PV", spd: "SPD", crit: "CRIT" };
-
+ 
     const GABARITS_PASSIF = {
         Lifesteal: (v, s) => `Vol de vie : <b>${v}%</b> des dégâts infligés sont rendus en PV.`,
         PoisonDegats: (v, s) => `Poison : inflige <b>${v}</b> dégâts au tour suivant, puis <b>${Math.max(0, v - 1)}</b>, <b>${Math.max(0, v - 2)}</b>... jusqu'à 0 (s'additionne si réappliqué).`,
@@ -481,7 +456,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         ParalysieChance: "paralysieChance",
         RiposteEtourdissementTousLesCoups: "riposteEtourdissementTousLesCoups",
     };
-
+ 
     // ==========================================================
     // "VOIR AU NIVEAU MAX" — porte fidèlement AppliquerAmelioration (moteur-combat.cs) + son
     // plafond de niveau par rareté (NIVEAU_MAX_PAR_RARETE, ajouté le 25/09) en JS pur, en autonome
@@ -522,12 +497,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const c = { ...original };
         if (original.statsExtra) c.statsExtra = original.statsExtra.map(sl => ({ ...sl }));
         if (original.passifsExtra) c.passifsExtra = original.passifsExtra.map(p => ({ ...p }));
-
+ 
         if (c.stat) c.bonus = (c.bonus || 0) + niveau * (c.increment || 0);
         if (c.stat2) c.bonus2 = (c.bonus2 || 0) + niveau * (c.increment2 || 0);
         if (c.stat3) c.bonus3 = (c.bonus3 || 0) + niveau * (c.increment3 || 0);
         if (c.statsExtra) c.statsExtra.forEach(slot => { slot.bonus = (slot.bonus || 0) + niveau * (slot.increment || 0); });
-
+ 
         if (c.scaling1Stat && c.incrementBaseDegats) {
             c.baseDegatsMin = (c.baseDegatsMin || 0) + niveau * c.incrementBaseDegats;
             c.baseDegatsMax = (c.baseDegatsMax || 0) + niveau * c.incrementBaseDegats;
@@ -535,7 +510,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         if ((c.degatsDirects || 0) > 0 && c.incrementDegatsDirects) {
             c.degatsDirects = c.degatsDirects + niveau * c.incrementDegatsDirects;
         }
-
+ 
         if (c.dureeStance) {
             if (c.stance2Stat) c.stance2Bonus = (c.stance2Bonus || 0) + niveau * (c.stance2IncrementBonus || 0);
             if (c.stance2Stat2) c.stance2Bonus2 = (c.stance2Bonus2 || 0) + niveau * (c.stance2IncrementBonus2 || 0);
@@ -545,7 +520,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 c.stance2BaseDegatsMax = (c.stance2BaseDegatsMax || 0) + niveau * c.stance2IncrementBaseDegats;
             }
         }
-
+ 
         if (c.statPrincipale) {
             const champ = CHAMP_STAT_PRINCIPALE_NIVELAGE[c.statPrincipale];
             if (champ) c[champ] = (c[champ] || 0) + niveau * c.incrementPassif;
@@ -574,11 +549,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         if (c.passifsExtra) c.passifsExtra = c.passifsExtra.map(p => ({ ...p, incrementPassif: 0 }));
         return c;
     }
-
+ 
     const iconeOuImage = (ref, classeImg) => ref.image
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
         : `<span class="${classeImg}-emoji">${ref.icone}</span>`;
-
+ 
     // Ces fonctions de construction de carte sont dérivées de inventaire.html — le Codex affiche
     // les valeurs à l'état de BASE (niveau 0, puisqu'il ne s'agit pas d'un inventaire personnel),
     // mais rend désormais PUBLIC le taux de progression par doublon de chaque valeur qui évolue
@@ -592,7 +567,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const entree = s.passifsExtra.find(p => p.champ === nomStat);
         return entree ? entree.incrementPassif : 0;
     }
-
+ 
     function construirePassifs(s, exclureChamp, exclusionsSupplementaires) {
         const passifs = [];
         const exclusions = new Set([exclureChamp, ...(exclusionsSupplementaires || [])]);
@@ -614,7 +589,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         }
         return passifs;
     }
-
+ 
     // incrementDegats : rendue publique ici — c'est le rythme auquel la fourchette de dégâts de
     // base progresse par doublon possédé (IncrementBaseDegats côté moteur), affichée même sans
     // aucun objet en inventaire puisque le Codex décrit l'objet indépendamment de qui le possède.
@@ -646,12 +621,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const ligneDegats = `<div class="scaling-degats"><span class="gauche">Dégâts : <b>${Math.round(degatsMin)}–${Math.round(degatsMax)}</b></span>${pilule}</div>`;
         return `<div class="scaling-grille">${badges}</div>${ligneDegats}`;
     }
-
+ 
     function construireScaling(s) {
         if (!s.scaling1Stat) return null;
         return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.scalingExtra, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats);
     }
-
+ 
     // EXTENSION "PANOPLIE SEKIRO" (Arc de Genichiro) : rendu dédié pour les armes à modes de tir
     // multiples (modesTir), qui alternent à CHAQUE usage plutôt que d'être un simple passif
     // scalaire — absent/vide pour tout le reste du catalogue, donc n'affecte que cet objet.
@@ -671,22 +646,22 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             return `<div class="passif-ligne"><span class="texte">Mode ${i + 1} (cycle à chaque attaque) : ${details.join(', ')}</span></div>`;
         }).join('');
     }
-
+ 
     function construireDetails(s, estStrategeme) {
         if (s.soinDirect > 0) {
             // SoinDirect ne progresse que via StatPrincipale (pas de champ increment dédié).
             const piluleSoin = s.statPrincipale === "SoinDirect" ? pilluleIncrement(s.incrementPassif) : "";
-            const lignesStat = [{ label: "Montant soigné", valeur: s.soinDirect, pilule: piluleSoin, colorer: false }];
+            // Bonus de stat classiques (PV/DEF/...) D'ABORD, pour uniformiser l'ordre d'affichage
+            // avec le reste du Codex (Bonus toujours en premier) -- Montant soigné/Utilisations/
+            // Cooldown affichés ENSUITE. Vide pour un objet sans Stat/Bonus (ex: Stimulant),
+            // comportement inchangé dans ce cas.
+            const lignesStat = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, s.statsExtra);
+            lignesStat.push({ label: "Montant soigné", valeur: s.soinDirect, pilule: piluleSoin, colorer: false });
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
-            // Fusion avec les bonus de stat génériques (ex: Gourde Médicinale, qui a aussi du PV/DEF
-            // en plus de son soin actif) — sans ça, avoir un SoinDirect masquait complètement tout
-            // Stat/Bonus classique configuré sur le même objet (early return qui ne les affichait
-            // jamais). Vide pour un objet sans Stat/Bonus (ex: Stimulant), comportement inchangé.
-            lignesStat.push(...construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, s.statsExtra));
             return { scalingHtml: null, lignesStat, passifTexte: construirePassifs(s, "SoinDirect").join("") };
         }
-
+ 
         if (estStrategeme) {
             const lignesStat = [];
             if (s.degatsDirects > 0) {
@@ -711,12 +686,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             }
             if (s.usagesParCombat > 0) lignesStat.push({ label: "Utilisations", valeur: s.usagesParCombat, colorer: false });
             if (s.cooldownTours > 0) lignesStat.push({ label: "Cooldown", valeur: s.cooldownTours + " tours", colorer: false });
-
+ 
             const passifs = construirePassifs(s, "DegatsDirects", ["ShieldMontant"]);
             if (s.delaiTours > 0) passifs.push(`<div class="passif-ligne"><span class="texte">Lancé immédiatement, atterrit après <b>${s.delaiTours}</b> tour${s.delaiTours > 1 ? "s" : ""}.</span></div>`);
             return { scalingHtml: null, lignesStat, passifTexte: passifs.join("") };
         }
-
+ 
         const lignesStat = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, s.statsExtra);
         // Cas générique (armes, torse, off-hand sans SoinDirect) : Utilisations/Cooldown étaient
         // rendus SEULEMENT dans les branches SoinDirect/Stratagème ci-dessus — un objet comme les
@@ -728,7 +703,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const passifTexte = construirePassifs(s, "Bonus").join("");
         return { scalingHtml: construireScaling(s), lignesStat, passifTexte };
     }
-
+ 
     // colorer=true -> ligne de "Bonus" de stat (ATK/DEF/PV/SPD/LUCK/Esquive) : teintée de la
     // couleur propre à cette stat, avec un badge à bordure rouge pour les valeurs négatives — le
     // badge reste visible même en cas de daltonisme. La pastille de progression (si présente) est
@@ -740,7 +715,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const classeBadge = negatif ? 'stat-valeur-badge malus' : 'stat-valeur-badge';
         return `<div class="stat-ligne"><span class="gauche"><span class="label">${label}</span><span class="${classeBadge}" style="color:${couleur}">${valeur}</span></span>${piluleHtml}</div>`;
     }
-
+ 
     // incrementN : rendu public ici — le taux de progression par doublon de chaque stat de bonus
     // (Increment/Increment2/Increment3 côté moteur), affiché dans sa propre pastille à droite.
     function construireLignesStatGenerique(stat, bonus, increment, stat2, bonus2, increment2, stat3, bonus3, increment3, statsExtra) {
@@ -758,7 +733,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         (statsExtra || []).forEach(slot => ligne(slot.nom, slot.bonus, slot.increment));
         return lignes;
     }
-
+ 
     // Carte dédiée aux armes à changement de stance : affiche la stance 1 par défaut, bascule
     // vers la stance 2 (image, scaling ET bonus différents) au survol — pur CSS, voir .carte-stance
     // dans le <style>. Le passif générique décrit le mécanisme lui-même, indépendant de la stance.
@@ -770,7 +745,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const scaling2 = blocScalingUnique(item.stance2Scaling1Stat, item.stance2Scaling1Lettre, item.stance2Scaling2Stat, item.stance2Scaling2Lettre, item.stance2ScalingExtra, item.stance2BaseDegatsMin, item.stance2BaseDegatsMax, item.stance2IncrementBaseDegats);
         const stats1 = construireLignesStatGenerique(item.stat, item.bonus, item.increment, item.stat2, item.bonus2, item.increment2, item.stat3, item.bonus3, item.increment3, item.statsExtra).map(rendreLigneStat).join('');
         const stats2 = construireLignesStatGenerique(item.stance2Stat, item.stance2Bonus, item.stance2IncrementBonus, item.stance2Stat2, item.stance2Bonus2, item.stance2IncrementBonus2, item.stance2Stat3, item.stance2Bonus3, item.stance2IncrementBonus3).map(rendreLigneStat).join('');
-
+ 
         // Chaque piste de la sous-grille (en-tête, scaling, bonus) accueille les DEUX vues stance1/
         // stance2 superposées à la même ligne (bascule au survol déjà gérée par .stance-vue-1/2 en
         // CSS) — c'est ce qui permet à ces pistes de s'aligner avec celles des cartes classiques de
@@ -789,28 +764,28 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 <div class="carte-corps">
                     <div class="carte-cabecera fila-header stance-vue stance-vue-1">${construireNomLigne(item, ' <span class="stance-etiquette">Stance 1</span>')}${construireBadgesLigne(item)}</div>
                     <div class="carte-cabecera fila-header stance-vue stance-vue-2">${construireNomLigne(item, ' <span class="stance-etiquette stance-etiquette-2">Stance 2</span>')}</div>
-
+ 
                     <div class="bloc-section fila-scaling stance-vue stance-vue-1">${scaling1 ? `<div class="section-titre">Scaling</div>${scaling1}` : ''}</div>
                     <div class="bloc-section fila-scaling stance-vue stance-vue-2">${scaling2 ? `<div class="section-titre">Scaling</div>${scaling2}` : ''}</div>
-
+ 
                     <div class="bloc-section fila-bonus stance-vue stance-vue-1">${stats1 ? `<div class="section-titre">Bonus</div>${stats1}` : ''}</div>
                     <div class="bloc-section fila-bonus stance-vue stance-vue-2">${stats2 ? `<div class="section-titre">Bonus</div>${stats2}` : ''}</div>
-
+ 
                     <div class="bloc-section fila-passif">
                     <div class="section-titre">Passif</div>
                     <div class="bloc-passif">
                     <div class="passif-ligne">
-                    <span class="text">Alterne de stance toutes les <b>${item.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge les états de poison et les brûlures qui vous sont appliquées.</span>
+                    <span class="texte">Alterne de stance toutes les <b>${item.dureeStance}</b> tours du porteur. Le retour à la Stance 1 purge les états de poison et les brûlures qui vous sont appliquées.</span>
                     </div>
                     </div></div>
                 </div>
             </div>
         `;
     }
-
+ 
     function construireCarte(numero, item) {
         if (item.dureeStance > 0) return construireCarteStance(numero, item);
-
+ 
         const rarete = item.rarete || 'commun';
         const estStrategeme = item.slot === 'strategeme';
         const { scalingHtml, lignesStat, passifTexte } = construireDetails(item, estStrategeme);
@@ -833,13 +808,13 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             </div>
         `;
     }
-
+ 
     let STATS = {};
     let raretesDisponibles = [];
     let raretesActives = new Set();
     let texteRecherche = '';
     let afficherNiveauMax = false;
-
+ 
     function appliquerFiltres() {
         document.querySelectorAll('.carte').forEach(carte => {
             const correspondNom = carte.dataset.nom.includes(texteRecherche);
@@ -854,7 +829,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const totalGeneral = document.querySelectorAll('.carte').length;
         document.getElementById('compteurResultats').textContent = `${totalVisible} / ${totalGeneral} objet(s) affiché(s)`;
     }
-
+ 
     function construirePage() {
         const parCategorie = { weapon_1h: [], weapon_2h: [], offhand: [], torso: [], strategeme: [] };
         raretesDisponibles = [];
@@ -866,17 +841,17 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             const rarete = item.rarete || 'commun';
             if (!raretesDisponibles.includes(rarete)) raretesDisponibles.push(rarete);
         }
-
+ 
         const ordreRarete = ['commun', 'normal', 'rare', 'epique', 'legendaire'];
         raretesDisponibles.sort((a, b) => ordreRarete.indexOf(a) - ordreRarete.indexOf(b));
-
+ 
         // ⚠️ raretesActives (le filtre choisi) survit à un reconstruirePage() (ex: bascule "niveau
         // max", qui reconstruit toute la grille sans repartir de zéro) — les pastilles régénérées
         // doivent donc refléter son état ACTUEL, pas retomber sur "Toutes les raretés" par défaut.
         const filtresEl = document.getElementById('filtresRarete');
         filtresEl.innerHTML = `<div class="filtre-pilule${raretesActives.size === 0 ? ' actif' : ''}" data-rarete="tous">Toutes les raretés</div>`
             + raretesDisponibles.map(r => `<div class="filtre-pilule r-${r}${raretesActives.has(r) ? ' actif' : ''}" data-rarete="${r}">${LABELS_RARETE[r] || r}</div>`).join('');
-
+ 
         filtresEl.querySelectorAll('.filtre-pilule').forEach(pilule => {
             pilule.addEventListener('click', () => {
                 const rarete = pilule.dataset.rarete;
@@ -893,7 +868,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                 appliquerFiltres();
             });
         });
-
+ 
         const conteneur = document.getElementById('grillePrincipale');
         let html = '';
         Object.keys(LABELS_CATEGORIE).forEach(cat => {
@@ -903,7 +878,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             items.sort((a, b) => {
                 const indexA = ordreRarete.indexOf(a.item.rarete || 'commun');
                 const indexB = ordreRarete.indexOf(b.item.rarete || 'commun');
-
+ 
                 if (indexA !== indexB) {
                     return indexA - indexB;
                 }
@@ -919,12 +894,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         conteneur.innerHTML = html || '<div class="vide-message">Aucun objet dans le catalogue pour le moment.</div>';
         appliquerFiltres();
     }
-
+ 
     document.getElementById('champRecherche').addEventListener('input', (e) => {
         texteRecherche = e.target.value.trim().toLowerCase();
         appliquerFiltres();
     });
-
+ 
     // "Voir au niveau max" : bascule globale, reconstruit toute la page (les objets affichés
     // viennent alors de construireVersionNiveauMax au lieu des données brutes du catalogue) — pas
     // besoin de recharger catalogue_stats.json, tout se recalcule côté client.
@@ -933,7 +908,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         e.currentTarget.classList.toggle('actif', afficherNiveauMax);
         construirePage();
     });
-
+ 
     fetch('catalogue_stats.json?v=' + Date.now())
         .then(r => r.json())
         .then(data => {
