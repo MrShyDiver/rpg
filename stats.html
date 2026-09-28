@@ -223,6 +223,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const couleurPower = couleurPercentile(percentileDepuisRang(cl.rangPower, cl.totalPower));
         const couleurPoints = couleurPercentile(percentileDepuisRang(cl.rangPoints, cl.totalPoints));
         const pvAffiche = Math.round(sp.pvBase / 10);
+        // SPD : le total remonté par le serveur (sp.spd) est la valeur RÉELLE, réduite par le
+        // rendement dégressif tanh -- mais la décomposition juste en dessous affiche toujours les
+        // points BRUTS investis (voir decomposerSpd), donc base+investi+objets ne retombe pas sur
+        // sp.spd (ex. Ronon : 35 affiché au-dessus de "10+29+0" qui fait 39). Pour que le gros
+        // chiffre corresponde à sa propre décomposition, on affiche ici la somme brute
+        // (base+investi+objets) plutôt que sp.spd -- la vraie valeur réduite reste utilisée par le
+        // moteur de combat, seul cet affichage change.
+        const dSpd = decomposerSpd(sp.spd, sp.spdStacks || 0);
+        const spdAffiche = BASE_SPD + dSpd.investi + dSpd.objets;
 
         document.getElementById('zoneStatistiques').innerHTML = `
             <div class="titre-section">Statistiques</div>
@@ -245,7 +254,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                     <span class="stat-sous-ligne">${sp.crit}% crit</span>
                 </div>
                 <div class="stat-carte stat-spd"><div class="stat-label">Speed</div>
-                    <div class="stat-valeur-ligne"><div class="stat-valeur">${Math.round(sp.spd)}</div>${ligneDetail(decomposerSpd(sp.spd, sp.spdStacks || 0), BASE_SPD, 1)}</div>
+                    <div class="stat-valeur-ligne"><div class="stat-valeur">${spdAffiche}</div>${ligneDetail(dSpd, BASE_SPD, 1)}</div>
                 </div>
             </div>
             <div class="legende-detail">
