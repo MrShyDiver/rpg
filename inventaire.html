@@ -31,7 +31,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
    Toujours affiches, meme a zero : voir "0 ticket de reset" apprend qu'ils
    existent et ou les obtenir, alors qu'un bloc qui n'apparait que si on en a
    deja n'apprend rien a celles et ceux qui n'en ont jamais eu. */
-.encarts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.encarts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
 .encart {
     position: relative; background: var(--bg-panel); border: 1px solid var(--line);
     border-top: 3px solid var(--accent); border-radius: 6px; padding: 13px 15px 15px;
@@ -75,9 +75,6 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--accent);
     background: rgba(0,0,0,.4); padding: 1px 7px; border-radius: 3px; white-space: nowrap;
 }
-
-@media (max-width: 900px) { .encarts { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 420px) { .encarts { grid-template-columns: 1fr; } }
 
 .titre-section {
     font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
@@ -398,6 +395,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     let equipeParSlot = { weapon: 0, offhand: 0, torso: 0, strategeme: 0 };
     let possedesParam = [];
     let nbLootbox = 0;
+    let nbLootboxLegendaire = 0;
 
     const iconeOuImage = (ref, classeImg) => ref.image
         ? `<img src="${ref.image}" alt="" class="${classeImg}">`
@@ -443,21 +441,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     // Rangée de badges de scaling (ATK/DEF/PV/SPD/CRIT) — seulement pour une arme qui en définit.
     // Un tiret long remplace la lettre pour toute stat sur laquelle l'arme ne scale pas.
-    // ⚠️ EXTENSION "scaling illimité" : scalingExtra est une liste de { stat, lettre }, symétrique
-    // à statsExtra/passifsExtra ailleurs sur cette page. On construit d'abord la liste COMPLÈTE
-    // des scalings configurés (scaling1 + scaling2 + scalingExtra) puis on boucle sur
-    // STATS_SCALABLES en cherchant dans cette liste — absent/vide pour tout objet existant,
-    // comportement strictement identique à avant son ajout (scaling1/scaling2 restent trouvés en
-    // priorité, même ordre).
-    function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, scalingExtra, baseMin, baseMax, incrementBaseDegats, niveau) {
-        const listeScalings = [
-            { stat: scaling1Stat, lettre: scaling1Lettre },
-            { stat: scaling2Stat, lettre: scaling2Lettre },
-            ...(scalingExtra || []),
-        ].filter(sc => sc.stat);
+    function blocScalingUnique(scaling1Stat, scaling1Lettre, scaling2Stat, scaling2Lettre, baseMin, baseMax, incrementBaseDegats, niveau) {
         const badges = STATS_SCALABLES.map(stat => {
-            const trouve = listeScalings.find(sc => sc.stat === stat);
-            const lettre = trouve ? trouve.lettre : null;
+            let lettre = null;
+            if (scaling1Stat === stat) lettre = scaling1Lettre;
+            else if (scaling2Stat === stat) lettre = scaling2Lettre;
             const couleur = lettre ? (COULEUR_LETTRE_SCALING[lettre] || "#8d8d8d") : "#555";
             return `<div class="scaling-item"><span class="scaling-label">${LABELS_SCALING[stat]}</span><span class="scaling-lettre" style="color:${couleur}">${lettre || "—"}</span></div>`;
         }).join("");
@@ -475,7 +463,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
     function construireScaling(s, niveau) {
         if (!s.scaling1Stat) return null;
-        return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.scalingExtra, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
+        return blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
     }
 
     // colorer=true -> ligne de "Bonus" de stat (ATK/DEF/PV/SPD/LUCK/Esquive) : teintée de la
@@ -524,8 +512,8 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
         const s = item;
         const imageStance1 = iconeOuImage(s, 'carte-icon');
         const imageStance2 = iconeOuImage({ image: s.stance2ImageUrl || s.image, icone: s.icone }, 'carte-icon');
-        const scaling1 = blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.scalingExtra, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
-        const scaling2 = blocScalingUnique(s.stance2Scaling1Stat, s.stance2Scaling1Lettre, s.stance2Scaling2Stat, s.stance2Scaling2Lettre, s.stance2ScalingExtra, s.stance2BaseDegatsMin, s.stance2BaseDegatsMax, s.stance2IncrementBaseDegats, niveau);
+        const scaling1 = blocScalingUnique(s.scaling1Stat, s.scaling1Lettre, s.scaling2Stat, s.scaling2Lettre, s.baseDegatsMin, s.baseDegatsMax, s.incrementBaseDegats, niveau);
+        const scaling2 = blocScalingUnique(s.stance2Scaling1Stat, s.stance2Scaling1Lettre, s.stance2Scaling2Stat, s.stance2Scaling2Lettre, s.stance2BaseDegatsMin, s.stance2BaseDegatsMax, s.stance2IncrementBaseDegats, niveau);
         const stats1 = construireLignesStatGenerique(s.stat, s.bonus, s.increment, s.stat2, s.bonus2, s.increment2, s.stat3, s.bonus3, s.increment3, niveau, s.statsExtra).map(rendreLigneStat).join('');
         const stats2 = construireLignesStatGenerique(s.stance2Stat, s.stance2Bonus, s.stance2IncrementBonus, s.stance2Stat2, s.stance2Bonus2, s.stance2IncrementBonus2, s.stance2Stat3, s.stance2Bonus3, s.stance2IncrementBonus3, niveau).map(rendreLigneStat).join('');
 
@@ -833,6 +821,7 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
     // taper pour s'en servir, ou comment en obtenir.
     function construireEncarts(r) {
         const lienShop = `shop.html?user=${encodeURIComponent(pseudo)}`;
+        const lienCalc = `calculateur.html?user=${encodeURIComponent(pseudo)}`;
         const encarts = [
             {
                 label: 'Médailles', accent: '#f2c230', icone: '🏅', valeur: r.medailles,
@@ -860,12 +849,20 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
                         au lieu d'être perdu.</p>`,
             },
             {
+                label: 'Lootbox légendaire', accent: '#f2c230', icone: '🌟', valeur: r.lootboxLegendaire,
+                sous: r.lootboxLegendaire > 0 ? 'À ouvrir' : 'Aucune en attente',
+                bulle: `<p><span class="cmd">!lootboxleg</span> ouvre une boîte légendaire et te
+                        donne un objet légendaire garanti.</p>
+                        <p>Si tu possèdes déjà l'objet tiré, le doublon le fait monter d'un niveau
+                        au lieu d'être perdu.</p>`,
+            },
+            {
                 label: 'Tickets de reset', accent: '#4a9fd8', icone: '♻️', valeur: r.ticketsReset,
                 // Les points en attente priment sur tout le reste : c'est une action
                 // à faire, pas une simple information.
                 sous: r.creditsReset > 0
                     ? `<b style="color:#4a9fd8">${r.creditsReset} point(s) à placer</b>`
-                    : (r.ticketsReset > 0 ? 'Prêt à réinitialiser' : 'S\'achète en boutique'),
+                    : (r.ticketsReset > 0 ? `<a href="${lienCalc}">Aller au calculateur</a>` : 'S\'achète en boutique'),
                 bulle: `<p><span class="cmd">!reset</span> remet toutes tes statistiques à zéro et
                         te rend la totalité des points investis.</p>
                         <p>Tu les replaces ensuite où tu veux avec
@@ -950,13 +947,15 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
             };
             possedesParam = joueur.inventaire || [];
             nbLootbox = joueur.lootbox || 0;
+            nbLootboxLegendaire = joueur.lootboxLegendaire || 0;
 
             construireEncarts({
-                medailles:    joueur.medailles    || 0,
-                tickets:      joueur.tickets      || 0,
-                lootbox:      nbLootbox,
-                ticketsReset: joueur.ticketsReset || 0,
-                creditsReset: joueur.creditsReset || 0,
+                medailles:         joueur.medailles         || 0,
+                tickets:           joueur.tickets           || 0,
+                lootbox:           nbLootbox,
+                lootboxLegendaire: nbLootboxLegendaire,
+                ticketsReset:      joueur.ticketsReset      || 0,
+                creditsReset:      joueur.creditsReset      || 0,
             });
 
             try {
