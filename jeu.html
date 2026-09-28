@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Sécurité : mêmes règles que jeu.html. Si tu modifies le script en bas de page, son empreinte
      sha256 change : regénère-la (sinon le navigateur refuse de l'exécuter). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net 'sha256-SbCIQOzCEVge4LBmjtAXT0nx9ySQHMG1jvmt05iUJVM='; connect-src 'self' https://jpmrgxezdzkvbkctwqlh.supabase.co wss://jpmrgxezdzkvbkctwqlh.supabase.co; img-src 'self' https://static-cdn.jtvnw.net data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net 'sha256-sydWWtX1srLXNGwnrXSaKUIE2iCXj/vRmUsdGxhCv7g='; media-src 'self'; connect-src 'self' https://jpmrgxezdzkvbkctwqlh.supabase.co wss://jpmrgxezdzkvbkctwqlh.supabase.co; img-src 'self' https://static-cdn.jtvnw.net data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Stream RPG</title>
 <meta name="description" content="Le jeu de rôle de la chaîne MrShyDiver : gagne des lootbox en live, ouvre-les ici, équipe ton personnage et affronte le chat en duel.">
@@ -157,22 +157,102 @@ body { overflow-x: clip; }
 .mention-demo { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--encre-3); }
 .mention-demo::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--encre-3); flex: none; }
 
-/* ---------- Lootbox : distribution et retournement des cartes ---------- */
+/* ---------- Lootbox : le coffre qui tremble, s'ouvre et libère les cartes ---------- */
+#lootbox .colonne { max-width: 960px; }
+.cf-o { fill: var(--contour, #160f0c); } .cf-b { fill: var(--bois, #7b4a2a); } .cf-bc { fill: var(--bois-clair, #a0643a); }
+.cf-bs { fill: var(--bois-sombre, #4b2c19); } .cf-m { fill: var(--metal, #9a9cae); } .cf-ms { fill: var(--metal-sombre, #5d5f70); } .cf-s { fill: var(--serrure, #ffc53d); }
+.version-legendaire { --bois: #3b2566; --bois-clair: #553692; --bois-sombre: #231543; --metal: #ffc53d; --metal-sombre: #b8841f; --serrure: #fff1c2; }
+
+.types-lootbox { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 30px; }
+.type-lootbox {
+  display: flex; gap: 14px; align-items: center; text-align: left; padding: 14px 16px; border-radius: 16px;
+  background: var(--sol-2); border: 1px solid var(--trait); transition: border-color .2s, background .2s, transform .2s var(--ease);
+}
+.type-lootbox:hover { border-color: var(--trait-fort); }
+.type-lootbox[aria-pressed="true"] { border-color: color-mix(in oklab, var(--c-type) 70%, transparent); background: color-mix(in oklab, var(--c-type) 9%, var(--sol-2)); }
+.type-lootbox[data-type="standard"] { --c-type: var(--encre-2); }
+.type-lootbox[data-type="legendaire"] { --c-type: var(--legendaire); }
+.type-lootbox svg { flex: none; width: 56px; height: auto; }
+.type-lootbox .titre-type { display: block; font-size: 15.5px; font-weight: 700; color: var(--encre); }
+.type-lootbox[data-type="legendaire"] .titre-type { color: var(--legendaire); }
+.type-lootbox .texte-type { display: block; font-size: 14px; color: var(--encre-2); margin-top: 2px; line-height: 1.45; }
+.type-lootbox:disabled { cursor: progress; }
+
 .table-jeu {
-  position: relative; margin-top: 34px; border-radius: 22px; overflow: hidden;
-  background:
-    radial-gradient(60% 80% at 50% 110%, rgba(145,70,255,.16), transparent 70%),
-    radial-gradient(40% 60% at 50% 45%, rgba(255,255,255,.035), transparent 70%),
-    var(--sol-2);
-  border: 1px solid var(--trait);
-  height: var(--h-table, 380px);
+  position: relative; margin-top: 14px; border-radius: 22px; overflow: hidden;
+  background: radial-gradient(55% 60% at 50% 100%, rgba(145,70,255,.13), transparent 70%), var(--sol-2);
+  border: 1px solid var(--trait); height: var(--h-table, 420px);
 }
 .table-jeu::before { /* feutrine discrète */
   content: ""; position: absolute; inset: 0; opacity: .5; pointer-events: none;
   background-image: radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px); background-size: 14px 14px;
 }
-.dcarte { position: absolute; left: 0; top: 0; width: var(--dw, 124px); transition: transform .7s var(--ease); will-change: transform; perspective: 900px; z-index: 1; }
-.dcarte-in { position: relative; transform-style: preserve-3d; transition: transform .75s var(--ease); }
+.table-jeu.passable { cursor: pointer; }
+.table-jeu.flash-leg::after {
+  content: ""; position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(255,244,214,.95), rgba(255,197,61,.35) 35%, transparent 70%);
+  animation: flash-table 1s ease-out forwards;
+}
+@keyframes flash-table { from { opacity: 1; } to { opacity: 0; } }
+
+.coffre { --lueur: #f4f2ec; --force: 1; position: absolute; left: 50%; top: 50%; width: min(230px, 46%); translate: -50% -46%; z-index: 2; transition: translate .7s var(--ease); }
+.coffre svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 16px 14px rgba(0,0,0,.65)); transition: opacity .5s var(--ease), scale .6s var(--ease); }
+.coffre:not(.tremble):not(.ouvert) svg { animation: flotte 3.4s ease-in-out infinite; }
+@keyframes flotte { 50% { transform: translateY(-5px); } }
+.coffre.tremble svg { animation: secousse .11s linear infinite; }
+@keyframes secousse {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(calc(var(--force) * -1.6px), calc(var(--force) * .6px)) rotate(calc(var(--force) * -.9deg)); }
+  50% { transform: translate(calc(var(--force) * 1.4px), calc(var(--force) * -.8px)) rotate(calc(var(--force) * .7deg)); }
+  75% { transform: translate(calc(var(--force) * -.8px), calc(var(--force) * -.4px)) rotate(calc(var(--force) * -.4deg)); }
+}
+.couvercle { transform-box: fill-box; transform-origin: 8% 100%; transition: transform .45s cubic-bezier(.3, 1.7, .5, 1); }
+.coffre.tremble .couvercle { animation: sautille .2s steps(2) infinite; }
+@keyframes sautille { 50% { transform: translateY(calc(var(--force) * -.35px)); } }
+.coffre.ouvert .couvercle { animation: none; transform: translate(-1px, -6px) rotate(-24deg); }
+.fente { fill: var(--lueur); opacity: 0; transition: opacity .3s, fill .35s; }
+.coffre.tremble .fente { opacity: calc(.3 + var(--force) * .16); }
+.interieur { fill: var(--lueur); opacity: 0; transition: opacity .2s; }
+.coffre.ouvert .interieur { opacity: 1; }
+.halo {
+  position: absolute; left: 50%; top: 40%; width: 170%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; z-index: -1; pointer-events: none;
+  background: radial-gradient(circle, color-mix(in oklab, var(--lueur) 60%, transparent), transparent 62%);
+  opacity: 0; scale: .5; transition: opacity .35s, scale .45s var(--ease);
+}
+.coffre.tremble .halo { opacity: calc(.1 + var(--force) * .09); scale: calc(.55 + var(--force) * .09); }
+.coffre.ouvert .halo { opacity: .9; scale: 1.2; }
+.faisceau {
+  position: absolute; left: 50%; bottom: 58%; width: 62%; height: 210%; translate: -50% 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(to top, color-mix(in oklab, var(--lueur) 80%, #fff), color-mix(in oklab, var(--lueur) 35%, transparent) 45%, transparent);
+  clip-path: polygon(28% 100%, 72% 100%, 100% 0, 0 0); filter: blur(5px);
+  opacity: 0; transform-origin: 50% 100%; scale: 1 0; transition: opacity .3s, scale .55s var(--ease);
+}
+.coffre.ouvert .faisceau { opacity: .85; scale: 1 1; }
+.rayons {
+  position: absolute; left: 50%; top: 38%; width: 360%; aspect-ratio: 1; translate: -50% -50%; z-index: -2; pointer-events: none;
+  background: repeating-conic-gradient(color-mix(in oklab, var(--lueur) 40%, transparent) 0 5deg, transparent 5deg 15deg);
+  -webkit-mask: radial-gradient(circle, #000 0 14%, transparent 60%); mask: radial-gradient(circle, #000 0 14%, transparent 60%);
+  opacity: 0; transition: opacity .6s; animation: rayons 16s linear infinite;
+}
+@keyframes rayons { to { rotate: 360deg; } }
+.coffre.rayonne .rayons { opacity: .75; }
+.onde { position: absolute; left: 50%; top: 40%; width: 40px; height: 40px; margin: -20px; border-radius: 50%; border: 3px solid var(--lueur); opacity: 0; pointer-events: none; }
+.coffre.ouvert .onde { animation: onde .8s var(--ease) forwards; }
+@keyframes onde { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(9); } }
+/* Une fois les cartes sorties, le coffre s'efface : il ne reste que sa lumière derrière elles. */
+.coffre.recule { translate: -50% -50%; }
+.coffre.recule svg { opacity: 0; scale: .7; }
+.coffre.recule .faisceau, .coffre.recule .fente { opacity: 0; }
+.coffre.recule .halo { opacity: .45; scale: 1.6; }
+
+.etincelle {
+  position: absolute; left: var(--x); top: var(--y); width: 6px; height: 6px; background: var(--c); z-index: 3; pointer-events: none;
+  animation: etincelle var(--d, .9s) cubic-bezier(.2, .7, .3, 1) forwards;
+}
+@keyframes etincelle { from { transform: translate(0, 0); opacity: 1; } to { transform: translate(var(--dx), calc(var(--dy) + 50px)) scale(.4) rotate(90deg); opacity: 0; } }
+
+.dcarte { position: absolute; left: 0; top: 0; width: var(--dw, 124px); transition: transform .75s var(--ease), opacity .35s; will-change: transform; perspective: 900px; z-index: 4; }
+.dcarte-in { position: relative; transform-style: preserve-3d; transition: transform .7s var(--ease); }
 .dcarte.retournee .dcarte-in { transform: rotateY(180deg); }
 .dos, .dcarte .face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .dcarte .face { position: absolute; inset: 0; transform: rotateY(180deg); }
@@ -187,42 +267,41 @@ body { overflow-x: clip; }
 }
 .dos svg { width: 42%; opacity: .95; }
 /* Anticipation : le dos s'illumine de la couleur de rareté avant de se retourner. */
-.dcarte.charge .dos { animation: vibre var(--vib, .5s) linear; box-shadow: inset 0 0 0 5px #15121f, inset 0 0 0 6px var(--c), 0 0 38px -4px var(--c), 0 0 90px -20px var(--c); border-color: var(--c); transition: box-shadow .35s, border-color .35s; }
+.dcarte.charge .dos { animation: vibre var(--vib, .5s) linear; box-shadow: inset 0 0 0 5px #15121f, inset 0 0 0 6px var(--c), 0 0 38px -4px var(--c), 0 0 90px -20px var(--c); border-color: var(--c); transition: box-shadow .3s, border-color .3s; }
 @keyframes vibre { 0%,100% { transform: translate(0,0) } 20% { transform: translate(-1.5px,1px) rotate(-.6deg) } 40% { transform: translate(1.5px,-1px) rotate(.6deg) } 60% { transform: translate(-1px,-1px) } 80% { transform: translate(1px,1px) rotate(.4deg) } }
 .dcarte .libelle-rarete {
-  position: absolute; left: 50%; top: calc(100% + 12px); transform: translate(-50%, 6px); opacity: 0;
-  font-family: var(--titre); font-weight: 700; font-size: 12.5px; letter-spacing: .01em; color: var(--c); white-space: nowrap;
+  position: absolute; left: 50%; top: calc(100% + 10px); transform: translate(-50%, 6px); opacity: 0;
+  font-family: var(--titre); font-weight: 700; font-size: clamp(10px, calc(var(--dw, 124px) * .1), 12.5px); letter-spacing: .01em; color: var(--c); white-space: nowrap;
   transition: opacity .4s, transform .4s var(--ease);
 }
 .dcarte.retournee .libelle-rarete { opacity: 1; transform: translate(-50%, 0); }
 .dcarte.haute.retournee .face { box-shadow: 0 0 0 1px var(--c), 0 22px 44px -18px color-mix(in oklab, var(--c) 70%, transparent); }
-#lootbox .colonne { max-width: 960px; }
 .eclat { position: absolute; inset: -30%; border-radius: 50%; pointer-events: none; z-index: -1;
   background: radial-gradient(circle, color-mix(in oklab, var(--c) 70%, transparent) 0%, transparent 62%); opacity: 0; transform: scale(.4); }
 .dcarte.eclate .eclat { animation: eclat 1.1s var(--ease) forwards; }
 @keyframes eclat { 0% { opacity: .95; transform: scale(.4); } 100% { opacity: 0; transform: scale(1.6); } }
-.flash { position: absolute; left: 50%; top: 42%; width: 320px; height: 320px; margin: -160px 0 0 -160px; border-radius: 50%; pointer-events: none; z-index: 0;
-  background: radial-gradient(circle, rgba(255,236,190,.55), rgba(183,119,255,.22) 35%, transparent 65%); opacity: 0; transform: scale(.3); }
-.table-jeu.ouvre .flash { animation: flash .9s var(--ease); }
-@keyframes flash { 0% { opacity: 0; transform: scale(.3); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5); } }
-.dcarte.secoue .dcarte-in { animation: vibre .45s linear; }
-.commandes-table { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; z-index: 5; }
+.btn-passer {
+  position: absolute; right: 14px; bottom: 14px; z-index: 7; padding: 8px 13px; border-radius: 10px;
+  background: rgba(12,13,18,.75); border: 1px solid var(--trait-fort); font-size: 13px; font-weight: 600; color: var(--encre-2);
+}
+.btn-passer:hover { color: var(--encre); }
+
+.commandes-coffre { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; margin-top: 14px; }
+.boutons-ouvrir { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn-ouvrir {
   font-family: var(--titre); font-weight: 700; font-size: 14.5px; letter-spacing: -.005em;
   padding: 13px 20px; border-radius: 12px; color: #16120a; background: var(--legendaire);
   box-shadow: 0 10px 22px -12px rgba(0,0,0,.9), inset 0 -2px 0 rgba(0,0,0,.18);
   transition: transform .2s var(--ease), filter .2s, opacity .2s;
 }
-.btn-ouvrir:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.btn-ouvrir.second { background: transparent; color: var(--legendaire); box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--legendaire) 65%, transparent); }
+.btn-ouvrir:hover { transform: translateY(-1px); filter: brightness(1.08); }
 .btn-ouvrir:active { transform: translateY(1px); }
-.btn-ouvrir:disabled { opacity: .45; cursor: progress; transform: none; }
-.types-lootbox { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 30px; }
-.type-lootbox { display: flex; gap: 14px; align-items: flex-start; }
-.type-lootbox .jeton { flex: none; width: 40px; height: 56px; border-radius: 7px; background: linear-gradient(160deg, #2a1d4a, #121019); border: 1px solid rgba(183,119,255,.4); display: grid; place-items: center; }
-.type-lootbox .jeton.or { background: linear-gradient(160deg, #4a3812, #1b150a); border-color: rgba(255,197,61,.55); }
-.type-lootbox .jeton svg { width: 20px; }
-.type-lootbox h3 { font-family: var(--texte); font-size: 15.5px; font-weight: 700; letter-spacing: 0; }
-.type-lootbox p { font-size: 14px; color: var(--encre-2); margin-top: 2px; }
+.btn-ouvrir:disabled { opacity: .4; cursor: progress; transform: none; }
+.btn-son { display: inline-flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--trait-fort); font-size: 14px; font-weight: 600; color: var(--encre-2); }
+.btn-son svg { width: 18px; height: 18px; }
+.btn-son:hover { color: var(--encre); }
+.btn-son[aria-pressed="false"] .onde-son { display: none; }
 
 /* ---------- Arsenal ---------- */
 .emplacements { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 38px; }
@@ -489,10 +568,8 @@ body { overflow-x: clip; }
   .rangee .carte { width: 120px; }
   .rang-ligne { grid-template-columns: 26px 38px minmax(0, 1fr) auto; gap: 10px; padding: 10px 12px; }
   .avatar { width: 38px; height: 38px; }
-  .commandes-table { padding: 12px 14px; }
-  .btn-ouvrir { padding: 11px 15px; font-size: 13.5px; }
-  .commandes-table { justify-content: center; }
-  .commandes-table .mention-demo { display: none; }
+  .btn-ouvrir { padding: 11px 14px; font-size: 13.5px; }
+  .type-lootbox svg { width: 44px; }
   .liens-entete a:first-child { display: none; }
   .heros { padding-bottom: 84px; }
   .emplacements { overflow: clip; overflow-clip-margin: 12px; }
@@ -524,6 +601,14 @@ body { overflow-x: clip; }
         <rect x="13" y="22" width="3" height="3" fill="#b777ff"/><rect x="16" y="25" width="3" height="3" fill="#b777ff"/><rect x="11" y="20" width="3" height="3" fill="#b777ff"/>
         <rect x="11" y="27" width="3" height="3" fill="#f4f2ec"/>
       </g>
+    </symbol>
+    <symbol id="i-coffre" viewBox="0 0 32 26" shape-rendering="crispEdges">
+      <rect class="cf-o" x="3" y="10" width="26" height="15"/><rect class="cf-b" x="4" y="11" width="24" height="13"/><rect class="cf-bc" x="4" y="11" width="24" height="1"/>
+      <rect class="cf-bs" x="4" y="15" width="24" height="1"/><rect class="cf-bs" x="4" y="19" width="24" height="1"/><rect class="cf-bs" x="4" y="23" width="24" height="1"/>
+      <rect class="cf-m" x="7" y="11" width="3" height="13"/><rect class="cf-ms" x="9" y="11" width="1" height="13"/><rect class="cf-m" x="22" y="11" width="3" height="13"/><rect class="cf-ms" x="24" y="11" width="1" height="13"/>
+      <rect class="cf-o" x="4" y="2" width="24" height="1"/><rect class="cf-o" x="3" y="3" width="26" height="8"/><rect class="cf-b" x="4" y="3" width="24" height="7"/><rect class="cf-bc" x="4" y="3" width="24" height="2"/>
+      <rect class="cf-bs" x="4" y="8" width="24" height="1"/><rect class="cf-m" x="7" y="3" width="3" height="7"/><rect class="cf-ms" x="9" y="3" width="1" height="7"/><rect class="cf-m" x="22" y="3" width="3" height="7"/><rect class="cf-ms" x="24" y="3" width="1" height="7"/>
+      <rect class="cf-ms" x="3" y="10" width="26" height="1"/><rect class="cf-o" x="13" y="8" width="6" height="9"/><rect class="cf-s" x="14" y="9" width="4" height="1"/><rect class="cf-s" x="14" y="12" width="4" height="4"/><rect class="cf-o" x="15.5" y="13" width="1" height="2"/>
     </symbol>
   </defs>
 </svg>
@@ -582,27 +667,74 @@ body { overflow-x: clip; }
       <section class="section" id="lootbox" aria-labelledby="t-lootbox">
         <div class="colonne">
           <h2 id="t-lootbox">Ouvre tes lootbox</h2>
-          <p class="chapeau">Une lootbox, un objet. Plus il est rare, plus la carte s'illumine avant de se retourner.</p>
+          <p class="chapeau">Une lootbox, un objet. Le coffre tremble, s'illumine… et plus il résiste, plus ce qu'il cache est rare.</p>
+
+          <div class="types-lootbox" role="group" aria-label="Choisis ta lootbox">
+            <button type="button" class="type-lootbox" data-type="standard" aria-pressed="true">
+              <svg viewBox="0 0 32 26" aria-hidden="true"><use href="#i-coffre"/></svg>
+              <span><span class="titre-type">Lootbox</span><span class="texte-type">Gagnée en live avec tes points de chaîne.</span></span>
+            </button>
+            <button type="button" class="type-lootbox version-legendaire" data-type="legendaire" aria-pressed="false">
+              <svg viewBox="0 0 32 26" aria-hidden="true"><use href="#i-coffre"/></svg>
+              <span><span class="titre-type">Lootbox légendaire</span><span class="texte-type">Jamais de Commun. Elle se gagne en abattant le boss de la communauté.</span></span>
+            </button>
+          </div>
 
           <div class="table-jeu" id="table-jeu">
-            <span class="flash" aria-hidden="true"></span>
-            <div class="commandes-table">
-              <span class="mention-demo" id="mention-tirage">Présentation des 5 raretés</span>
-              <button class="btn-ouvrir" id="btn-ouvrir" type="button">Ouvrir 5 lootbox</button>
+            <div class="coffre" id="coffre" aria-hidden="true">
+              <span class="rayons"></span>
+              <span class="halo"></span>
+              <span class="faisceau"></span>
+              <span class="onde"></span>
+              <svg viewBox="0 0 32 26" shape-rendering="crispEdges">
+                <g>
+                  <rect class="cf-o" x="3" y="10" width="26" height="15"/>
+                  <rect class="cf-b" x="4" y="11" width="24" height="13"/>
+                  <rect class="cf-bc" x="4" y="11" width="24" height="1"/>
+                  <rect class="cf-bs" x="4" y="15" width="24" height="1"/>
+                  <rect class="cf-bs" x="4" y="19" width="24" height="1"/>
+                  <rect class="cf-bs" x="4" y="23" width="24" height="1"/>
+                  <rect class="cf-m" x="7" y="11" width="3" height="13"/>
+                  <rect class="cf-ms" x="9" y="11" width="1" height="13"/>
+                  <rect class="cf-m" x="22" y="11" width="3" height="13"/>
+                  <rect class="cf-ms" x="24" y="11" width="1" height="13"/>
+                  <rect class="cf-o" x="13" y="11" width="6" height="6"/>
+                  <rect class="cf-s" x="14" y="12" width="4" height="4"/>
+                  <rect class="cf-o" x="15.5" y="13" width="1" height="2"/>
+                </g>
+                <rect class="interieur" x="4" y="9" width="24" height="2.5"/>
+                <g class="couvercle">
+                  <rect class="cf-o" x="4" y="2" width="24" height="1"/>
+                  <rect class="cf-o" x="3" y="3" width="26" height="8"/>
+                  <rect class="cf-b" x="4" y="3" width="24" height="7"/>
+                  <rect class="cf-bc" x="4" y="3" width="24" height="2"/>
+                  <rect class="cf-bs" x="4" y="8" width="24" height="1"/>
+                  <rect class="cf-m" x="7" y="3" width="3" height="7"/>
+                  <rect class="cf-ms" x="9" y="3" width="1" height="7"/>
+                  <rect class="cf-m" x="22" y="3" width="3" height="7"/>
+                  <rect class="cf-ms" x="24" y="3" width="1" height="7"/>
+                  <rect class="cf-ms" x="3" y="10" width="26" height="1"/>
+                  <rect class="cf-o" x="13" y="8" width="6" height="3"/>
+                  <rect class="cf-s" x="14" y="9" width="4" height="1"/>
+                </g>
+                <rect class="fente" x="3.5" y="10.6" width="25" height=".8"/>
+              </svg>
             </div>
+            <button type="button" class="btn-passer" id="btn-passer" hidden>Tout révéler</button>
           </div>
-          <p class="mention-demo" style="margin-top:12px">Tirage de démonstration : rien n'est ajouté à un inventaire.</p>
 
-          <div class="types-lootbox">
-            <div class="type-lootbox">
-              <span class="jeton" aria-hidden="true"><svg viewBox="0 0 40 40"><use href="#i-marque"/></svg></span>
-              <div><h3>Lootbox</h3><p>Gagnée en live avec tes points de chaîne. Ouvre-la à l'unité ou par 10.</p></div>
+          <div class="commandes-coffre">
+            <div class="boutons-ouvrir">
+              <button class="btn-ouvrir" type="button" data-n="1">Ouvrir 1</button>
+              <button class="btn-ouvrir second" type="button" data-n="5">Ouvrir 5</button>
+              <button class="btn-ouvrir second" type="button" data-n="10">Ouvrir 10</button>
             </div>
-            <div class="type-lootbox">
-              <span class="jeton or" aria-hidden="true"><svg viewBox="0 0 24 24" style="color:var(--legendaire);width:22px"><use href="#i-etoile"/></svg></span>
-              <div><h3>Lootbox légendaire</h3><p>Jamais de Commun à l'intérieur. Elle se gagne en abattant le boss de la communauté.</p></div>
-            </div>
+            <button type="button" class="btn-son" id="btn-son" aria-pressed="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="onde-son" d="M15.5 9a4 4 0 0 1 0 6M18.2 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+              <span id="libelle-son">Son activé</span>
+            </button>
           </div>
+          <p class="mention-demo" style="margin-top:14px">Tirage de démonstration aux taux actuels de chaque lootbox : rien n'est ajouté à un inventaire.</p>
         </div>
       </section>
 
@@ -869,53 +1001,150 @@ function carte(o, { niveau = null } = {}) {
 [46, 36, 38].forEach((n) => $("main-legendaire").append(carte(PAR_NUMERO[n])));
 
 // ============================================================
-// Lootbox : 5 cartes distribuées face cachée, puis retournées une à une.
+// Lootbox : le coffre tremble (plus longtemps quand le butin est rare), s'ouvre,
+// et libère une carte par lootbox ouverte. Chaque rareté a son son.
 // ============================================================
 const table = $("table-jeu");
-const btnOuvrir = $("btn-ouvrir");
-let premiereOuverture = true;
-let ouvertureEnCours = false;
-// Poids des tirages de démonstration à partir du 2e clic : table actuelle de la lootbox
-// standard (commande-lootbox.cs, avant le boss : pas de Légendaire). À passer à 45/30/15/8/2
-// quand la table « après boss » sera activée. Le 1er tirage présente une carte de chaque rareté.
-const POIDS_DEMO = { commun: 46, normal: 31, rare: 15, epique: 8, legendaire: 0 };
+const coffre = $("coffre");
+const btnPasser = $("btn-passer");
+// Taux actuels (commande-lootbox.cs : table « avant boss », pas de Légendaire ;
+// commande-lootbox-legendaire.cs : jamais de Commun). Passer la standard à
+// 45/30/15/8/2 quand la table « après boss » sera activée.
+const TAUX = {
+  standard: { commun: 46, normal: 31, rare: 15, epique: 8, legendaire: 0 },
+  legendaire: { commun: 0, normal: 46, rare: 31, epique: 15, legendaire: 8 },
+};
+// Durée du suspense du coffre selon la meilleure rareté du tirage, puis de chaque carte.
+const SUSPENSE = [900, 1500, 2200, 3000, 4000];
+const CHARGE = [110, 190, 360, 620, 950];
+// Sons : laisser vide pour les sons générés ; sinon un chemin (ex. "sons/jojo-rare.mp3").
+const SONS_FICHIERS = { commun: "", normal: "", rare: "", epique: "", legendaire: "" };
 
-function tirerRarete() {
-  let x = Math.random() * 100;
-  for (const r of ORDRE_RARETE) { x -= POIDS_DEMO[r]; if (x <= 0) return r; }
-  return "commun";
+let typeCoffre = "standard", ouvertureEnCours = false, passer = false, reveils = [], dernierTirage = null;
+const rangDe = (r) => ORDRE_RARETE.indexOf(r);
+const couleur = (r) => getComputedStyle(document.documentElement).getPropertyValue("--" + r).trim();
+
+// Pause que « Tout révéler » peut écourter.
+function pause(ms) {
+  return new Promise((fin) => {
+    if (passer) return fin();
+    const t = setTimeout(fin, reduit ? Math.min(ms, 60) : ms);
+    reveils.push(() => { clearTimeout(t); fin(); });
+  });
+}
+function toutReveler() {
+  if (!ouvertureEnCours || passer) return;
+  passer = true;
+  reveils.splice(0).forEach((f) => f());
+}
+
+function tirerRarete(taux) {
+  const total = ORDRE_RARETE.reduce((s, r) => s + taux[r], 0);
+  let x = Math.random() * total;
+  for (const r of ORDRE_RARETE) { if (!taux[r]) continue; x -= taux[r]; if (x <= 0) return r; }
+  return ORDRE_RARETE.find((r) => taux[r]);
 }
 function tirerObjet(rarete) {
   const pool = OBJETS.filter((o) => o.rarete === rarete);
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function dispositionTable() {
-  const w = table.clientWidth;
-  const deuxRangs = w < 560;
-  const dw = deuxRangs ? Math.min(112, (w - 60) / 3) : Math.min(150, (w - 110) / 5);
-  const dh = dw * 1.4;
-  table.style.setProperty("--dw", dw + "px");
-  table.style.setProperty("--h-table", Math.round(deuxRangs ? dh * 2 + 190 : dh + 170) + "px");
-  const positions = [];
-  if (!deuxRangs) {
-    const pas = dw + Math.min(22, (w - dw * 5) / 6);
-    for (let i = 0; i < 5; i++) {
-      const k = i - 2;
-      positions.push({ x: w / 2 - dw / 2 + k * pas, y: 34 + Math.abs(k) * 10, r: k * 3.5 });
-    }
-  } else {
-    const pas = dw + 12;
-    for (let i = 0; i < 5; i++) {
-      const rang = i < 3 ? 0 : 1, col = i < 3 ? i - 1 : i - 3.5;
-      positions.push({ x: w / 2 - dw / 2 + col * pas, y: 24 + rang * (dh + 40), r: col * 2.5 });
-    }
+// ---------- Sons (Web Audio, aucun fichier requis) ----------
+let actx = null, maitre = null, sonActif = true;
+function demarrerAudio() {
+  if (!sonActif) return;
+  if (!actx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    actx = new AC();
+    maitre = actx.createGain();
+    maitre.gain.value = 0.5;
+    maitre.connect(actx.createDynamicsCompressor()).connect(actx.destination);
   }
-  return { positions, paquet: { x: w / 2 - dw / 2, y: deuxRangs ? 24 + (dh + 40) / 2 : 34 } };
+  if (actx.state === "suspended") actx.resume();
+}
+const audible = () => sonActif && actx;
+function note(f, t0, duree, type = "triangle", vol = 0.16) {
+  if (!audible()) return;
+  const t = actx.currentTime + t0, o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + duree);
+  o.connect(g).connect(maitre);
+  o.start(t); o.stop(t + duree + 0.05);
+}
+function bruit(duree) {
+  const b = actx.createBuffer(1, Math.floor(actx.sampleRate * duree), actx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const s = actx.createBufferSource(); s.buffer = b; return s;
+}
+// Grondement du coffre qui tremble ; renvoie la fonction qui l'arrête.
+function grondement() {
+  if (!audible()) return () => {};
+  const s = bruit(2), f = actx.createBiquadFilter(), g = actx.createGain();
+  s.loop = true; f.type = "lowpass"; f.frequency.value = 150;
+  g.gain.setValueAtTime(0.0001, actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.55, actx.currentTime + 0.25);
+  s.connect(f).connect(g).connect(maitre); s.start();
+  return () => {
+    const t = actx.currentTime;
+    g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0.4, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12); s.stop(t + 0.15);
+  };
+}
+// Un « tic » qui monte d'un cran à chaque palier de rareté franchi pendant le suspense.
+function tic(palier) { note(196 * Math.pow(1.26, palier), 0, 0.12, "square", 0.06); note(98 * Math.pow(1.26, palier), 0, 0.22, "sine", 0.22); }
+function explosion() {
+  if (!audible()) return;
+  const t = actx.currentTime, s = bruit(0.6), f = actx.createBiquadFilter(), g = actx.createGain();
+  f.type = "bandpass"; f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(300, t + 0.5);
+  g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+  s.connect(f).connect(g).connect(maitre); s.start(t);
+  const o = actx.createOscillator(), go = actx.createGain();
+  o.type = "sine"; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.4);
+  go.gain.setValueAtTime(0.6, t); go.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+  o.connect(go).connect(maitre); o.start(t); o.stop(t + 0.5);
+}
+// Motif de chaque rareté : [fréquence, départ, durée, forme, volume]
+const MOTIFS = [
+  [[523, 0, 0.16, "square", 0.05]],
+  [[659, 0, 0.18], [880, 0.09, 0.28]],
+  [[784, 0, 0.16], [988, 0.08, 0.16], [1175, 0.16, 0.45], [2349, 0.16, 0.5, "sine", 0.05]],
+  [[523, 0, 0.14], [659, 0.07, 0.14], [784, 0.14, 0.14], [1047, 0.21, 0.7], [1568, 0.21, 0.8, "sine", 0.08], [2093, 0.36, 0.6, "sine", 0.05]],
+  [[392, 0, 0.16, "sawtooth", 0.06], [523, 0.1, 0.16, "sawtooth", 0.06], [659, 0.2, 0.16, "sawtooth", 0.06],
+   [784, 0.3, 1.4], [1047, 0.3, 1.4], [1319, 0.3, 1.4], [1568, 0.3, 1.5, "sine", 0.1],
+   [2637, 0.55, 0.5, "sine", 0.05], [3136, 0.75, 0.5, "sine", 0.05], [2093, 0.95, 0.7, "sine", 0.05]],
+];
+function sonRarete(rang) {
+  if (!sonActif) return;
+  const fichier = SONS_FICHIERS[ORDRE_RARETE[rang]];
+  if (fichier) { const a = new Audio(fichier); a.volume = 0.8; a.play().catch(() => {}); return; }
+  MOTIFS[rang].forEach(([f, t, d, type, v]) => note(f, t, d, type || "triangle", v || 0.15));
 }
 
-function placer(el, p, rot) { el.style.transform = "translate(" + p.x + "px," + p.y + "px) rotate(" + rot + "deg)"; }
-
+// ---------- Mise en place ----------
+function disposition(n) {
+  const w = table.clientWidth, etroit = w < 560;
+  const cols = n === 1 ? 1 : etroit ? (n === 5 ? 3 : 4) : 5;
+  const rangs = Math.ceil(n / cols);
+  const dw = n === 1 ? Math.min(200, w * 0.5) : etroit ? Math.min(104, (w - 24 - (cols - 1) * 10) / cols) : Math.min(148, (w - 90) / 5);
+  const dh = dw * 1.4, gx = etroit ? 10 : Math.min(20, (w - dw * cols) / (cols + 1)), gy = 44;
+  const hauteur = Math.max(etroit ? 360 : 420, Math.round(rangs * (dh + gy) + 64));
+  const positions = [];
+  for (let i = 0; i < n; i++) {
+    const rg = Math.floor(i / cols), dansRang = Math.min(cols, n - rg * cols), k = i - rg * cols - (dansRang - 1) / 2;
+    const eventail = rangs === 1 && n > 1;
+    positions.push({ x: w / 2 - dw / 2 + k * (dw + gx), y: 28 + rg * (dh + gy) + (eventail ? Math.abs(k) * 8 : 0), r: eventail ? k * 3 : 0 });
+  }
+  if (n === 1) positions[0].y = Math.max(28, (hauteur - dh - 30) / 2);
+  return { dw, hauteur, positions };
+}
+function placer(el, p, rot, echelle = 1) { el.style.transform = "translate(" + p.x + "px," + p.y + "px) rotate(" + rot + "deg) scale(" + echelle + ")"; }
+function boucheCoffre(dw) {
+  const t = table.getBoundingClientRect(), s = coffre.querySelector("svg").getBoundingClientRect();
+  return { x: s.left - t.left + s.width / 2 - dw / 2, y: s.top - t.top + s.height * 0.3 - dw * 0.7 };
+}
 function creerCarteTable(o) {
   const d = document.createElement("div");
   d.className = "dcarte";
@@ -926,73 +1155,151 @@ function creerCarteTable(o) {
   d.querySelector(".dcarte-in").append(face);
   return d;
 }
+function etincelles(rang, c) {
+  if (reduit) return;
+  const t = table.getBoundingClientRect(), s = coffre.querySelector("svg").getBoundingClientRect();
+  const x0 = s.left - t.left + s.width / 2, y0 = s.top - t.top + s.height * 0.35;
+  for (let i = 0; i < 8 + rang * 10; i++) {
+    const e = document.createElement("span"), a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.3, v = 60 + Math.random() * (90 + rang * 50);
+    e.className = "etincelle";
+    e.style.cssText = "--x:" + x0 + "px;--y:" + y0 + "px;--dx:" + (Math.cos(a) * v).toFixed(1) + "px;--dy:" + (Math.sin(a) * v).toFixed(1) + "px;--d:" + (0.7 + Math.random() * 0.6).toFixed(2) + "s;--c:" + (Math.random() < 0.3 ? "#fff" : c);
+    table.append(e);
+    setTimeout(() => e.remove(), 1500);
+  }
+}
+function commandes(actives) {
+  document.querySelectorAll(".btn-ouvrir, .type-lootbox").forEach((b) => (b.disabled = !actives));
+  btnPasser.hidden = actives;
+  table.classList.toggle("passable", !actives);
+}
+function remettreCoffre() {
+  table.querySelectorAll(".dcarte, .etincelle").forEach((e) => e.remove());
+  table.classList.remove("flash-leg");
+  coffre.classList.remove("tremble", "ouvert", "rayonne", "recule");
+  coffre.classList.toggle("version-legendaire", typeCoffre === "legendaire");
+  coffre.style.setProperty("--lueur", "#f4f2ec");
+  table.style.setProperty("--h-table", (table.clientWidth < 560 ? 360 : 420) + "px");
+  dernierTirage = null;
+}
 
-async function ouvrir() {
+// ---------- L'ouverture ----------
+async function ouvrir(n) {
   if (ouvertureEnCours) return;
-  ouvertureEnCours = true;
-  btnOuvrir.disabled = true;
-  table.querySelectorAll(".dcarte").forEach((c) => c.remove());
+  ouvertureEnCours = true; passer = false; reveils = [];
+  demarrerAudio();
+  const dejaOuvert = coffre.classList.contains("recule");
+  remettreCoffre();
+  commandes(false);
+  if (dejaOuvert) await pause(450);
 
-  const tirage = premiereOuverture
-    ? ORDRE_RARETE.map((r) => tirerObjet(r))
-    : Array.from({ length: 5 }, () => tirerObjet(tirerRarete()));
-  $("mention-tirage").textContent = premiereOuverture ? "Présentation des 5 raretés" : "Tirage aléatoire de démonstration";
-  premiereOuverture = false;
+  const tirage = Array.from({ length: n }, () => tirerObjet(tirerRarete(TAUX[typeCoffre])));
+  const rangMax = Math.max(...tirage.map((o) => rangDe(o.rarete)));
+  const rangMin = typeCoffre === "legendaire" ? 1 : 0;
 
-  const disp = dispositionTable();
-  const cartes = tirage.map((o, i) => {
+  // 1. Suspense : le coffre tremble de plus en plus fort et sa lueur passe d'une rareté à la suivante.
+  coffre.classList.add("tremble");
+  const arreterGrondement = grondement();
+  const paliers = rangMax - rangMin + 1;
+  for (let p = 0; p < paliers; p++) {
+    if (rangMax >= 3 && p === paliers - 1 && !passer) {
+      // Faux calme avant le dernier palier
+      coffre.classList.remove("tremble");
+      await pause(420);
+      coffre.classList.add("tremble");
+    }
+    coffre.style.setProperty("--lueur", couleur(ORDRE_RARETE[rangMin + p]));
+    coffre.style.setProperty("--force", String(1 + p * 0.9));
+    if (!passer) tic(p);
+    await pause(SUSPENSE[rangMax] / paliers);
+  }
+  arreterGrondement();
+  coffre.classList.remove("tremble");
+
+  // 2. Le coffre s'ouvre
+  const cMax = couleur(ORDRE_RARETE[rangMax]);
+  coffre.style.setProperty("--lueur", cMax);
+  coffre.classList.add("ouvert");
+  if (rangMax >= 2) coffre.classList.add("rayonne");
+  if (rangMax >= 4) { void table.offsetWidth; table.classList.add("flash-leg"); }
+  explosion();
+  sonRarete(rangMax);
+  etincelles(rangMax, cMax);
+  await pause(rangMax >= 3 ? 950 : 620);
+
+  // 3. Les cartes jaillissent du coffre
+  const disp = disposition(n);
+  table.style.setProperty("--dw", disp.dw + "px");
+  table.style.setProperty("--h-table", disp.hauteur + "px");
+  const bouche = boucheCoffre(disp.dw);
+  coffre.classList.add("recule");
+  const cartes = tirage.map((o) => {
     const d = creerCarteTable(o);
     d.style.transition = "none";
-    placer(d, { x: disp.paquet.x + i * 1.5, y: disp.paquet.y - i * 1.5 }, (i - 2) * 1.2);
-    d.style.zIndex = 10 - i;
+    d.style.opacity = "0";
+    placer(d, bouche, 0, 0.25);
     table.append(d);
     return d;
   });
-  await attendre(60);
-  // Le paquet tremble, s'illumine, puis s'ouvre en éventail
-  cartes.forEach((d) => d.classList.add("secoue"));
-  await attendre(450);
-  cartes.forEach((d) => d.classList.remove("secoue"));
-  table.classList.remove("ouvre"); void table.offsetWidth; table.classList.add("ouvre");
-  // Distribution en éventail
+  void table.offsetWidth;
   cartes.forEach((d, i) => {
     d.style.transition = "";
-    d.style.transitionDelay = i * 90 + "ms";
+    d.style.transitionDelay = (passer ? 0 : i * 70) + "ms";
+    d.style.opacity = "1";
     placer(d, disp.positions[i], disp.positions[i].r);
-    d.style.zIndex = 1;
   });
-  await attendre(820);
+  dernierTirage = { n, cartes };
+  await pause(760 + n * 70);
   cartes.forEach((d) => (d.style.transitionDelay = "0ms"));
 
-  // Retournement : anticipation plus longue pour les raretés hautes
+  // 4. Retournement, une carte après l'autre : plus elle est rare, plus elle se fait attendre.
   for (let i = 0; i < cartes.length; i++) {
-    const d = cartes[i], rang = ORDRE_RARETE.indexOf(tirage[i].rarete);
-    const charge = [180, 260, 420, 700, 1050][rang];
-    d.style.setProperty("--vib", charge + "ms");
-    d.classList.add("charge");
-    await attendre(charge);
-    d.classList.remove("charge");
+    const d = cartes[i], rang = rangDe(tirage[i].rarete);
+    if (!passer) {
+      d.style.setProperty("--vib", CHARGE[rang] + "ms");
+      d.classList.add("charge");
+      await pause(CHARGE[rang]);
+      d.classList.remove("charge");
+    }
     d.classList.add("retournee");
     if (rang >= 2) d.classList.add("eclate");
     if (rang >= 3) d.classList.add("haute");
-    await attendre(rang >= 3 ? 520 : 300);
+    if (!passer && n > 1) sonRarete(rang);
+    await pause(rang >= 3 ? 480 : 240);
   }
-  btnOuvrir.disabled = false;
-  btnOuvrir.textContent = "Rouvrir 5 lootbox";
+  if (passer) sonRarete(rangMax);
+  commandes(true);
   ouvertureEnCours = false;
 }
-btnOuvrir.addEventListener("click", ouvrir);
 
-// Repositionne sans rejouer quand la largeur change
+document.querySelectorAll(".btn-ouvrir").forEach((b) => b.addEventListener("click", () => ouvrir(Number(b.dataset.n))));
+btnPasser.addEventListener("click", (e) => { e.stopPropagation(); toutReveler(); });
+table.addEventListener("click", toutReveler);
+document.querySelectorAll(".type-lootbox").forEach((b) => b.addEventListener("click", () => {
+  if (ouvertureEnCours) return;
+  typeCoffre = b.dataset.type;
+  document.querySelectorAll(".type-lootbox").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  remettreCoffre();
+}));
+$("btn-son").addEventListener("click", () => {
+  sonActif = !sonActif;
+  $("btn-son").setAttribute("aria-pressed", String(sonActif));
+  $("libelle-son").textContent = sonActif ? "Son activé" : "Son coupé";
+  if (sonActif) demarrerAudio();
+});
+
+// Repositionne les cartes posées quand la largeur change
 let minuterieRedim;
 addEventListener("resize", () => {
   clearTimeout(minuterieRedim);
   minuterieRedim = setTimeout(() => {
-    const disp = dispositionTable();
-    table.querySelectorAll(".dcarte").forEach((d, i) => { d.style.transition = "none"; placer(d, disp.positions[i], disp.positions[i].r); });
+    if (!dernierTirage || ouvertureEnCours) return;
+    const disp = disposition(dernierTirage.n);
+    table.style.setProperty("--dw", disp.dw + "px");
+    table.style.setProperty("--h-table", disp.hauteur + "px");
+    dernierTirage.cartes.forEach((d, i) => { d.style.transition = "none"; placer(d, disp.positions[i], disp.positions[i].r); });
   }, 120);
 });
-dispositionTable();
+remettreCoffre();
 
 // ============================================================
 // Arsenal : emplacements, effets filtrables, collection complète
@@ -1201,16 +1508,14 @@ async function jouerDuel() {
 $("btn-rejouer").addEventListener("click", () => jouerDuel());
 montageCombattant("a"); montageCombattant("b");
 
-// Lance la distribution et le duel quand leur zone arrive à l'écran (une seule fois).
+// Lance le duel quand il arrive à l'écran (une seule fois).
 const observe = new IntersectionObserver((entrees) => {
   entrees.forEach((e) => {
     if (!e.isIntersecting) return;
     observe.unobserve(e.target);
-    if (e.target.id === "table-jeu") ouvrir();
     if (e.target.id === "arene") jouerDuel();
   });
 }, { threshold: 0.45 });
-observe.observe(table);
 observe.observe($("arene"));
 
 // ============================================================
