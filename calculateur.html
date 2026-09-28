@@ -21,7 +21,7 @@ body {
     margin: 0; padding: 28px 18px 60px; line-height: 1.5;
 }
 h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
-.page { max-width: 1200px; margin: 0 auto; overflow-x: hidden; }
+.page { max-width: 1200px; margin: 0 auto; overflow-x: hidden; overflow-y: visible; }
 
 /* ===== Habillage navigateur : sélection, scrollbar, focus ===== */
 ::selection { background: var(--yellow); color: #17170f; }
@@ -815,9 +815,15 @@ function afficherDetailStats(statsActuelles) {
     // SPD a un rendement dégressif (tanh, voir formule-combat.js/boost-spd.cs) -- on affiche le
     // nombre RÉEL de points dépensés (stacksChoisis.spd, brut) plutôt que la contribution réduite
     // par la courbe, pour ne jamais laisser croire aux joueurs que leurs points "valent moins"
-    // que ce qu'ils ont investi. La part "objets" reste calculée par différence à partir de la
-    // vraie contribution tanh (avecStacksSeuls.spd - base.spd), donc son calcul ne change pas.
-    rendre('spd', base.spd, stacksChoisis.spd, statsActuelles.spd - avecStacksSeuls.spd, statsActuelles.spd, statsInitiales.spd, f1);
+    // que ce qu'ils ont investi. Le total AFFICHÉ tout en haut suit désormais la même logique :
+    // base + investi (brut) + objets, pour que la grosse valeur corresponde toujours à la somme
+    // de la décomposition juste en dessous (sinon "35" au-dessus de "10+29+0" ressemble à un bug
+    // de calcul). La vraie valeur réduite par tanh continue d'être utilisée telle quelle pour les
+    // dégâts/survie simulés plus haut sur la page -- seul cet affichage-ci change.
+    const gearSpd = statsActuelles.spd - avecStacksSeuls.spd;
+    const avecStacksSeulsInitial = calculerStatsEffectives(stacksOriginaux, vide);
+    const gearSpdInitial = statsInitiales.spd - avecStacksSeulsInitial.spd;
+    rendre('spd', base.spd, stacksChoisis.spd, gearSpd, base.spd + stacksChoisis.spd + gearSpd, base.spd + stacksOriginaux.spd + gearSpdInitial, f1);
 
     const BASELINE_LUCK_AFFICHEE = 10;
     const luckStack = stacksChoisis.luck;
