@@ -9,8 +9,8 @@
 <style>
 :root {
     --bg: #0b0b0d; --bg-panel: #141416; --yellow: #f2c230; --red: #a8271f;
-    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e;
-    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --legendaire: #f2c230;
+    --paper: #e9e3d2; --paper-dim: #b8b2a0; --line: #2c2c2e; --line-soft: rgba(255,255,255,.06);
+    --commun: #8d8d8d; --normal: #5ddd7a; --rare: #4a9fd8; --epique: #a855f7; --legendaire: #f2c230;
     --atk: #ff5e3a; --def: #3b82f6; --pv: #ca2972; --spd: #FFCC00; --luck: #00ffaa;
     --investi: #5ddd7a; --objets: #4a9fd8;
     --positif: #5ddd7a; --negatif: #ff6b6b;
@@ -21,7 +21,19 @@ body {
     margin: 0; padding: 28px 18px 60px; line-height: 1.5;
 }
 h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin: 0; }
-.page { max-width: 1080px; margin: 0 auto; overflow-x: hidden; }
+.page { max-width: 1200px; margin: 0 auto; overflow-x: hidden; }
+
+/* ===== Habillage navigateur : sélection, scrollbar, focus ===== */
+::selection { background: var(--yellow); color: #17170f; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #3c3c3f; }
+* { scrollbar-color: var(--line) var(--bg); scrollbar-width: thin; }
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; border-radius: 3px; }
+
+/* ===== Icônes SVG ===== */
+.icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 
 .entete { padding-bottom: 14px; border-bottom: 3px solid var(--yellow); margin-bottom: 24px; }
 .entete h1 { font-size: 28px; font-weight: 700; }
@@ -33,9 +45,11 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
     letter-spacing: 1.4px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 6px;
 }
+.champ-profil-boite { position: relative; }
+.champ-profil-icone { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--paper-dim); width: 18px; height: 18px; pointer-events: none; }
 #chercheProfil {
     width: 100%; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
-    padding: 12px 15px; color: var(--paper); font-size: 15px; font-family: 'Barlow', sans-serif;
+    padding: 12px 15px 12px 42px; color: var(--paper); font-size: 15px; font-family: 'Barlow', sans-serif;
     transition: border-color 0.2s;
 }
 #chercheProfil:focus { outline: none; border-color: var(--yellow); }
@@ -71,11 +85,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     display: flex; align-items: center; justify-content: center;
     font-family: 'Oswald', sans-serif; font-size: 22px; color: var(--paper-dim);
 }
-.profil-actif-infos { display: flex; flex-direction: column; }
-.profil-actif-titre {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
-    letter-spacing: 1.2px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px;
-}
 .profil-actif-nom { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--paper); line-height: 1.15; }
 .profil-actif-stats { margin-left: auto; display: flex; gap: 26px; flex-wrap: wrap; }
 .profil-actif-stat { display: flex; flex-direction: column; align-items: flex-end; }
@@ -85,32 +94,41 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .profil-actif-stat b { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--yellow); line-height: 1; }
 
+/* ===== Mise en page à deux colonnes ===== */
+.espace-travail { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
+.colonne-laterale { position: sticky; top: 20px; }
+@media (max-width: 980px) {
+    .espace-travail { display: block; }
+    .colonne-laterale { position: static; }
+}
+
 .section { margin-bottom: 34px; }
 .section-tete { padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
 .section-tete h2 { font-size: 19px; font-weight: 600; }
 .section-tete p { color: var(--paper-dim); font-size: 13.5px; margin: 6px 0 0; max-width: 68ch; }
 
-/* ===== Redistribution des stats (Nouveau Design Fluide) ===== */
-.total-dispo {
-    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-    background: linear-gradient(90deg, rgba(242,194,48,0.15) 0%, rgba(242,194,48,0.02) 100%);
-    border-left: 4px solid var(--yellow); border-radius: 4px;
+/* ===== Répartition des points ===== */
+.carte-repartition {
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px;
     padding: 16px 20px; margin-bottom: 20px;
 }
-.total-dispo-label { display: flex; flex-direction: column; }
-.total-dispo-label span { font-size: 12px; color: var(--paper-dim); text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; }
-.total-dispo-label b { font-family: 'Oswald', sans-serif; font-size: 20px; color: var(--paper); }
-.total-dispo-reste { text-align: right; }
-.total-dispo-reste span { font-size: 12px; color: var(--paper-dim); text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; }
-.total-dispo-reste b { font-family: 'Oswald', sans-serif; font-size: 32px; line-height: 1.1; color: var(--yellow); display: block; }
-.total-dispo-reste.negatif b { color: var(--red); }
+.carte-repartition-tete { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.carte-repartition-label { display: flex; flex-direction: column; }
+.carte-repartition-label span, .carte-repartition-reste span { font-size: 12px; color: var(--paper-dim); text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; }
+.carte-repartition-label b { font-family: 'Oswald', sans-serif; font-size: 20px; color: var(--paper); }
+.carte-repartition-reste { text-align: right; }
+.carte-repartition-reste b { font-family: 'Oswald', sans-serif; font-size: 32px; line-height: 1.1; color: var(--yellow); display: block; }
+.carte-repartition-reste.negatif b { color: var(--red); }
+.barre-progression { height: 8px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.barre-progression-remplie { height: 100%; width: 0; background: linear-gradient(90deg, var(--yellow), #ffdd7a); border-radius: 4px; transition: width .2s ease, background .2s ease; }
+.barre-progression-remplie.depasse { background: var(--red); }
 
 /* GRILLE RESPONSIVE 100% FLUIDE */
-.stats-grille { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); 
-    gap: 12px; 
-    margin-bottom: 12px; 
+.stats-grille {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .stat-carte {
@@ -125,17 +143,23 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
 .stat-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 .stat-label { display: flex; align-items: center; gap: 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); }
+.stat-label .icon { width: 16px; height: 16px; color: inherit; }
+.stat-atk .stat-label .icon { color: var(--atk); } .stat-def .stat-label .icon { color: var(--def); }
+.stat-pv .stat-label .icon { color: var(--pv); } .stat-spd .stat-label .icon { color: var(--spd); }
+.stat-luck .stat-label .icon { color: var(--luck); }
 .stat-total-wrapper { text-align: right; }
 .stat-valeur { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 800; line-height: 1; }
 .stat-atk .stat-valeur { color: var(--atk); } .stat-def .stat-valeur { color: var(--def); }
 .stat-pv  .stat-valeur { color: var(--pv); }  .stat-spd .stat-valeur { color: var(--spd); }
 .stat-luck .stat-valeur { color: var(--luck); }
 
-.stat-breakdown { font-size: 11px; text-align: right; margin-bottom: 12px; font-family: 'Oswald', sans-serif; font-weight: 600; }
-.stat-breakdown .base { color: var(--paper-dim); }
-.stat-breakdown .investi { color: var(--investi); }
-.stat-breakdown .objets { color: var(--objets); }
-.stat-breakdown .signe { color: var(--line); margin: 0 3px; font-weight: 400; }
+.stat-breakdown { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 12px; }
+.sb-item { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,.03); border: 1px solid var(--line-soft); border-radius: 6px; padding: 5px 3px; }
+.sb-label { font-family: 'Barlow Condensed', sans-serif; font-size: 8.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 2px; }
+.sb-val { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 700; }
+.sb-base .sb-val { color: var(--paper-dim); }
+.sb-investi .sb-val { color: var(--investi); }
+.sb-objets .sb-val { color: var(--objets); }
 
 .stat-controls { display: flex; gap: 4px; margin-top: auto; align-items: stretch; }
 .stat-controls button {
@@ -169,18 +193,16 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 }
 .btn-action:hover { color: var(--yellow); border-color: var(--yellow); background: rgba(242,194,48,0.05); }
 
-.legende-detail { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 18px; font-size: 11.5px; color: var(--paper-dim); }
-.legende-detail span { display: inline-flex; align-items: center; gap: 5px; }
-.legende-detail .pastille { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.legende-detail .pastille.base { background: var(--paper-dim); }
-.legende-detail .pastille.investi { background: var(--investi); }
-.legende-detail .pastille.objets { background: var(--objets); }
-
-/* ===== Resultats (dégâts et survie) ===== */
-.resultats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+/* ===== Resultats (dégâts et survie) — une seule animation d'entrée autorisée ===== */
+@keyframes maj-entree {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.resultats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 .resultat-carte {
     background: var(--bg-panel); border: 1px solid var(--line); border-top: 3px solid var(--yellow);
     border-radius: 6px; padding: 16px 18px; text-align: center;
+    animation: maj-entree .35s cubic-bezier(.16,1,.3,1);
 }
 .resultat-carte .valeur { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 800; color: var(--yellow); }
 .resultat-carte .label { font-family: 'Barlow Condensed', sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--paper-dim); margin-top: 4px; }
@@ -206,13 +228,14 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     --accent: var(--commun);
     position: relative; background: var(--bg-panel); border: 2px solid var(--accent);
     border-radius: 10px; padding: 12px 10px 10px; display: flex; flex-direction: column;
-    align-items: center; text-align: center; box-shadow: 0 0 0 0 var(--accent);
+    align-items: center; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,.2);
     transition: box-shadow .15s, transform .1s; cursor: pointer;
 }
-.card.choisi { box-shadow: 0 0 0 3px var(--accent); transform: translateY(-2px); }
+.card.choisi { box-shadow: 0 0 0 3px var(--accent), 0 10px 24px rgba(0,0,0,.35); transform: translateY(-2px); }
 .card.desactive { opacity: .35; cursor: not-allowed; }
 .card.aucun { justify-content: center; }
 .card.aucun .card-nom { color: var(--paper-dim); font-style: italic; min-height: 0; }
+.card .icon { color: var(--paper-dim); width: 34px; height: 34px; }
 
 .card-verrou {
     position: absolute; top: 8px; left: 8px; font-size: 12px; line-height: 1;
@@ -234,7 +257,6 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .card-puce-rarete.a-gauche { left: 8px; right: auto; }
 .card-image { width: 100%; height: 74px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
 .card-image img { max-width: 100%; max-height: 74px; object-fit: contain; }
-.card-image .emoji { font-size: 42px; line-height: 1; }
 .card-nom {
     font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; line-height: 1.25;
     min-height: 2.5em; display: flex; align-items: center; margin-bottom: 6px;
@@ -245,7 +267,8 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 .card-stats .l-pv { color: var(--pv); } .card-stats .l-spd { color: var(--spd); }
 .card-stats .l-luck { color: var(--luck); } .card-stats .l-esquive { color: var(--paper); }
 .card-stats .l-passif { color: var(--paper-dim); }
-.card-note { font-size: 10.5px; color: var(--paper-dim); margin-top: 6px; font-style: italic; }
+.card-note { font-size: 10.5px; color: var(--paper-dim); margin-top: 6px; font-style: italic; display: flex; align-items: center; gap: 6px; }
+.card-note .icon { width: 13px; height: 13px; }
 
 /* ===== Commande finale ===== */
 .zone-commande { margin-top: 18px; background: #17171a; border: 1px solid var(--yellow); border-radius: 8px; padding: 18px 20px; }
@@ -257,11 +280,12 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
     overflow-x: auto; white-space: nowrap; display: flex; align-items: center;
 }
 .zone-commande-ligne button {
-    font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em;
+    display: flex; align-items: center; gap: 6px; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em;
     text-transform: uppercase; color: #17170f; background: var(--yellow); border: none; border-radius: 5px;
     padding: 0 20px; cursor: pointer; flex: 0 0 auto; transition: background 0.15s;
 }
 .zone-commande-ligne button:hover { background: #ffd75a; }
+.zone-commande-ligne button.copie { background: var(--positif); }
 .zone-commande .avertissement { font-size: 12px; color: var(--paper-dim); margin-top: 10px; }
 
 @media (max-width: 620px) {
@@ -271,6 +295,54 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 </style>
 </head>
 <body>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<defs>
+    <symbol id="ic-atk" viewBox="0 0 24 24">
+        <line x1="19.5" y1="4.5" x2="8" y2="16"/>
+        <line x1="15" y1="9" x2="18" y2="12"/>
+        <line x1="8" y1="16" x2="4.5" y2="19.5"/>
+        <line x1="12.5" y1="6" x2="10" y2="3.5"/>
+    </symbol>
+    <symbol id="ic-def" viewBox="0 0 24 24">
+        <path d="M12 3.5l7 2.7v5.4c0 4.6-3 7.9-7 9.1-4-1.2-7-4.5-7-9.1V6.2l7-2.7z"/>
+    </symbol>
+    <symbol id="ic-pv" viewBox="0 0 24 24">
+        <path d="M12 21s-6.7-4.35-9.3-8.5C1.1 9.8 2.4 6 6 6c1.98 0 3.57 1.1 4.24 2.66C10.9 7.1 12.5 6 14.48 6c3.6 0 4.9 3.8 3.32 6.5C18.7 16.65 12 21 12 21z"/>
+    </symbol>
+    <symbol id="ic-spd" viewBox="0 0 24 24">
+        <polygon points="13 2 4 14 11 14 9 22 20 9 13 9 15 2"/>
+    </symbol>
+    <symbol id="ic-luck" viewBox="0 0 24 24">
+        <path d="M12 3 L13.4 9.9 20 12 13.4 14.1 12 21 10.6 14.1 4 12 10.6 9.9 Z"/>
+    </symbol>
+    <symbol id="ic-lock" viewBox="0 0 24 24">
+        <rect x="5" y="11" width="14" height="10" rx="2"/>
+        <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+    </symbol>
+    <symbol id="ic-ban" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"/>
+        <line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/>
+    </symbol>
+    <symbol id="ic-package" viewBox="0 0 24 24">
+        <path d="M3 8l9-5 9 5-9 5-9-5z"/>
+        <path d="M3 8v9l9 5 9-5V8"/>
+        <line x1="12" y1="13" x2="12" y2="22"/>
+    </symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7"/>
+        <line x1="21" y1="21" x2="16.2" y2="16.2"/>
+    </symbol>
+    <symbol id="ic-copy" viewBox="0 0 24 24">
+        <rect x="9" y="9" width="12" height="12" rx="2"/>
+        <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+    </symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24">
+        <polyline points="4 12 10 18 20 6"/>
+    </symbol>
+</defs>
+</svg>
+
 <div class="page">
 
     <div class="entete">
@@ -281,8 +353,11 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 
     <div class="champ-profil">
         <label for="chercheProfil">Qui es-tu&nbsp;?</label>
-        <input type="text" id="chercheProfil" autocomplete="off" spellcheck="false" placeholder="Ton pseudo Twitch..."
-               role="combobox" aria-expanded="false" aria-controls="propositions" aria-autocomplete="list">
+        <div class="champ-profil-boite">
+            <svg class="icon champ-profil-icone"><use href="#ic-search"></use></svg>
+            <input type="text" id="chercheProfil" autocomplete="off" spellcheck="false" placeholder="Ton pseudo Twitch..."
+                   role="combobox" aria-expanded="false" aria-controls="propositions" aria-autocomplete="list">
+        </div>
         <div class="propositions" id="propositions" role="listbox"></div>
     </div>
 
@@ -295,9 +370,8 @@ h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margi
 <script src="formule-combat.js"></script>
 <script>
 const LABEL_STAT = { atk: 'Attaque', def: 'Défense', pv: 'Points de vie', spd: 'Vitesse', luck: 'Chance' };
-const ICONE_STAT = { atk: '⚔️', def: '🛡️', pv: '❤️', spd: '💨', luck: '🍀' };
 const CMD_STAT = { atk: 'atk', def: 'def', pv: 'pv', spd: 'vit', luck: 'chance' };
-const LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', legendaire: 'Légendaire' };
+const LABEL_RARETE = { commun: 'Commun', normal: 'Normal', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire' };
 const LABEL_SLOT = { weapon: 'Arme', offhand: 'Main gauche', torso: 'Armure', strategeme: 'Stratagème' };
 const BASE_STAT_JS = { atk: 10, def: 10, pv: 100, spd: 10, luck: 0 };
 
@@ -305,12 +379,16 @@ let JOUEURS = {}, CATALOGUE = {}, listeJoueurs = [];
 let pseudoActif = null, joueurActif = null;
 let stacksOriginaux = null;   // stacks réellement investis (immuables)
 let stacksChoisis = null;     // répartition en cours d'édition
-let equipChoisi = { arme: null, offhand: null, torso: null, strat: null }; 
+let equipChoisi = { arme: null, offhand: null, torso: null, strat: null };
 let statsInitiales = null;    // vue "avant modification" des stats
 let resultatInitial = null;   // vue "avant modification" du combat
 
 function echapper(t) {
     return String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function imgFallback(el) {
+    el.outerHTML = '<svg class="icon"><use href="#ic-package"></use></svg>';
 }
 
 /* ===================== SÉLECTION DE PROFIL ===================== */
@@ -373,80 +451,78 @@ function afficherPage() {
     document.getElementById('contenu').innerHTML = `
         <div class="profil-actif-carte">
             ${avatar}
-            <div class="profil-actif-infos">
-                <div class="profil-actif-titre">Build actuel</div>
-                <div class="profil-actif-nom">${echapper(joueurActif.nomAffichage || pseudoActif)}</div>
-            </div>
+            <div class="profil-actif-nom">${echapper(joueurActif.nomAffichage || pseudoActif)}</div>
             <div class="profil-actif-stats">
                 <div class="profil-actif-stat"><span>Points investis</span><b>${totalOriginal}</b></div>
             </div>
         </div>
 
-        <section class="section">
-            <div class="section-tete">
-                <h2>Simuler un reset</h2>
-                <p>Tu as actuellement <b style="color:var(--yellow)">${totalOriginal}</b> point(s) investi(s). Redistribue-les ci-dessous comme tu veux —
-                   rien n'est appliqué pour de vrai tant que tu n'as pas collé la commande, tout en bas de page.</p>
-            </div>
-            
-            <div class="actions-reset">
-                <button type="button" class="btn-action" id="btnZero">Tout à 0</button>
-                <button type="button" class="btn-action" id="btnReinit" style="display:none;">Annuler mes modifs</button>
+        <div class="espace-travail">
+            <div class="colonne-principale">
+                <section class="section">
+                    <div class="section-tete">
+                        <h2>Simuler un reset</h2>
+                        <p>Tu as actuellement <b style="color:var(--yellow)">${totalOriginal}</b> point(s) investi(s). Redistribue-les ci-dessous comme tu veux —
+                           rien n'est appliqué pour de vrai tant que tu n'as pas collé la commande, dans le panneau de droite.</p>
+                    </div>
+
+                    <div class="actions-reset">
+                        <button type="button" class="btn-action" id="btnZero">Tout à 0</button>
+                        <button type="button" class="btn-action" id="btnReinit" style="display:none;">Annuler mes modifs</button>
+                    </div>
+
+                    <div class="carte-repartition">
+                        <div class="carte-repartition-tete">
+                            <div class="carte-repartition-label">
+                                <span>Total de points de profil</span>
+                                <b>${totalOriginal}</b>
+                            </div>
+                            <div class="carte-repartition-reste" id="resteAPlacer"></div>
+                        </div>
+                        <div class="barre-progression"><div class="barre-progression-remplie" id="barreRemplie"></div></div>
+                    </div>
+
+                    <div class="stats-grille" id="statsGrille"></div>
+                </section>
+
+                <section class="section">
+                    <div class="section-tete">
+                        <h2>Équipement</h2>
+                        <p>Clique sur un objet pour le sélectionner. Une arme à deux mains occupe aussi la main gauche.</p>
+                    </div>
+                    <div id="equipGrille"></div>
+                </section>
             </div>
 
-            <div class="total-dispo">
-                <div class="total-dispo-label">
-                    <span>Total de points de profil</span>
-                    <b>${totalOriginal}</b>
-                </div>
-                <div class="total-dispo-reste" id="resteAPlacer"></div>
-            </div>
+            <div class="colonne-laterale">
+                <section class="section">
+                    <div class="section-tete">
+                        <h2>Dégâts et survie</h2>
+                        <p>Calculés à partir de la répartition et de l'équipement choisis, comparés à ta vue d'avant modification.</p>
+                    </div>
+                    <div class="resultats-grille" id="resultatsGrille"></div>
+                </section>
 
-            <div class="legende-detail">
-                <span><span class="pastille base"></span>Base du personnage</span>
-                <span><span class="pastille investi"></span>Points investis</span>
-                <span><span class="pastille objets"></span>Bonus d'équipements</span>
+                <section class="section">
+                    <div class="section-tete">
+                        <h2>Commande</h2>
+                        <p>Nécessite un ticket de reset en votre possession.</p>
+                    </div>
+                    <div class="zone-commande" id="zoneCommandeReset"></div>
+                </section>
             </div>
-
-            <div class="stats-grille" id="statsGrille"></div>
-            
-        </section>
-
-        <section class="section">
-            <div class="section-tete">
-                <h2>Dégâts et survie</h2>
-                <p>Calculés à partir de la répartition et de l'équipement choisis. Chaque valeur est comparée à ta vue
-                   d'avant modification (ta répartition et ton équipement réels).</p>
-            </div>
-            <div class="resultats-grille" id="resultatsGrille"></div>
-        </section>
-
-        <section class="section">
-            <div class="section-tete">
-                <h2>Équipement</h2>
-                <p>Clique sur un objet pour le sélectionner. Une arme à deux mains occupe aussi la main gauche.</p>
-            </div>
-            <div id="equipGrille"></div>
-        </section>
-
-        <section class="section">
-            <div class="section-tete">
-                <h2>Commande</h2>
-                <p>Nécessite un ticket de reset en votre possession.</p>
-            </div>
-            <div class="zone-commande" id="zoneCommandeReset"></div>
-        </section>
+        </div>
     `;
 
     rendreStatsGrille();
     rendreEquipGrille();
-    
+
     document.getElementById('btnReinit').addEventListener('click', () => { stacksChoisis = { ...stacksOriginaux }; rendreStatsGrille(); recalculer(); });
-    document.getElementById('btnZero').addEventListener('click', () => { 
+    document.getElementById('btnZero').addEventListener('click', () => {
         Object.keys(stacksChoisis).forEach(k => stacksChoisis[k] = 0);
-        rendreStatsGrille(); recalculer(); 
+        rendreStatsGrille(); recalculer();
     });
-    
+
     recalculer();
 }
 
@@ -470,17 +546,24 @@ function rendreStatsGrille() {
     resteEl.classList.toggle('negatif', reste < 0);
     resteEl.innerHTML = `<span>Reste à placer</span><b>${reste}</b>`;
 
+    const barreEl = document.getElementById('barreRemplie');
+    if (barreEl) {
+        const pct = totalOriginal > 0 ? Math.min(100, (totalChoisi / totalOriginal) * 100) : 0;
+        barreEl.style.width = pct + '%';
+        barreEl.classList.toggle('depasse', reste < 0);
+    }
+
     const aChange = Object.keys(stacksOriginaux).some(k => stacksOriginaux[k] !== stacksChoisis[k]);
     document.getElementById('btnReinit').style.display = aChange ? '' : 'none';
 
     document.getElementById('statsGrille').innerHTML = Object.keys(LABEL_STAT).map(st => `
         <div class="stat-carte stat-${st}">
             <div class="stat-header">
-                <div class="stat-label"><span>${ICONE_STAT[st]}</span> ${LABEL_STAT[st]}</div>
+                <div class="stat-label"><svg class="icon"><use href="#ic-${st}"></use></svg> ${LABEL_STAT[st]}</div>
                 <div class="stat-total-wrapper" id="detailStatTotal_${st}"></div>
             </div>
             <div class="stat-breakdown" id="detailStatBreakdown_${st}"></div>
-            
+
             <div class="stat-controls">
                 <button type="button" class="btn-minmax" data-stat="${st}" data-act="min" ${stacksChoisis[st] <= 0 ? 'disabled' : ''}>0</button>
                 <button type="button" class="btn-step" data-stat="${st}" data-act="moins" ${stacksChoisis[st] <= 0 ? 'disabled' : ''}>&minus;</button>
@@ -506,7 +589,7 @@ function rendreStatsGrille() {
             rendreStatsGrille(); recalculer();
         });
     });
-    
+
     document.getElementById('statsGrille').querySelectorAll('input[data-stat]').forEach(inp => {
         inp.addEventListener('change', () => {
             const st = inp.getAttribute('data-stat');
@@ -535,7 +618,7 @@ function rendreCommandeFinale() {
         <div class="consigne">À coller dans le chat Twitch — vide ta répartition actuelle et la remplace par celle-ci.</div>
         <div class="zone-commande-ligne">
             <code id="cmdComplete">${echapper(commande)}</code>
-            <button type="button" onclick="copier('cmdComplete', this)">Copier</button>
+            <button type="button" onclick="copier('cmdComplete', this)"><svg class="icon" style="width:14px;height:14px;"><use href="#ic-copy"></use></svg> Copier</button>
         </div>
     `;
 }
@@ -569,13 +652,13 @@ function rendreEquipGrille() {
     const offhands = inv.filter(l => l.info.slot === 'offhand');
     const carteAucunOffhand = `
         <div class="card aucun ${!equipChoisi.offhand ? 'choisi' : ''}" data-slot="offhand" data-numero="">
-            <div class="card-image"><div class="emoji">🚫</div></div>
+            <div class="card-image"><svg class="icon"><use href="#ic-ban"></use></svg></div>
             <div class="card-nom">Aucun</div>
         </div>`;
     blocs.push(`
         <div class="equip-bloc">
             <div class="equip-bloc-titre">${LABEL_SLOT.offhand}</div>
-            ${armeEstDeuxMains ? `<div class="card-note" style="margin-bottom:8px;">🔒 Occupée par ton arme à deux mains.</div>` : ''}
+            ${armeEstDeuxMains ? `<div class="card-note" style="margin-bottom:8px;"><svg class="icon"><use href="#ic-lock"></use></svg> Occupée par ton arme à deux mains.</div>` : ''}
             <div class="grille-cards">${carteAucunOffhand}${offhands.map(l => rendreCartePick(l, 'offhand', armeEstDeuxMains)).join('')}</div>
         </div>`);
 
@@ -584,7 +667,7 @@ function rendreEquipGrille() {
         const options = inv.filter(l => l.info.slot === slotKey);
         const carteAucun = `
             <div class="card aucun ${!equipChoisi[choixKey] ? 'choisi' : ''}" data-slot="${choixKey}" data-numero="">
-                <div class="card-image"><div class="emoji">🚫</div></div>
+                <div class="card-image"><svg class="icon"><use href="#ic-ban"></use></svg></div>
                 <div class="card-nom">Aucun</div>
             </div>`;
         blocs.push(`
@@ -617,10 +700,12 @@ function rendreCartePick(ligneInv, choixKey, desactivee) {
     const niveau = ligneInv.niveau || 0;
     const nivele = appliquerAmelioration(info, niveau);
     const estChoisi = String(equipChoisi[choixKey]) === String(ligneInv.numero);
-    const img = info.image ? `<img src="${echapper(info.image)}" alt="">` : `<div class="emoji">${echapper(info.icone || '❔')}</div>`;
+    const img = info.image
+        ? `<img src="${echapper(info.image)}" alt="" onerror="imgFallback(this)">`
+        : `<svg class="icon"><use href="#ic-package"></use></svg>`;
 
     const lignesStat = [];
-    
+
     // Dégâts de l'arme affichés en tout premier, en blanc
     if (info.slot === 'weapon' && info.scaling1Stat) {
         lignesStat.push(`
@@ -633,7 +718,7 @@ function rendreCartePick(ligneInv, choixKey, desactivee) {
     if (nivele.stat) lignesStat.push(ligneStatCarte(nivele.stat, nivele.bonus));
     if (nivele.stat2) lignesStat.push(ligneStatCarte(nivele.stat2, nivele.bonus2));
     if (nivele.stat3) lignesStat.push(ligneStatCarte(nivele.stat3, nivele.bonus3));
-    
+
     if (info.statPrincipale) {
         const champ = { Lifesteal:'lifesteal', PoisonDegats:'poisonDegats', ShieldMontant:'shieldMontant', SoinDirect:'soinDirect', DegatsDirects:'degatsDirects', SaignementDegats:'saignementDegats', BrulureDegats:'brulureDegats' }[info.statPrincipale];
         if (champ && nivele[champ]) lignesStat.push(`<span class="l-passif">${LABEL_STAT_COURT[info.statPrincipale] || info.statPrincipale} <b style="color:var(--paper)">${Math.round(nivele[champ]*10)/10}</b></span>`);
@@ -674,7 +759,7 @@ function recalculer() {
         strat: gearPourFormule(equipChoisi.strat),
     };
     const r = simulerBuild(stacksChoisis, equipementBrut);
-    
+
     afficherDetailStats(r.stats);
 
     document.getElementById('resultatsGrille').innerHTML = `
@@ -711,15 +796,15 @@ function afficherDetailStats(statsActuelles) {
         const elTotal = document.getElementById('detailStatTotal_' + st);
         const elBreak = document.getElementById('detailStatBreakdown_' + st);
         if (!elTotal || !elBreak) return;
-        
+
         elTotal.innerHTML = `
             <div class="stat-valeur">${formatteur(total)}</div>
             <div class="stat-delta">${texteDelta(total, initial, 1)}</div>
         `;
         elBreak.innerHTML = `
-            <span class="base">${formatteur(baseline)}</span><span class="signe">+</span>
-            <span class="investi">${formatteur(stack)}</span><span class="signe">+</span>
-            <span class="objets">${formatteur(gear)}</span>
+            <div class="sb-item sb-base"><span class="sb-label">Base</span><span class="sb-val">${formatteur(baseline)}</span></div>
+            <div class="sb-item sb-investi"><span class="sb-label">Investi</span><span class="sb-val">${formatteur(stack)}</span></div>
+            <div class="sb-item sb-objets"><span class="sb-label">Objets</span><span class="sb-val">${formatteur(gear)}</span></div>
         `;
     };
     const f1 = v => (Math.round(v*10)/10).toString();
@@ -727,7 +812,12 @@ function afficherDetailStats(statsActuelles) {
     rendre('atk', base.atk, avecStacksSeuls.atk - base.atk, statsActuelles.atk - avecStacksSeuls.atk, statsActuelles.atk, statsInitiales.atk, f1);
     rendre('def', base.def, avecStacksSeuls.def - base.def, statsActuelles.def - avecStacksSeuls.def, statsActuelles.def, statsInitiales.def, f1);
     rendre('pv',  base.pv,  avecStacksSeuls.pv  - base.pv,  statsActuelles.pv  - avecStacksSeuls.pv,  statsActuelles.pv,  statsInitiales.pv,  f1);
-    rendre('spd', base.spd, avecStacksSeuls.spd - base.spd, statsActuelles.spd - avecStacksSeuls.spd, statsActuelles.spd, statsInitiales.spd, f1);
+    // SPD a un rendement dégressif (tanh, voir formule-combat.js/boost-spd.cs) -- on affiche le
+    // nombre RÉEL de points dépensés (stacksChoisis.spd, brut) plutôt que la contribution réduite
+    // par la courbe, pour ne jamais laisser croire aux joueurs que leurs points "valent moins"
+    // que ce qu'ils ont investi. La part "objets" reste calculée par différence à partir de la
+    // vraie contribution tanh (avecStacksSeuls.spd - base.spd), donc son calcul ne change pas.
+    rendre('spd', base.spd, stacksChoisis.spd, statsActuelles.spd - avecStacksSeuls.spd, statsActuelles.spd, statsInitiales.spd, f1);
 
     const BASELINE_LUCK_AFFICHEE = 10;
     const luckStack = stacksChoisis.luck;
@@ -737,7 +827,12 @@ function afficherDetailStats(statsActuelles) {
 
 function copier(idCode, bouton) {
     const texte = document.getElementById(idCode).textContent;
-    const fini = () => { const avant = bouton.textContent; bouton.textContent = 'Copié !'; setTimeout(() => bouton.textContent = avant, 1600); };
+    const avantHTML = bouton.innerHTML;
+    const fini = () => {
+        bouton.innerHTML = '<svg class="icon" style="width:14px;height:14px;"><use href="#ic-check"></use></svg> Copié !';
+        bouton.classList.add('copie');
+        setTimeout(() => { bouton.innerHTML = avantHTML; bouton.classList.remove('copie'); }, 1600);
+    };
     if (navigator.clipboard) navigator.clipboard.writeText(texte).then(fini, fini);
     else {
         const z = document.createElement('textarea'); z.value = texte; document.body.appendChild(z); z.select();
