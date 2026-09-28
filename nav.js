@@ -3,10 +3,15 @@
        <script src="nav.js" defer></script>
    (à placer juste avant </body>)
 
-   Menu épuré et moderne : 
-   La barre de recherche n'est plus coincée dans la navigation. Si la page 
-   nécessite une sélection de profil, le script injecte automatiquement une 
+   Menu épuré et moderne :
+   La barre de recherche n'est plus coincée dans la navigation. Si la page
+   nécessite une sélection de profil, le script injecte automatiquement une
    VRAIE barre de recherche native au cœur de la page.
+
+   Menu débordement (« ••• ») : au-delà de LIMITE_LIENS_VISIBLES liens directs,
+   les pages restantes sont regroupées dans un petit menu contextuel sur
+   desktop (bouton "•••"). Sur mobile, le menu hamburger existant affiche déjà
+   tout à plat, donc le bouton "•••" est désactivé sous 780px.
    ========================================================================== */
 (function () {
     "use strict";
@@ -21,8 +26,13 @@
         { fichier: "scout.html",          label: "Cibles",     profil: true,        donnees: "players.json" },
         { fichier: "shop.html",           label: "Boutique",   profil: true, rechercheNav: false, donnees: "players.json" },
         { fichier: "ranking.html",        label: "Classements",                     donnees: "players.json" },
-        { fichier: "codex.html",          label: "Codex",                           donnees: "catalogue_stats.json" }
+        { fichier: "codex.html",          label: "Codex",                           donnees: "catalogue_stats.json" },
+        { fichier: "calculateur.html",    label: "Calculateur", profil: true, rechercheNav: false, donnees: "players.json" },
+        { fichier: "patchnotes.html",     label: "Patchnotes" }
     ];
+
+    // Au-delà de ce nombre de liens directs, le reste part dans le menu "•••".
+    var LIMITE_LIENS_VISIBLES = 7;
 
     var fichierCourant = (location.pathname.split("/").pop() || ACCUEIL).toLowerCase();
     if (fichierCourant === "") fichierCourant = ACCUEIL;
@@ -79,6 +89,17 @@
         ".hdnav-liens a[aria-current=page] { background: rgba(242,194,48,0.12); color: var(--hdnav-jaune); }",
         ".hdnav a:focus-visible { outline: 2px solid var(--hdnav-jaune); outline-offset: 2px; }",
 
+        /* Menu débordement "•••" (desktop uniquement) */
+        ".hdnav-plus { position: relative; }",
+        ".hdnav-plus-bouton { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: .05em; color: var(--hdnav-attenue); background: none; border: none; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: all 0.2s ease; line-height: 1; }",
+        ".hdnav-plus-bouton:hover, .hdnav-plus-bouton[aria-expanded=true] { background: var(--hdnav-hover); color: var(--hdnav-texte); }",
+        ".hdnav-plus-bouton[aria-current=page] { background: rgba(242,194,48,0.12); color: var(--hdnav-jaune); }",
+        ".hdnav-plus-menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 170px; background: var(--bg-panel, #141416); border: 1px solid var(--hdnav-bord); border-top: 3px solid var(--hdnav-jaune); border-radius: 0 0 8px 8px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); padding: 6px; display: none; flex-direction: column; gap: 2px; z-index: 950; }",
+        ".hdnav-plus-menu.ouvert { display: flex; animation: hdnav-drop 0.2s ease; }",
+        ".hdnav-plus-menu a { display: block; font-family: 'Oswald', sans-serif; font-weight: 500; font-size: 13.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--hdnav-attenue); text-decoration: none; padding: 9px 12px; border-radius: 6px; white-space: nowrap; transition: all 0.15s ease; }",
+        ".hdnav-plus-menu a:hover { background: var(--hdnav-hover); color: var(--hdnav-texte); }",
+        ".hdnav-plus-menu a[aria-current=page] { background: rgba(242,194,48,0.12); color: var(--hdnav-jaune); }",
+
         /* Fraîcheur des données (Badge) */
         ".hdnav-maj { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; margin-left: 6px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 4px 6px 4px 10px; border-radius: 20px; }",
         ".hdnav-maj-texte { font-size: 11px; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hdnav-attenue); white-space: nowrap; }",
@@ -96,7 +117,7 @@
         ".hdnav-bouton { display: none; background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--hdnav-texte); border-radius: 6px; cursor: pointer; flex: 0 0 auto; padding: 6px 8px; transition: all 0.2s; }",
         ".hdnav-bouton:hover { background: rgba(255,255,255,0.05); }",
         ".hdnav-bouton svg { width: 22px; height: 22px; stroke: currentColor; transition: transform 0.3s ease; }",
-        
+
         "@media (max-width: 600px) { .hdnav-maj-prefixe { display: none; } .hdnav-maj { padding-left: 8px; } }",
 
         /* MENU MOBILE OVERLAY */
@@ -107,6 +128,11 @@
         ".hdnav-liens.hdnav-ouvert { opacity: 1; visibility: visible; transform: translateY(0); }",
         ".hdnav-liens a { padding: 12px 16px; border-radius: 8px; font-size: 15px; background: rgba(255,255,255,0.02); }",
         ".hdnav-interieur { flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }",
+        /* Sur mobile, le hamburger affiche déjà tout à plat : le bouton "•••" est désactivé */
+        /* et ses liens rejoignent la liste normale, à la suite des liens directs. */
+        ".hdnav-plus-bouton { display: none; }",
+        ".hdnav-plus-menu { position: static; display: flex !important; flex-direction: column; box-shadow: none; border: none; background: none; padding: 0; gap: 4px; min-width: 0; animation: none; }",
+        ".hdnav-plus-menu a { padding: 12px 16px; border-radius: 8px; font-size: 15px; background: rgba(255,255,255,0.02); }",
         "}",
 
         /* ========================================================= */
@@ -121,16 +147,16 @@
         "background-repeat: no-repeat; background-position: 14px center; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2); }",
         ".page-rech-champ input::placeholder { color: #6f6b60; }",
         ".page-rech-champ input:focus { outline: none; border-color: var(--yellow, #f2c230); background-color: rgba(0,0,0,0.45); box-shadow: 0 0 0 3px rgba(242,194,48,0.15); }",
-        
+
         ".page-rech-listbox { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50; background: var(--bg-panel, #141416); border: 1px solid var(--line, #2c2c2e); border-top: 3px solid var(--yellow, #f2c230); border-radius: 0 0 8px 8px; max-height: 340px; overflow-y: auto; box-shadow: 0 16px 40px rgba(0,0,0,0.6); display: none; }",
         ".page-rech-listbox.ouvert { display: block; animation: hdnav-drop 0.2s ease; }",
         "@keyframes hdnav-drop { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }",
-        
+
         ".page-rech-option { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--line, #2c2c2e); transition: background 0.15s; }",
         ".page-rech-option:last-child { border-bottom: none; }",
         ".page-rech-option:hover, .page-rech-option.actif { background: rgba(255,255,255,0.06); }",
         ".page-rech-option.actif { border-left: 3px solid var(--yellow, #f2c230); padding-left: 11px; }",
-        
+
         ".page-rech-option img, .page-rech-option .init { width: 32px; height: 32px; border-radius: 50%; flex: 0 0 auto; object-fit: cover; background: #232326; border: 1px solid var(--line, #2c2c2e); }",
         ".page-rech-option .init { display: flex; align-items: center; justify-content: center; font-family: 'Oswald', sans-serif; font-size: 14px; color: var(--paper-dim, #b8b2a0); }",
         ".page-rech-option span { font-size: 15px; font-weight: 500; color: var(--paper, #e9e3d2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; }",
@@ -233,7 +259,7 @@
             var liste = q ? personnages.filter(function (p) {
                 return p.nom.toLowerCase().indexOf(q) !== -1 || p.cle.indexOf(q) !== -1;
             }) : personnages;
-            
+
             var visibles = liste.slice(0, 8);
             indexActif = -1;
             input.removeAttribute("aria-activedescendant");
@@ -313,13 +339,66 @@
     liens.className = "hdnav-liens";
     liens.id = "hdnav-liens";
 
-    PAGES.forEach(function (page) {
+    // Factory pour un lien de nav standard (utilisée pour les liens directs
+    // comme pour ceux du menu de débordement "•••").
+    function creerLien(page) {
         var a = document.createElement("a");
         a.href = lienDe(page);
         a.textContent = page.label;
         if (page.fichier === fichierCourant) a.setAttribute("aria-current", "page");
-        liens.appendChild(a);
+        return a;
+    }
+
+    var pagesVisibles = PAGES.slice(0, LIMITE_LIENS_VISIBLES);
+    var pagesDebordement = PAGES.slice(LIMITE_LIENS_VISIBLES);
+
+    pagesVisibles.forEach(function (page) {
+        liens.appendChild(creerLien(page));
     });
+
+    // Menu "•••" : regroupe les pages au-delà de la limite. Sur desktop c'est
+    // un menu contextuel cliquable ; en dessous de 780px le CSS le remet à
+    // plat dans le menu hamburger existant (voir @media plus haut).
+    var pageActiveEnDebordement = false;
+    if (pagesDebordement.length) {
+        var plusWrap = document.createElement("div");
+        plusWrap.className = "hdnav-plus";
+
+        var plusBouton = document.createElement("button");
+        plusBouton.type = "button";
+        plusBouton.className = "hdnav-plus-bouton";
+        plusBouton.setAttribute("aria-haspopup", "true");
+        plusBouton.setAttribute("aria-expanded", "false");
+        plusBouton.setAttribute("aria-label", "Plus de pages");
+        plusBouton.textContent = "•••";
+
+        var plusMenu = document.createElement("div");
+        plusMenu.className = "hdnav-plus-menu";
+
+        pagesDebordement.forEach(function (page) {
+            var a = creerLien(page);
+            if (page.fichier === fichierCourant) pageActiveEnDebordement = true;
+            plusMenu.appendChild(a);
+        });
+
+        if (pageActiveEnDebordement) plusBouton.setAttribute("aria-current", "page");
+
+        plusBouton.addEventListener("click", function (e) {
+            e.stopPropagation();
+            var ouvert = plusMenu.classList.toggle("ouvert");
+            plusBouton.setAttribute("aria-expanded", ouvert ? "true" : "false");
+        });
+        document.addEventListener("click", function (e) {
+            if (!plusWrap.contains(e.target)) {
+                plusMenu.classList.remove("ouvert");
+                plusBouton.setAttribute("aria-expanded", "false");
+            }
+        });
+
+        plusWrap.appendChild(plusBouton);
+        plusWrap.appendChild(plusMenu);
+        liens.appendChild(plusWrap);
+    }
     interieur.appendChild(liens);
 
     var pageCourante = PAGES.filter(function (p) { return p.fichier === fichierCourant; })[0];
@@ -392,7 +471,7 @@
         var hauteurNav = interieur.offsetHeight;
         document.body.style.paddingTop = (paddingInitial + hauteurNav) + "px";
     }
-    
+
     if (estPageProfil) {
         injecterRecherchePage();
     }
